@@ -21,7 +21,8 @@ Log::YetAnother - A flexible logging class for Perl
 # DESCRIPTION
 
 The `Log::YetAnother` class provides a flexible logging mechanism that can handle different types of loggers,
-including code references, arrays, file paths, and objects. It also supports logging to syslog if configured.
+including code references, arrays, file paths, and objects.
+It also supports logging to syslog if configured.
 
 # METHODS
 
