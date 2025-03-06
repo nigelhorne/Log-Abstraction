@@ -4,7 +4,7 @@ Log::YetAnother - A flexible logging class for Perl
 
 # VERSION
 
-0.01
+0.02
 
 # SYNOPSIS
 

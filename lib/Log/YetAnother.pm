@@ -13,11 +13,11 @@ Log::YetAnother - A flexible logging class for Perl
 
 =head1 VERSION
 
-0.01
+0.02
 
 =cut
 
-our $VERSION = 0.01;
+our $VERSION = 0.02;
 
 =head1 SYNOPSIS
 
