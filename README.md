@@ -34,12 +34,6 @@ Creates a new `Log::YetAnother` object. The following arguments can be provided:
 - `logger` - A logger can be a code reference, an array reference, a file path, or an object.
 - `syslog` - A hash reference for syslog configuration.
 
-## \_log
-
-    $logger->_log($level, @messages);
-
-Internal method to log messages. This method is called by other logging methods.
-
 ## debug
 
     $logger->debug(@messages);

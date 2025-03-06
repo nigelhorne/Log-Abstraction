@@ -63,13 +63,8 @@ sub new {
 	return bless $self, $class;  # Bless and return the object
 }
 
-=head2 _log
-
-  $logger->_log($level, @messages);
-
-Internal method to log messages. This method is called by other logging methods.
-
-=cut
+# Internal method to log messages. This method is called by other logging methods.
+# $logger->_log($level, @messages);
 
 sub _log {
 	my ($self, $level, @messages) = @_;
