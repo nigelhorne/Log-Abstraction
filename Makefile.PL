@@ -2,7 +2,7 @@ use ExtUtils::MakeMaker;
 
 WriteMakefile(
     NAME         => 'Log::YetAnother',
-    VERSION_FROM => 'Log::YetAnother.pm', # finds $VERSION
+    VERSION_FROM => 'lib/Log/YetAnother.pm', # finds $VERSION
     AUTHOR       => 'Nigel Horne <njh@nigelhorne.com>',
     ABSTRACT     => 'A flexible logging class for Perl',
     LICENSE      => 'perl',

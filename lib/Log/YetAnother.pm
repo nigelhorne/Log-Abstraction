@@ -11,6 +11,14 @@ use Scalar::Util 'blessed';  # Import Scalar::Util for object reference checking
 
 Log::YetAnother - A flexible logging class for Perl
 
+=head1 VERSION
+
+0.01
+
+=cut
+
+our $VERSION = 0.01;
+
 =head1 SYNOPSIS
 
   use Log::YetAnother;
