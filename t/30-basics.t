@@ -7,12 +7,12 @@ use Sys::Syslog qw(:standard :macros);
 
 # Test logging to an in-memory array
 my @log_array;
-my $logger = Log::YetAnother->new(logger => \@log_array);
+my $logger = Log::YetAnother->new(logger => \@log_array, script_name => 'test');
 
-$logger->_debug('This is a debug message');
-$logger->_info('This is an info message');
-$logger->_notice('This is a notice message');
-$logger->_trace('This is a trace message');
+$logger->debug('This is a debug message');
+$logger->info('This is an info message');
+$logger->notice('This is a notice message');
+$logger->trace('This is a trace message');
 
 is_deeply(
     \@log_array,
@@ -27,41 +27,42 @@ is_deeply(
 
 # Test logging to a file
 my ($fh, $filename) = tempfile();
-$logger = Log::YetAnother->new(logger => $filename);
+$logger = Log::YetAnother->new(logger => $filename, script_name => 'test');
 
-$logger->_debug('File debug message');
-$logger->_info('File info message');
+$logger->debug('File debug message');
+$logger->info('File info message');
 
 open my $log_fh, '<', $filename or die "Could not open log file: $!";
 my @log_lines = <$log_fh>;
 close $log_fh;
 
-like($log_lines[0], qr/DEBUG: Log::YetAnother::Log::YetAnother/, 'Logged debug message to file');
+like($log_lines[0], qr/DEBUG: Log::YetAnother/, 'Logged debug message to file');
 like($log_lines[0], qr/File debug message/, 'Logged correct debug message to file');
-like($log_lines[1], qr/INFO: Log::YetAnother::Log::YetAnother/, 'Logged info message to file');
+like($log_lines[1], qr/INFO: Log::YetAnother/, 'Logged info message to file');
 like($log_lines[1], qr/File info message/, 'Logged correct info message to file');
 
 # Test logging to a code reference
 my @code_log;
-$logger = Log::YetAnother->new(logger => sub { push @code_log, @_ });
+$logger = Log::YetAnother->new(logger => sub { push @code_log, @_ }, script_name => 'test');
 
-$logger->_debug('Code debug message');
-$logger->_info('Code info message');
+$logger->debug('Code debug message');
+$logger->info('Code info message');
 
+diag(Data::Dumper->new([\@code_log])->Dump()) if($ENV{'TEST_VERBOSE'});
 is_deeply(
     \@code_log,
     [
         {
             class => 'Log::YetAnother',
-            function => 'main::test_logger',  # Adjust function name if needed
-            line => 64,  # Adjust line number if needed
+	    file => 't/30-basics.t',
+            line => 48,  # Adjust line number if needed
             level => 'debug',
             message => ['Code debug message']
         },
         {
             class => 'Log::YetAnother',
-            function => 'main::test_logger',  # Adjust function name if needed
-            line => 65,  # Adjust line number if needed
+	    file => 't/30-basics.t',
+            line => 49,  # Adjust line number if needed
             level => 'info',
             message => ['Code info message']
         }
@@ -70,9 +71,9 @@ is_deeply(
 );
 
 # Test logging to syslog
-$logger = Log::YetAnother->new(syslog => { type => 'unix' });
+$logger = Log::YetAnother->new(syslog => { type => 'unix' }, script_name => 'test');
 
-$logger->_warn({ warning => 'Syslog warning message' });
+$logger->warn({ warning => 'Syslog warning message' });
 
 # Note: Verifying syslog output requires checking the syslog file, not done here
 
