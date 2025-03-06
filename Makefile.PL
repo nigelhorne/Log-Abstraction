@@ -31,8 +31,8 @@ WriteMakefile(
 		resources => {
 			repository => {
 				type => 'git',
-				url  => 'git://github.com/nigelhorne/log-yetanother.git',
-				web  => 'https://github.com/nigelhorne/log-yetanother',
+				url  => 'git://github.com/nigelhorne/Log-YetAnother.git',
+				web  => 'https://github.com/nigelhorne/Log-YetAnother',
 			},
 		},
 	}, dist => $dist
