@@ -34,7 +34,8 @@ our $VERSION = 0.01;
 =head1 DESCRIPTION
 
 The C<Log::YetAnother> class provides a flexible logging mechanism that can handle different types of loggers,
-including code references, arrays, file paths, and objects. It also supports logging to syslog if configured.
+including code references, arrays, file paths, and objects.
+It also supports logging to syslog if configured.
 
 =head1 METHODS
 
