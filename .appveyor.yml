@@ -1,0 +1,54 @@
+---
+# Appveyor CI configuration file
+
+# The name of the project
+version: 1.0.{build}
+
+# Build matrix
+matrix:
+  - {perl: "5.32"}
+  - {perl: "5.30"}
+  - {perl: "5.28"}
+  - {perl: "5.26"}
+
+# Platform and environment
+platform:
+  - x64
+  - x86
+
+# Install dependencies
+install:
+  # Install Strawberry Perl
+  - ps: Install-Module -Name 'StrawberryPerl' -Force -Scope CurrentUser
+
+  # Use cpanm to install Perl dependencies
+  - cinst -y cpanm
+  - cpanm --notest --installdeps .
+
+# Build script
+build_script:
+  - perl -V
+  - cpanm Test::Most
+  - prove -l
+
+# Artifacts
+artifacts:
+  - path: build\*
+    name: Build
+
+# Notifications
+notifications:
+  - provider: Email
+    to:
+      - your-email@example.com
+    on_build_success: true
+    on_build_failure: true
+
+# Cache
+cache:
+  - C:\strawberry\cpan\build\*
+  - C:\strawberry\cpan\sources\*
+
+# Environment variables
+environment:
+  APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
