@@ -77,8 +77,11 @@ sub new {
 		%args = @_;
 	} else {
 		# If there is an odd number of arguments, treat it as an error
-		carp(__PACKAGE__, ': Invalid arguments passed to new()');
-		return;
+		croak(__PACKAGE__, ': Invalid arguments passed to new()');
+	}
+
+	if($args{'syslog'} && !$args{'script_name'}) {
+		croak(__PACKAGE__, ' syslog needs to know the script name');
 	}
 
 	my $self = {
@@ -185,6 +188,8 @@ sub trace {
   $logger->warn(@messages);
 
 Logs a warning message. This method also supports logging to syslog if configured.
+If not logging mechanism is set,
+falls back to C<Carp>.
 
 =cut
 

@@ -1,9 +1,11 @@
 use strict;
 use warnings;
+
 use Test::Most;
-use Log::YetAnother;
 use File::Temp qw/tempfile/;
 use Sys::Syslog qw(:standard :macros);
+
+BEGIN { use_ok('Log::YetAnother') }
 
 # Test logging to an in-memory array
 my @log_array;
@@ -55,13 +57,13 @@ is_deeply(
 		{
 			class => 'Log::YetAnother',
 		file => 't/30-basics.t',
-			line => 48,  # Adjust line number if needed
+			line => 50,  # Adjust line number if needed
 			level => 'debug',
 			message => ['Code debug message']
 		}, {
 			class => 'Log::YetAnother',
 		file => 't/30-basics.t',
-			line => 49,  # Adjust line number if needed
+			line => 51,  # Adjust line number if needed
 			level => 'info',
 			message => ['Code info message']
 		}

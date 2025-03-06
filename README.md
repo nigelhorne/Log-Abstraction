@@ -68,6 +68,8 @@ Logs a trace message.
     $logger->warn(@messages);
 
 Logs a warning message. This method also supports logging to syslog if configured.
+If not logging mechanism is set,
+falls back to `Carp`.
 
 # AUTHOR
 
