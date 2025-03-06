@@ -12,9 +12,11 @@ if($^O eq 'darwin') {
 WriteMakefile(
 	NAME		 => 'Log::YetAnother',
 	VERSION_FROM => 'lib/Log/YetAnother.pm', # finds $VERSION
-	AUTHOR	   => 'Nigel Horne <njh@nigelhorne.com>',
+	AUTHOR	 => 'Nigel Horne <njh@nigelhorne.com>',
 	ABSTRACT	 => 'A flexible logging class for Perl',
-	LICENSE	  => 'perl',
+	((defined($ExtUtils::MakeMaker::VERSION) && ($ExtUtils::MakeMaker::VERSION >= 6.3002))
+		? ('LICENSE'=> 'GPL')
+		: ()),
 	PREREQ_PM	=> {
 		'Carp'		=> 0,
 		'ExtUtils::MakeMaker' => 6.64,	# Minimum version for TEST_REQUIRES
@@ -23,16 +25,18 @@ WriteMakefile(
 		'Scalar::Util'=> 0,
 	},
 	TEST_REQUIRES => {
-		'Test::More'  => 0,
-		'Test::Most'  => 0,
-		'File::Temp'  => 0,
+		'Test::DescribeMe' => 0,
+		'Test::More' => 0,
+		'Test::Most' => 0,
+		'Test::Needs' => 0,
+		'File::Temp' => 0,
 	},
 	META_MERGE => {
 		resources => {
 			repository => {
 				type => 'git',
-				url  => 'git://github.com/nigelhorne/Log-YetAnother.git',
-				web  => 'https://github.com/nigelhorne/Log-YetAnother',
+				url => 'git://github.com/nigelhorne/Log-YetAnother.git',
+				web => 'https://github.com/nigelhorne/Log-YetAnother',
 			},
 		},
 	}, dist => $dist
