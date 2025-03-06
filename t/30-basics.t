@@ -7,7 +7,7 @@ use Sys::Syslog qw(:standard :macros);
 
 # Test logging to an in-memory array
 my @log_array;
-my $logger = Log::YetAnother->new(logger => \@log_array, script_name => 'test');
+my $logger = Log::YetAnother->new({ logger => \@log_array });
 
 $logger->debug('This is a debug message');
 $logger->info('This is an info message');
@@ -15,19 +15,19 @@ $logger->notice('This is a notice message');
 $logger->trace('This is a trace message');
 
 is_deeply(
-    \@log_array,
-    [
-        { level => 'debug', message => 'This is a debug message' },
-        { level => 'info', message => 'This is an info message' },
-        { level => 'notice', message => 'This is a notice message' },
-        { level => 'trace', message => 'This is a trace message' }
-    ],
-    'Logged messages to array'
+	\@log_array,
+	[
+		{ level => 'debug', message => 'This is a debug message' },
+		{ level => 'info', message => 'This is an info message' },
+		{ level => 'notice', message => 'This is a notice message' },
+		{ level => 'trace', message => 'This is a trace message' }
+	],
+	'Logged messages to array'
 );
 
 # Test logging to a file
 my ($fh, $filename) = tempfile();
-$logger = Log::YetAnother->new(logger => $filename, script_name => 'test');
+$logger = Log::YetAnother->new($filename);
 
 $logger->debug('File debug message');
 $logger->info('File info message');
@@ -43,31 +43,30 @@ like($log_lines[1], qr/File info message/, 'Logged correct info message to file'
 
 # Test logging to a code reference
 my @code_log;
-$logger = Log::YetAnother->new(logger => sub { push @code_log, @_ }, script_name => 'test');
+$logger = Log::YetAnother->new(logger => sub { push @code_log, @_ });
 
 $logger->debug('Code debug message');
 $logger->info('Code info message');
 
 diag(Data::Dumper->new([\@code_log])->Dump()) if($ENV{'TEST_VERBOSE'});
 is_deeply(
-    \@code_log,
-    [
-        {
-            class => 'Log::YetAnother',
-	    file => 't/30-basics.t',
-            line => 48,  # Adjust line number if needed
-            level => 'debug',
-            message => ['Code debug message']
-        },
-        {
-            class => 'Log::YetAnother',
-	    file => 't/30-basics.t',
-            line => 49,  # Adjust line number if needed
-            level => 'info',
-            message => ['Code info message']
-        }
-    ],
-    'Logged messages to code reference'
+	\@code_log,
+	[
+		{
+			class => 'Log::YetAnother',
+		file => 't/30-basics.t',
+			line => 48,  # Adjust line number if needed
+			level => 'debug',
+			message => ['Code debug message']
+		}, {
+			class => 'Log::YetAnother',
+		file => 't/30-basics.t',
+			line => 49,  # Adjust line number if needed
+			level => 'info',
+			message => ['Code info message']
+		}
+	],
+	'Logged messages to code reference'
 );
 
 # Test logging to syslog

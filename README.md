@@ -29,10 +29,14 @@ including code references, arrays, file paths, and objects. It also supports log
 
     my $logger = Log::YetAnother->new(%args);
 
-Creates a new `Log::YetAnother` object. The following arguments can be provided:
+Creates a new `Log::YetAnother` object.
+The argument can be a hash,
+a reference to a hash or the `logger` value.
+The following arguments can be provided:
 
 - `logger` - A logger can be a code reference, an array reference, a file path, or an object.
 - `syslog` - A hash reference for syslog configuration.
+- `script_name` - Name of the script, needed when `syslog` is given
 
 ## debug
 
@@ -66,7 +70,7 @@ Logs a warning message. This method also supports logging to syslog if configure
 
 # AUTHOR
 
-Nigel Horne <njh@nigelhorne.com>
+Nigel Horne ` <njh@nigelhorne.com` >
 
 # COPYRIGHT AND LICENSE
 

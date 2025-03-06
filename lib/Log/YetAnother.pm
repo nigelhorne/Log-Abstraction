@@ -2,10 +2,10 @@ package Log::YetAnother;
 
 use strict;
 use warnings;
-use Carp;  # Import Carp for warnings
-use Params::Get;  # Import Params::Get for parameter handling
-use Sys::Syslog;  # Import Sys::Syslog for syslog support
-use Scalar::Util 'blessed';  # Import Scalar::Util for object reference checking
+use Carp;	# Import Carp for warnings
+use Params::Get;	# Import Params::Get for parameter handling
+use Sys::Syslog;	# Import Sys::Syslog for syslog support
+use Scalar::Util 'blessed';	# Import Scalar::Util for object reference checking
 
 =head1 NAME
 
@@ -42,7 +42,10 @@ including code references, arrays, file paths, and objects. It also supports log
 
   my $logger = Log::YetAnother->new(%args);
 
-Creates a new C<Log::YetAnother> object. The following arguments can be provided:
+Creates a new C<Log::YetAnother> object.
+The argument can be a hash,
+a reference to a hash or the C<logger> value.
+The following arguments can be provided:
 
 =over
 
@@ -50,12 +53,33 @@ Creates a new C<Log::YetAnother> object. The following arguments can be provided
 
 =item * C<syslog> - A hash reference for syslog configuration.
 
+=item * C<script_name> - Name of the script, needed when C<syslog> is given
+
 =back
 
 =cut
 
 sub new {
-	my ($class, %args) = @_;
+	my $class = shift;
+
+	# Handle hash or hashref arguments
+	my %args;
+	if(@_ == 1) {
+		if(ref $_[0] eq 'HASH') {
+			# If the first argument is a hash reference, dereference it
+			%args = %{$_[0]};
+		} else {
+			$args{'logger'} = shift;
+		}
+	} elsif((scalar(@_) % 2) == 0) {
+		# If there is an even number of arguments, treat them as key-value pairs
+		%args = @_;
+	} else {
+		# If there is an odd number of arguments, treat it as an error
+		carp(__PACKAGE__, ': Invalid arguments passed to new()');
+		return;
+	}
+
 	my $self = {
 		messages => [],  # Initialize messages array
 		%args,
@@ -76,8 +100,8 @@ sub _log {
 	# Push the message to the internal messages array
 	push @{$self->{messages}}, { level => $level, message => join(' ', grep defined, @messages) };
 
-	if (my $logger = $self->{logger}) {
-		if (ref($logger) eq 'CODE') {
+	if(my $logger = $self->{logger}) {
+		if(ref($logger) eq 'CODE') {
 			# If logger is a code reference, call it with log details
 			$logger->({
 				class => blessed($self) || __PACKAGE__,
@@ -87,12 +111,12 @@ sub _log {
 				level => $level,
 				message => \@messages,
 			});
-		} elsif (ref($logger) eq 'ARRAY') {
+		} elsif(ref($logger) eq 'ARRAY') {
 			# If logger is an array reference, push the log message to the array
 			push @{$logger}, { level => $level, message => join(' ', grep defined, @messages) };
-		} elsif (!ref($logger)) {
+		} elsif(!ref($logger)) {
 			# If logger is a file path, append the log message to the file
-			if (open(my $fout, '>>', $logger)) {
+			if(open(my $fout, '>>', $logger)) {
 				print $fout uc($level), ': ', blessed($self) || __PACKAGE__, ' ', (caller(1))[1], (caller(1))[2], ' ', join(' ', @messages), "\n";
 				close $fout;
 			}
@@ -165,22 +189,22 @@ Logs a warning message. This method also supports logging to syslog if configure
 
 sub warn {
 	my $self = shift;
-	my $params = Params::Get::get_params('warning', @_);  # Get parameters
+	my $params = Params::Get::get_params('warning', @_);	# Get parameters
 
 	# Validate input parameters
 	return unless ($params && (ref($params) eq 'HASH'));
 	my $warning = $params->{warning};
 	return unless ($warning);
 
-	if ($self eq __PACKAGE__) {
+	if($self eq __PACKAGE__) {
 		# If called from a class method, use Carp to warn
 		Carp::carp($warning);
 		return;
 	}
 
-	if ($self->{syslog}) {
+	if($self->{syslog}) {
 		# Handle syslog-based logging
-		if (ref($self->{syslog}) eq 'HASH') {
+		if(ref($self->{syslog}) eq 'HASH') {
 			Sys::Syslog::setlogsock($self->{syslog});
 		}
 		openlog($self->{script_name}, 'cons,pid', 'user');
@@ -190,7 +214,7 @@ sub warn {
 
 	# Log the warning message
 	$self->_log('warn', $warning);
-	if ((!defined($self->{logger})) && (!defined($self->{syslog}))) {
+	if((!defined($self->{logger})) && (!defined($self->{syslog}))) {
 		# Fallback to Carp if no logger or syslog is defined
 		Carp::carp($warning);
 	}
@@ -198,7 +222,7 @@ sub warn {
 
 =head1 AUTHOR
 
-Nigel Horne <njh@nigelhorne.com>
+Nigel Horne C< <njh@nigelhorne.com> >
 
 =head1 COPYRIGHT AND LICENSE
 
@@ -209,4 +233,4 @@ it under the same terms as Perl itself.
 
 =cut
 
-1;  # End of Log::YetAnother package
+1;
