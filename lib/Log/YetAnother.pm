@@ -186,6 +186,7 @@ sub trace {
 =head2 warn
 
   $logger->warn(@messages);
+  $logger->warn(warning => \@messages);
 
 Logs a warning message. This method also supports logging to syslog if configured.
 If not logging mechanism is set,
@@ -200,7 +201,18 @@ sub warn {
 	# Validate input parameters
 	return unless ($params && (ref($params) eq 'HASH'));
 	my $warning = $params->{warning};
-	return unless ($warning);
+	if(!defined($warning)) {
+		if(scalar(@_) && !ref($_[0])) {
+			# Given an array
+			$warning = join(' ', @_);
+		} else {
+			return;
+		}
+	}
+	if(ref($warning) eq 'ARRAY') {
+		# Given "message => [ ref to array ]"
+		$warning = join(' ', @{$warning});
+	}
 
 	if($self eq __PACKAGE__) {
 		# If called from a class method, use Carp to warn

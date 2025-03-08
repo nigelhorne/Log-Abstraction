@@ -1,5 +1,8 @@
 Revision history for Log-YetAnother
 
+0.03
+	Fix passing an array to warn()
+
 0.02	Thu Mar  6 17:09:32 EST 2025
 	Improved argument checking to new()
 
