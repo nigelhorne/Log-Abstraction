@@ -17,8 +17,9 @@ WriteMakefile(
 	((defined($ExtUtils::MakeMaker::VERSION) && ($ExtUtils::MakeMaker::VERSION >= 6.3002))
 		? ('LICENSE'=> 'GPL')
 		: ()),
-	PREREQ_PM	=> {
-		'Carp'		=> 0,
+	PREREQ_PM => {
+		'Carp'	 => 0,
+		'Config::Auto' => 0,
 		'ExtUtils::MakeMaker' => 6.64,	# Minimum version for TEST_REQUIRES
 		'Params::Get' => 0,
 		'Sys::Syslog' => 0,

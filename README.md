@@ -1,6 +1,6 @@
 # NAME
 
-Log::YetAnother - A flexible logging class for Perl
+Log::Abstraction - Logging abstraction layer
 
 # VERSION
 
@@ -8,9 +8,9 @@ Log::YetAnother - A flexible logging class for Perl
 
 # SYNOPSIS
 
-    use Log::YetAnother;
+    use Log::Abstraction;
 
-    my $logger = Log::YetAnother->new(logger => 'logfile.log');
+    my $logger = Log::Abstraction->new(logger => 'logfile.log');
 
     $logger->debug('This is a debug message');
     $logger->info('This is an info message');
@@ -20,7 +20,7 @@ Log::YetAnother - A flexible logging class for Perl
 
 # DESCRIPTION
 
-The `Log::YetAnother` class provides a flexible logging mechanism that can handle different types of loggers,
+The `Log::Abstraction` class provides a flexible logging layer that can handle different types of loggers,
 including code references, arrays, file paths, and objects.
 It also supports logging to syslog if configured.
 
@@ -28,12 +28,18 @@ It also supports logging to syslog if configured.
 
 ## new
 
-    my $logger = Log::YetAnother->new(%args);
+    my $logger = Log::Abstraction->new(%args);
 
-Creates a new `Log::YetAnother` object.
+Creates a new `Log::Abstraction` object.
 The argument can be a hash,
 a reference to a hash or the `logger` value.
 The following arguments can be provided:
+
+- `config_file`
+
+    Points to a configuration file which contains the parameters to `new()`.
+    The file can be in any common format including `YAML`, `XML`, and `INI`.
+    This allows the parameters to be set at run time.
 
 - `logger` - A logger can be a code reference, an array reference, a file path, or an object.
 - `syslog` - A hash reference for syslog configuration.

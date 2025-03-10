@@ -3,6 +3,7 @@ package Log::Abstraction;
 use strict;
 use warnings;
 use Carp;	# Import Carp for warnings
+use Config::Auto;
 use Params::Get;	# Import Params::Get for parameter handling
 use Sys::Syslog;	# Import Sys::Syslog for syslog support
 use Scalar::Util 'blessed';	# Import Scalar::Util for object reference checking
@@ -50,6 +51,12 @@ The following arguments can be provided:
 
 =over
 
+=item * C<config_file>
+
+Points to a configuration file which contains the parameters to C<new()>.
+The file can be in any common format including C<YAML>, C<XML>, and C<INI>.
+This allows the parameters to be set at run time.
+
 =item * C<logger> - A logger can be a code reference, an array reference, a file path, or an object.
 
 =item * C<syslog> - A hash reference for syslog configuration.
@@ -78,6 +85,13 @@ sub new {
 	} else {
 		# If there is an odd number of arguments, treat it as an error
 		croak(__PACKAGE__, ': Invalid arguments passed to new()');
+	}
+
+	# Load the configuration from a config file, if provided
+	if(exists($args{'config_file'})) {
+		my $config = Config::Auto::parse($args{'config_file'});
+		# my $config = YAML::XS::LoadFile($args{'config_file'});
+		%args = (%{$config}, %args);
 	}
 
 	if($args{'syslog'} && !$args{'script_name'}) {
