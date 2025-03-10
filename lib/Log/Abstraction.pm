@@ -1,4 +1,4 @@
-package Log::YetAnother;
+package Log::Abstraction;
 
 use strict;
 use warnings;
@@ -9,7 +9,7 @@ use Scalar::Util 'blessed';	# Import Scalar::Util for object reference checking
 
 =head1 NAME
 
-Log::YetAnother - A flexible logging class for Perl
+Log::Abstraction - Logging abstraction layer
 
 =head1 VERSION
 
@@ -21,9 +21,9 @@ our $VERSION = 0.03;
 
 =head1 SYNOPSIS
 
-  use Log::YetAnother;
+  use Log::Abstraction;
 
-  my $logger = Log::YetAnother->new(logger => 'logfile.log');
+  my $logger = Log::Abstraction->new(logger => 'logfile.log');
 
   $logger->debug('This is a debug message');
   $logger->info('This is an info message');
@@ -33,7 +33,7 @@ our $VERSION = 0.03;
 
 =head1 DESCRIPTION
 
-The C<Log::YetAnother> class provides a flexible logging mechanism that can handle different types of loggers,
+The C<Log::Abstraction> class provides a flexible logging layer that can handle different types of loggers,
 including code references, arrays, file paths, and objects.
 It also supports logging to syslog if configured.
 
@@ -41,9 +41,9 @@ It also supports logging to syslog if configured.
 
 =head2 new
 
-  my $logger = Log::YetAnother->new(%args);
+  my $logger = Log::Abstraction->new(%args);
 
-Creates a new C<Log::YetAnother> object.
+Creates a new C<Log::Abstraction> object.
 The argument can be a hash,
 a reference to a hash or the C<logger> value.
 The following arguments can be provided:

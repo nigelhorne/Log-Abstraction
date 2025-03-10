@@ -1,4 +1,7 @@
-Revision history for Log-YetAnother
+Revision history for Log-Abstraction
+
+0.04
+	Renamed from Log-YetAnother to Log-Abstraction
 
 0.03	Sat Mar  8 08:40:00 EST 2025
 	Fix passing an array to warn()
