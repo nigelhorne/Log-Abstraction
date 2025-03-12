@@ -1,5 +1,8 @@
 Revision history for Log-Abstraction
 
+0.06
+	Don't put spaces between elements of an array
+
 0.05	Tue Mar 11 14:10:10 EDT 2025
 	Handle being passed a reference to an array
 
