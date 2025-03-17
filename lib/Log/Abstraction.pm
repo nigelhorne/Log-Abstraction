@@ -241,19 +241,24 @@ sub warn {
 		return;
 	}
 
+	# Log the warning message
+	$self->_log('warn', $warning);
+
 	if($self->{syslog}) {
 		# Handle syslog-based logging
 		if(ref($self->{syslog}) eq 'HASH') {
 			Sys::Syslog::setlogsock($self->{syslog});
 		}
 		openlog($self->{script_name}, 'cons,pid', 'user');
-		syslog('warning|local0', $warning);
+		eval {
+			syslog('warning|local0', $warning);
+		};
+		my $err = $@;
 		closelog();
-	}
-
-	# Log the warning message
-	$self->_log('warn', $warning);
-	if((!defined($self->{logger})) && (!defined($self->{syslog}))) {
+		if($err)  {
+			Carp::carp($err);
+		}
+	} elsif(!defined($self->{logger})) {
 		# Fallback to Carp if no logger or syslog is defined
 		Carp::carp($warning);
 	}
