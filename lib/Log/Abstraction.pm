@@ -14,11 +14,11 @@ Log::Abstraction - Logging abstraction layer
 
 =head1 VERSION
 
-0.06
+0.07
 
 =cut
 
-our $VERSION = 0.06;
+our $VERSION = 0.07;
 
 =head1 SYNOPSIS
 
@@ -286,6 +286,42 @@ sub warn {
 =head1 AUTHOR
 
 Nigel Horne C< <njh@nigelhorne.com> >
+
+=head1 SUPPORT
+
+This module is provided as-is without any warranty.
+
+Please report any bugs or feature requests to C<bug-log-abstraction at rt.cpan.org>,
+or through the web interface at
+L<http://rt.cpan.org/NoAuth/ReportBug.html?Queue=Log-Abstraction>.
+I will be notified, and then you'll
+automatically be notified of progress on your bug as I make changes.
+
+You can find documentation for this module with the perldoc command.
+
+    perldoc Log::Abstraction
+
+You can also look for information at:
+
+=over 4
+
+=item * MetaCPAN
+
+L<https://metacpan.org/dist/Log-Abstraction>
+
+=item * RT: CPAN's request tracker
+
+L<https://rt.cpan.org/NoAuth/Bugs.html?Dist=Log-Abstraction>
+
+=item * CPAN Testers' Matrix
+
+L<http://matrix.cpantesters.org/?dist=Log-Abstraction>
+
+=item * CPAN Testers Dependencies
+
+L<http://deps.cpantesters.org/?module=Log::Abstraction>
+
+=back
 
 =head1 COPYRIGHT AND LICENSE
 
