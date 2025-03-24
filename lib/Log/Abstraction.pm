@@ -42,9 +42,14 @@ It also supports logging to syslog if configured.
 
 =head2 new
 
-  my $logger = Log::Abstraction->new(%args);
+    my $logger = Log::Abstraction->new(%args);
 
 Creates a new C<Log::Abstraction> object.
+
+Clones existing objects with or without modifications.
+
+    my $clone = $logger->new();
+
 The argument can be a hash,
 a reference to a hash or the C<logger> value.
 The following arguments can be provided:
@@ -92,6 +97,20 @@ sub new {
 		my $config = Config::Auto::parse($args{'config_file'});
 		# my $config = YAML::XS::LoadFile($args{'config_file'});
 		%args = (%{$config}, %args);
+	}
+
+	if(!defined($class)) {
+		if((scalar keys %args) > 0) {
+			# Using Log::Abstraction:new(), not Log::Abstraction->new()
+			carp(__PACKAGE__, ' use ->new() not ::new() to instantiate');
+			return;
+		}
+
+		# FIXME: this only works when no arguments are given
+		$class = __PACKAGE__;
+	} elsif(Scalar::Util::blessed($class)) {
+		# If $class is an object, clone it with new arguments
+		return bless { %{$class}, %args }, ref($class);
 	}
 
 	if($args{'syslog'} && !$args{'script_name'}) {
