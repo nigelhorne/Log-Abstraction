@@ -19,7 +19,7 @@ WriteMakefile(
 		: ()),
 	PREREQ_PM => {
 		'Carp'	 => 0,
-		'Config::Auto' => 0,
+		'Config::Abstraction' => 0,
 		'ExtUtils::MakeMaker' => 6.64,	# Minimum version for TEST_REQUIRES
 		'Params::Get' => 0,
 		'Sys::Syslog' => 0,

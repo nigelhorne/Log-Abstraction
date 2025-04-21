@@ -3,14 +3,14 @@ package Log::Abstraction;
 use strict;
 use warnings;
 use Carp;	# Import Carp for warnings
-use Config::Auto;
+use Config::Abstraction;
 use Params::Get;	# Import Params::Get for parameter handling
 use Sys::Syslog;	# Import Sys::Syslog for syslog support
 use Scalar::Util 'blessed';	# Import Scalar::Util for object reference checking
 
 =head1 NAME
 
-Log::Abstraction - Logging abstraction layer
+Log::Abstraction - Logging Abstraction Layer
 
 =head1 VERSION
 
@@ -34,7 +34,7 @@ our $VERSION = 0.07;
 
 =head1 DESCRIPTION
 
-The C<Log::Abstraction> class provides a flexible logging layer that can handle different types of loggers,
+The C<Log::Abstraction> class provides a flexible logging layer on top of different types of loggers,
 including code references, arrays, file paths, and objects.
 It also supports logging to syslog if configured.
 
@@ -93,7 +93,7 @@ sub new {
 	}
 
 	# Load the configuration from a config file, if provided
-	if(exists($args{'config_file'}) && (my $config = Config::Auto::parse($args{'config_file'}))) {
+	if(exists($args{'config_file'}) && (my $config = Config::Abstraction->new(config_dirs => ['/'], config_file => $args{'config_file'}, env_prefix => "${class}::")->all())) {
 		# my $config = YAML::XS::LoadFile($args{'config_file'});
 		if($config->{$class}) {
 			$config = $config->{$class};
