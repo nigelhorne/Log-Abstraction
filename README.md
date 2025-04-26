@@ -1,6 +1,6 @@
 # NAME
 
-Log::Abstraction - Logging abstraction layer
+Log::Abstraction - Logging Abstraction Layer
 
 # VERSION
 
@@ -20,7 +20,7 @@ Log::Abstraction - Logging abstraction layer
 
 # DESCRIPTION
 
-The `Log::Abstraction` class provides a flexible logging layer that can handle different types of loggers,
+The `Log::Abstraction` class provides a flexible logging layer on top of different types of loggers,
 including code references, arrays, file paths, and objects.
 It also supports logging to syslog if configured.
 
@@ -32,13 +32,13 @@ It also supports logging to syslog if configured.
 
 Creates a new `Log::Abstraction` object.
 
-Clones existing objects with or without modifications.
-
-    my $clone = $logger->new();
-
 The argument can be a hash,
 a reference to a hash or the `logger` value.
 The following arguments can be provided:
+
+Clones existing objects with or without modifications.
+
+    my $clone = $logger->new();
 
 - `config_file`
 

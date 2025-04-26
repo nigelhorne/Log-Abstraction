@@ -46,13 +46,13 @@ It also supports logging to syslog if configured.
 
 Creates a new C<Log::Abstraction> object.
 
-Clones existing objects with or without modifications.
-
-    my $clone = $logger->new();
-
 The argument can be a hash,
 a reference to a hash or the C<logger> value.
 The following arguments can be provided:
+
+Clones existing objects with or without modifications.
+
+    my $clone = $logger->new();
 
 =over
 
