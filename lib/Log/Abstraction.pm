@@ -4,7 +4,7 @@ use strict;
 use warnings;
 use Carp;	# Import Carp for warnings
 use Config::Abstraction;
-use Params::Get;	# Import Params::Get for parameter handling
+use Params::Get 0.04;	# Import Params::Get for parameter handling
 use Sys::Syslog;	# Import Sys::Syslog for syslog support
 use Scalar::Util 'blessed';	# Import Scalar::Util for object reference checking
 
@@ -50,10 +50,6 @@ The argument can be a hash,
 a reference to a hash or the C<logger> value.
 The following arguments can be provided:
 
-Clones existing objects with or without modifications.
-
-    my $clone = $logger->new();
-
 =over
 
 =item * C<config_file>
@@ -69,6 +65,10 @@ This allows the parameters to be set at run time.
 =item * C<script_name> - Name of the script, needed when C<syslog> is given
 
 =back
+
+Clone existing objects with or without modifications:
+
+    my $clone = $logger->new();
 
 =cut
 
@@ -93,13 +93,20 @@ sub new {
 	}
 
 	# Load the configuration from a config file, if provided
-	if(exists($args{'config_file'}) && (my $config = Config::Abstraction->new(config_dirs => ['/'], config_file => $args{'config_file'}, env_prefix => "${class}::")->all())) {
-		# my $config = YAML::XS::LoadFile($args{'config_file'});
-		if($config->{$class}) {
-			$config = $config->{$class};
+	if(exists($args{'config_file'})) {
+		# my $config = YAML::XS::LoadFile($params->{'config_file'});
+		if(!-r $args{'config_file'}) {
+			croak("$class: ", $args{'config_file'}, ': File not readable');
 		}
-		# my $config = YAML::XS::LoadFile($args{'config_file'});
-		%args = (%{$config}, %args);
+		if(my $config = Config::Abstraction->new(config_dirs => [''], config_file => $args{'config_file'}, env_prefix => "${class}::")) {
+			$config = $config->all();
+			if($config->{$class}) {
+				$config = $config->{$class};
+			}
+			%args = (%{$config}, %args);
+		} else {
+			croak("$class: Can't load configuration from ", $args{'config_file'});
+		}
 	}
 
 	if(!defined($class)) {
