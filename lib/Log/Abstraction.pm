@@ -55,8 +55,17 @@ The following arguments can be provided:
 =item * C<config_file>
 
 Points to a configuration file which contains the parameters to C<new()>.
-The file can be in any common format including C<YAML>, C<XML>, and C<INI>.
+The file can be in any common format,
+including C<YAML>, C<XML>, and C<INI>.
 This allows the parameters to be set at run time.
+
+On non-Windows system,
+the class can be configured using environment variables starting with "CGI::Info::".
+For example:
+
+  export Log::Abstraction::script_name=foo
+
+It doesn't work on windows because of the case-insensitive nature of that system.
 
 =item * C<logger> - A logger can be a code reference, an array reference, a file path, or an object.
 

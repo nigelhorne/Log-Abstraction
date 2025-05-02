@@ -36,19 +36,28 @@ The argument can be a hash,
 a reference to a hash or the `logger` value.
 The following arguments can be provided:
 
-Clones existing objects with or without modifications.
-
-    my $clone = $logger->new();
-
 - `config_file`
 
     Points to a configuration file which contains the parameters to `new()`.
-    The file can be in any common format including `YAML`, `XML`, and `INI`.
+    The file can be in any common format,
+    including `YAML`, `XML`, and `INI`.
     This allows the parameters to be set at run time.
+
+    On non-Windows system,
+    the class can be configured using environment variables starting with "CGI::Info::".
+    For example:
+
+        export Log::Abstraction::script_name=foo
+
+    It doesn't work on windows because of the case-insensitive nature of that system.
 
 - `logger` - A logger can be a code reference, an array reference, a file path, or an object.
 - `syslog` - A hash reference for syslog configuration.
 - `script_name` - Name of the script, needed when `syslog` is given
+
+Clone existing objects with or without modifications:
+
+    my $clone = $logger->new();
 
 ## debug
 
