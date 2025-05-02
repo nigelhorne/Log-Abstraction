@@ -60,7 +60,7 @@ including C<YAML>, C<XML>, and C<INI>.
 This allows the parameters to be set at run time.
 
 On non-Windows system,
-the class can be configured using environment variables starting with "Log::Abstraction::".
+the class can be configured using environment variables starting with C<"Log::Abstraction::">.
 For example:
 
   export Log::Abstraction::script_name=foo
