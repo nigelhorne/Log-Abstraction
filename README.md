@@ -49,7 +49,7 @@ The following arguments can be provided:
 
         export Log::Abstraction::script_name=foo
 
-    It doesn't work on windows because of the case-insensitive nature of that system.
+    It doesn't work on Windows because of the case-insensitive nature of that system.
 
 - `logger` - A logger can be a code reference, an array reference, a file path, or an object.
 - `syslog` - A hash reference for syslog configuration.
