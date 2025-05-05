@@ -71,7 +71,11 @@ It doesn't work on Windows because of the case-insensitive nature of that system
 
 =item * C<syslog> - A hash reference for syslog configuration.
 
-=item * C<script_name> - Name of the script, needed when C<syslog> is given
+=item * C<script_name>
+
+The name of the script.
+It's needed when C<syslog> is given,
+if none is passed, the value is guessed.
 
 =back
 
@@ -133,7 +137,12 @@ sub new {
 	}
 
 	if($args{'syslog'} && !$args{'script_name'}) {
-		croak(__PACKAGE__, ' syslog needs to know the script name');
+		require File::Basename && File::Basename->import() unless File::Basename->can('basename');
+
+		# Determine script name
+		$args{'script_name'} = File::Basename::basename($ENV{'SCRIPT_NAME'} || $0);
+
+		# croak(__PACKAGE__, ' syslog needs to know the script name');
 	}
 
 	my $self = {

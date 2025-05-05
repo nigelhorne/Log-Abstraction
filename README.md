@@ -53,7 +53,11 @@ The following arguments can be provided:
 
 - `logger` - A logger can be a code reference, an array reference, a file path, or an object.
 - `syslog` - A hash reference for syslog configuration.
-- `script_name` - Name of the script, needed when `syslog` is given
+- `script_name`
+
+    The name of the script.
+    It's needed when `syslog` is given,
+    if none is passed, the value is guessed.
 
 Clone existing objects with or without modifications:
 

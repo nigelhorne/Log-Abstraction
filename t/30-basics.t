@@ -102,4 +102,10 @@ is_deeply(
 	'Logged list messages to array'
 );
 
+# Determine script name if not given
+$logger = Log::Abstraction->new(syslog => { facility => 'local0' });
+cmp_ok($logger->{'script_name'}, 'eq', '30-basics.t', 'Set a sensible value for script_name');
+
+# Test illegal call to _log()
+
 done_testing();
