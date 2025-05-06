@@ -204,8 +204,9 @@ sub _log {
 				print $fout uc($level), ': ', blessed($self) || __PACKAGE__, ' ', (caller(1))[1], (caller(1))[2], ' ', join('', @messages), "\n";
 				close $fout;
 			}
-		} else {
+		} elsif($logger->can($level)) {
 			# If logger is an object, call the appropriate method on the object
+			# The test is because Log::Log4perl doesn't understand notice()
 			$logger->$level(@messages);
 		}
 	}
