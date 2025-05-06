@@ -1,6 +1,6 @@
 Revision history for Log-Abstraction
 
-0.09
+0.09	Tue May  6 08:15:36 EDT 2025
 	If no logger is given, use Log4perl
 
 0.08	Mon May  5 11:39:58 EDT 2025

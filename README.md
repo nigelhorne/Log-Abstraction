@@ -4,7 +4,7 @@ Log::Abstraction - Logging Abstraction Layer
 
 # VERSION
 
-0.08
+0.09
 
 # SYNOPSIS
 
@@ -51,7 +51,11 @@ The following arguments can be provided:
 
     It doesn't work on Windows because of the case-insensitive nature of that system.
 
-- `logger` - A logger can be a code reference, an array reference, a file path, or an object.
+- `logger`
+
+    A logger can be a code reference, an array reference, a file path, or an object.
+    Defaults to [Log::Log4perl](https://metacpan.org/pod/Log%3A%3ALog4perl)
+
 - `syslog` - A hash reference for syslog configuration.
 - `script_name`
 
