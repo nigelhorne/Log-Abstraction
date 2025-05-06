@@ -1,9 +1,12 @@
 package Log::Abstraction;
 
+# TODO: add a minimum logging level
+
 use strict;
 use warnings;
 use Carp;	# Import Carp for warnings
 use Config::Abstraction;
+use Log::Log4perl;
 use Params::Get 0.04;	# Import Params::Get for parameter handling
 use Sys::Syslog;	# Import Sys::Syslog for syslog support
 use Scalar::Util 'blessed';	# Import Scalar::Util for object reference checking
@@ -67,7 +70,10 @@ For example:
 
 It doesn't work on Windows because of the case-insensitive nature of that system.
 
-=item * C<logger> - A logger can be a code reference, an array reference, a file path, or an object.
+=item * C<logger>
+
+A logger can be a code reference, an array reference, a file path, or an object.
+Defaults to L<Log::Log4perl>
 
 =item * C<syslog> - A hash reference for syslog configuration.
 
@@ -143,6 +149,13 @@ sub new {
 		$args{'script_name'} = File::Basename::basename($ENV{'SCRIPT_NAME'} || $0);
 
 		# croak(__PACKAGE__, ' syslog needs to know the script name');
+	}
+
+	if(!defined($args{logger})) {
+		# Default to Log4perl
+		# FIXME: add default minimum logging level
+		Log::Log4perl->easy_init($args{verbose} ? $Log::Log4perl::DEBUG : $Log::Log4perl::ERROR);
+		$args{'logger'} = Log::Log4perl->get_logger();
 	}
 
 	my $self = {

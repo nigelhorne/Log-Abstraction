@@ -1,5 +1,8 @@
 Revision history for Log-Abstraction
 
+0.09
+	If no logger is given, use Log4perl
+
 0.08	Mon May  5 11:39:58 EDT 2025
 	Use Config::Abstraction instead of Config::Auto
 	Guess the value if script_name if it's not given
