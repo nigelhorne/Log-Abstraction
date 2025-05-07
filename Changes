@@ -1,5 +1,8 @@
 Revision history for Log-Abstraction
 
+0.11
+	Fixed calling can() on an unblessed variable
+
 0.10	Tue May  6 20:43:48 EDT 2025
 	Added carp_on_warn
 
