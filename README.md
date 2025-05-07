@@ -40,7 +40,7 @@ The following arguments can be provided:
 
     If set to 1,
     and `logger` is not given,
-    call `Carp:carp`.
+    call `Carp:carp` on `warn()`.
 
 - `config_file`
 

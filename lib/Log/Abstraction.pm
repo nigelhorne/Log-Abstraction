@@ -59,7 +59,7 @@ The following arguments can be provided:
 
 If set to 1,
 and C<logger> is not given,
-call C<Carp:carp>.
+call C<Carp:carp> on C<warn()>.
 
 =item * C<config_file>
 
