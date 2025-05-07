@@ -165,10 +165,10 @@ sub new {
 	}
 
 	my $self = {
-		messages => [],  # Initialize messages array
+		messages => [],	# Initialize messages array
 		%args,
 	};
-	return bless $self, $class;  # Bless and return the object
+	return bless $self, $class;	# Bless and return the object
 }
 
 # Internal method to log messages. This method is called by other logging methods.
@@ -322,7 +322,7 @@ sub warn {
 		};
 		my $err = $@;
 		closelog();
-		if($err)  {
+		if($err) {
 			Carp::carp($err);
 		}
 	} elsif($self->{'carp_on_warn'} || !defined($self->{logger})) {
