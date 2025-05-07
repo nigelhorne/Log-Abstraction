@@ -17,11 +17,11 @@ Log::Abstraction - Logging Abstraction Layer
 
 =head1 VERSION
 
-0.09
+0.10
 
 =cut
 
-our $VERSION = 0.09;
+our $VERSION = 0.10;
 
 =head1 SYNOPSIS
 
@@ -54,6 +54,12 @@ a reference to a hash or the C<logger> value.
 The following arguments can be provided:
 
 =over
+
+=item * C<carp_on_warn>
+
+If set to 1,
+and C<logger> is not given,
+call C<Carp:carp>.
 
 =item * C<config_file>
 
@@ -319,7 +325,7 @@ sub warn {
 		if($err)  {
 			Carp::carp($err);
 		}
-	} elsif(!defined($self->{logger})) {
+	} elsif($self->{'carp_on_warn'} || !defined($self->{logger})) {
 		# Fallback to Carp if no logger or syslog is defined
 		Carp::carp($warning);
 	}

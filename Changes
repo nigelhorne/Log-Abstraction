@@ -1,5 +1,8 @@
 Revision history for Log-Abstraction
 
+0.10	Tue May  6 20:43:48 EDT 2025
+	Added carp_on_warn
+
 0.09	Tue May  6 08:15:36 EDT 2025
 	If no logger is given, use Log4perl
 
