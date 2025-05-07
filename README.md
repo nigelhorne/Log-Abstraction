@@ -4,7 +4,7 @@ Log::Abstraction - Logging Abstraction Layer
 
 # VERSION
 
-0.09
+0.10
 
 # SYNOPSIS
 
@@ -35,6 +35,12 @@ Creates a new `Log::Abstraction` object.
 The argument can be a hash,
 a reference to a hash or the `logger` value.
 The following arguments can be provided:
+
+- `carp_on_warn`
+
+    If set to 1,
+    and `logger` is not given,
+    call `Carp:carp`.
 
 - `config_file`
 
