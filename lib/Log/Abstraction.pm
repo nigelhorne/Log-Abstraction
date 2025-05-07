@@ -78,7 +78,9 @@ It doesn't work on Windows because of the case-insensitive nature of that system
 
 =item * C<logger>
 
-A logger can be a code reference, an array reference, a file path, or an object.
+A logger can be a code reference, an array reference, a file path, or an object,
+or a hash of options, e.g. 'file' containing the file to log to.
+
 Defaults to L<Log::Log4perl>
 
 =item * C<syslog> - A hash reference for syslog configuration.
@@ -107,7 +109,7 @@ sub new {
 			# If the first argument is a hash reference, dereference it
 			%args = %{$_[0]};
 		} else {
-			$args{'logger'} = shift;
+			$args{'logger'} = shift;	# Just a string as an argument, which will be a file to output to
 		}
 	} elsif((scalar(@_) % 2) == 0) {
 		# If there is an even number of arguments, treat them as key-value pairs
@@ -204,6 +206,11 @@ sub _log {
 		} elsif(ref($logger) eq 'ARRAY') {
 			# If logger is an array reference, push the log message to the array
 			push @{$logger}, { level => $level, message => join('', grep defined, @messages) };
+		} elsif((ref($logger) eq 'HASH') && $logger->{'file'}) {
+			if(open(my $fout, '>>', $logger->{'file'})) {
+				print $fout uc($level), ': ', blessed($self) || __PACKAGE__, ' ', (caller(1))[1], (caller(1))[2], ' ', join('', @messages), "\n";
+				close $fout;
+			}
 		} elsif(!ref($logger)) {
 			# If logger is a file path, append the log message to the file
 			if(open(my $fout, '>>', $logger)) {
