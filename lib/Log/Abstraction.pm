@@ -154,7 +154,7 @@ sub new {
 		# Determine script name
 		$args{'script_name'} = File::Basename::basename($ENV{'SCRIPT_NAME'} || $0);
 
-		# croak(__PACKAGE__, ' syslog needs to know the script name');
+		croak(__PACKAGE__, ' syslog needs to know the script name') if(!defined($args{'script_name'}));
 	}
 
 	if(!defined($args{logger})) {
@@ -324,6 +324,8 @@ sub warn {
 		closelog();
 		if($err) {
 			Carp::carp($err);
+		} elsif($self->{'carp_on_warn'}) {
+			Carp::carp($warning);
 		}
 	} elsif($self->{'carp_on_warn'} || !defined($self->{logger})) {
 		# Fallback to Carp if no logger or syslog is defined
