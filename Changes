@@ -4,6 +4,7 @@ Revision history for Log-Abstraction
 	Added the file parameter, so that both file and syslog can now be given,
 		and file can be read in from a configuration file
 	Added the fd descriptor - a file descriptor to log to
+	Added separators between fields in file output
 
 0.11	Wed May  7 15:37:37 EDT 2025
 	Fixed calling can() on an unblessed variable
