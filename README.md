@@ -59,10 +59,16 @@ The following arguments can be provided:
 
 - `logger`
 
-    A logger can be a code reference, an array reference, a file path, or an object,
-    or a hash of options, e.g. 'file' containing the file to log to.
+    A logger can be one or more of:
 
-    Defaults to [Log::Log4perl](https://metacpan.org/pod/Log%3A%3ALog4perl)
+    - a code reference
+    - an array reference
+    - a file path
+    - a file descriptor
+    - an object
+    - a hash of options, e.g. 'file' containing the filename, or 'fd' containing a file descriptor to log to
+
+    Defaults to [Log::Log4perl](https://metacpan.org/pod/Log%3A%3ALog4perl).
 
 - `syslog` - A hash reference for syslog configuration.
 - `script_name`
