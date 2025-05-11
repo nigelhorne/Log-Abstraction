@@ -1,5 +1,8 @@
 Revision history for Log-Abstraction
 
+0.13
+	Use '>' after level rather than ':' to files, like lower level loggers
+
 0.12	Fri May  9 07:42:35 EDT 2025
 	Added the file parameter, so that both file and syslog can now be given,
 		and file can be read in from a configuration file
