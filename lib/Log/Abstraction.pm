@@ -207,6 +207,11 @@ sub _log {
 	# Push the message to the internal messages array
 	push @{$self->{messages}}, { level => $level, message => join('', grep defined, @messages) };
 
+	my $class = blessed($self) || '';
+	if($class eq __PACKAGE__) {
+		$class = '';
+	}
+
 	if(my $logger = $self->{logger}) {
 		if(ref($logger) eq 'CODE') {
 			# If logger is a code reference, call it with log details
@@ -224,22 +229,20 @@ sub _log {
 		} elsif(ref($logger) eq 'HASH') {
 			if($logger->{'file'}) {
 				if(open(my $fout, '>>', $logger->{'file'})) {
-					print $fout uc($level), '> ', blessed($self) || __PACKAGE__, ' ', (caller(1))[1], ' ', (caller(1))[2], ' ', join('', @messages), "\n" or
+					print $fout uc($level), "> $class ", (caller(1))[1], ' ', (caller(1))[2], ' ', join('', @messages), "\n" or
 						die "ref($self): Can't write to ", $logger->{'file'}, ": $!";
 					close $fout;
 				}
 			}
 			if(my $fout = $logger->{'fd'}) {
-				print $fout uc($level), '> ', blessed($self) || __PACKAGE__, ' ', (caller(1))[1], ' ', (caller(1))[2], ' ', join('', @messages), "\n" or
+				print $fout uc($level), "> $class ", (caller(1))[1], ' ', (caller(1))[2], ' ', join('', @messages), "\n" or
 					die "ref($self): Can't write to file descriptor: $!";
 			}
 		} elsif(!ref($logger)) {
 			# If logger is a file path, append the log message to the file
 			if(open(my $fout, '>>', $logger)) {
 				print $fout uc($level),
-					'> ',
-					blessed($self) || __PACKAGE__,
-					' ',
+					"> $class ",
 					(caller(1))[1],
 					' (',
 					(caller(1))[2],
@@ -255,13 +258,13 @@ sub _log {
 	}
 	if($self->{'file'}) {
 		if(open(my $fout, '>>', $self->{'file'})) {
-			print $fout uc($level), '> ', blessed($self) || __PACKAGE__, ' ', (caller(1))[1], ' ', (caller(1))[2], ' ', join('', @messages), "\n" or
+			print $fout uc($level), '> ', blessed($self) || '', ' ', (caller(1))[1], ' ', (caller(1))[2], ' ', join('', @messages), "\n" or
 				die "ref($self): Can't write to ", $self->{'file'}, ": $!";
 			close $fout;
 		}
 	}
 	if(my $fout = $self->{'fd'}) {
-		print $fout uc($level), '> ', blessed($self) || __PACKAGE__, ' ', (caller(1))[1], ' ', (caller(1))[2], ' ', join('', @messages), "\n" or
+		print $fout uc($level), '> ', blessed($self) || '', ' ', (caller(1))[1], ' ', (caller(1))[2], ' ', join('', @messages), "\n" or
 			die "ref($self): Can't write to file descriptor: $!";
 	}
 }
