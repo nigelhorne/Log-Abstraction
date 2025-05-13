@@ -258,8 +258,13 @@ sub _log {
 	}
 	if($self->{'file'}) {
 		if(open(my $fout, '>>', $self->{'file'})) {
-			print $fout uc($level), '> ', blessed($self) || '', ' ', (caller(1))[1], '(', (caller(1))[2], ') ', join('', @messages), "\n" or
-				die "ref($self): Can't write to ", $self->{'file'}, ": $!";
+			if(blessed($self) eq __PACKAGE__) {
+				print $fout uc($level), '> ', (caller(1))[1], '(', (caller(1))[2], ') ', join('', @messages), "\n" or
+					die "ref($self): Can't write to ", $self->{'file'}, ": $!";
+			} else {
+				print $fout uc($level), '> ', blessed($self) || '', ' ', (caller(1))[1], '(', (caller(1))[2], ') ', join('', @messages), "\n" or
+					die "ref($self): Can't write to ", $self->{'file'}, ": $!";
+			}
 			close $fout;
 		}
 	}
