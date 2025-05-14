@@ -5,6 +5,7 @@ Revision history for Log-Abstraction
 	Try not to put the name of this package in the logfiles,
 		it adds nothing apart from disc usage
 	Block setting logger => Log::Abstraction in new()
+	Croak if we don't know how to handle a message
 
 0.12	Fri May  9 07:42:35 EDT 2025
 	Added the file parameter, so that both file and syslog can now be given,

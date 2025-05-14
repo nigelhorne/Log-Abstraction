@@ -217,11 +217,7 @@ sub _log {
 	}
 
 	if(my $logger = $self->{logger}) {
-	::diag(__PACKAGE__);
-	::diag(__LINE__);
-	::diag(ref($logger));
 		if(ref($logger) eq 'CODE') {
-	::diag(__LINE__);
 			# If logger is a code reference, call it with log details
 			$logger->({
 				class => blessed($self) || __PACKAGE__,
@@ -245,6 +241,8 @@ sub _log {
 			if(my $fout = $logger->{'fd'}) {
 				print $fout uc($level), "> $class ", (caller(1))[1], ' ', (caller(1))[2], ' ', join('', @messages), "\n" or
 					die "ref($self): Can't write to file descriptor: $!";
+			} elsif((!$logger->{'file'}) && (!$logger->{'syslog'})) {
+				croak(ref($self), ": Don't know how to deal with the $level message");
 			}
 		} elsif(!ref($logger)) {
 			# If logger is a file path, append the log message to the file
@@ -262,6 +260,8 @@ sub _log {
 			# If logger is an object, call the appropriate method on the object
 			# The test is because Log::Log4perl doesn't understand notice()
 			$logger->$level(@messages);
+		} else {
+			croak(ref($self), ": Don't know how to deal with the $level message");
 		}
 	}
 	if($self->{'file'}) {
