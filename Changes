@@ -1,6 +1,6 @@
 Revision history for Log-Abstraction
 
-0.13
+0.13	Wed May 14 08:30:53 EDT 2025
 	Use '>' after level rather than ':' to files, like lower level loggers
 	Try not to put the name of this package in the logfiles,
 		it adds nothing apart from disc usage
