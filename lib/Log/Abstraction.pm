@@ -171,10 +171,14 @@ sub new {
 		# Determine script name
 		$args{'script_name'} = File::Basename::basename($ENV{'SCRIPT_NAME'} || $0);
 
-		croak(__PACKAGE__, ' syslog needs to know the script name') if(!defined($args{'script_name'}));
+		croak("$class: syslog needs to know the script name") if(!defined($args{'script_name'}));
 	}
 
-	if(!defined($args{logger})) {
+	if(defined(my $logger = $args{logger})) {
+		if(Scalar::Util::blessed($logger) && (ref($logger) eq __PACKAGE__)) {
+			croak("$class: attempt to encapulate ", __PACKAGE__, ' as a logging class, that would add a needless indirection');
+		}
+	} else {
 		# Default to Log4perl
 		# FIXME: add default minimum logging level
 		Log::Log4perl->easy_init($args{verbose} ? $Log::Log4perl::DEBUG : $Log::Log4perl::ERROR);
@@ -213,7 +217,11 @@ sub _log {
 	}
 
 	if(my $logger = $self->{logger}) {
+	::diag(__PACKAGE__);
+	::diag(__LINE__);
+	::diag(ref($logger));
 		if(ref($logger) eq 'CODE') {
+	::diag(__LINE__);
 			# If logger is a code reference, call it with log details
 			$logger->({
 				class => blessed($self) || __PACKAGE__,
