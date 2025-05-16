@@ -5,7 +5,7 @@ package Log::Abstraction;
 use strict;
 use warnings;
 use Carp;	# Import Carp for warnings
-use Config::Abstraction;
+use Config::Abstraction 0.25;
 use Log::Log4perl;
 use Params::Get 0.04;	# Import Params::Get for parameter handling
 use Sys::Syslog;	# Import Sys::Syslog for syslog support
