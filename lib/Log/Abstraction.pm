@@ -92,7 +92,7 @@ A logger can be one or more of:
 
 =item * an object
 
-=item * a hash of options, e.g. 'file' containing the filename, or 'fd' containing a file descriptor to log to
+=item * a hash of options, e.g. 'file' containing the filename, 'array' a reference to an array, or 'fd' containing a file descriptor to log to
 
 =back
 
@@ -237,6 +237,9 @@ sub _log {
 						die "ref($self): Can't write to ", $logger->{'file'}, ": $!";
 					close $fout;
 				}
+			}
+			if(my $array = $logger->{'array'}) {
+				push @{$array}, { level => $level, message => join('', grep defined, @messages) };
 			}
 			if(my $fout = $logger->{'fd'}) {
 				print $fout uc($level), "> $class ", (caller(1))[1], ' ', (caller(1))[2], ' ', join('', @messages), "\n" or
