@@ -5,6 +5,8 @@ Revision history for Log-Abstraction
 		It should be 0.19 in terms of testing but it's best to use the fixes in 0.25
 		RT#165420 - ANDK
 	Added 'array' to the logger hash
+	Introduced 'level' - minimum level to log at, defaults to 'warn'
+	Fixed where to log bugs
 
 0.13	Wed May 14 08:30:53 EDT 2025
 	Use '>' after level rather than ':' to files, like lower level loggers

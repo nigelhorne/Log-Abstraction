@@ -8,6 +8,7 @@ use Carp;	# Import Carp for warnings
 use Config::Abstraction 0.25;
 use Log::Log4perl;
 use Params::Get 0.04;	# Import Params::Get for parameter handling
+use Readonly::Values::Syslog 0.02;
 use Sys::Syslog;	# Import Sys::Syslog for syslog support
 use Scalar::Util 'blessed';	# Import Scalar::Util for object reference checking
 
@@ -76,6 +77,11 @@ For example:
 
 It doesn't work on Windows because of the case-insensitive nature of that system.
 
+=item * C<level>
+
+The minimum level at which to log something,
+the default is "warning".
+
 =item * C<logger>
 
 A logger can be one or more of:
@@ -119,6 +125,7 @@ sub new {
 
 	# Handle hash or hashref arguments
 	my %args;
+
 	if(@_ == 1) {
 		if(ref($_[0]) eq 'HASH') {
 			# If the first argument is a hash reference, dereference it
@@ -185,9 +192,19 @@ sub new {
 		$args{'logger'} = Log::Log4perl->get_logger();
 	}
 
+	if(my $level = $args{'level'}) {
+		if(!defined($syslog_values{$level})) {
+			Carp::croak("$class: invalid syslog level '$level'");
+		}
+	} else {
+		# The default minimum level at which to log something is 'warning'
+		$args{'level'} = 'warning';
+	}
+
 	my $self = {
 		messages => [],	# Initialize messages array
 		%args,
+		level => $syslog_values{$args{'level'}},
 	};
 	return bless $self, $class;	# Bless and return the object
 }
@@ -201,6 +218,15 @@ sub _log {
 
 	if(!UNIVERSAL::isa((caller)[0], __PACKAGE__)) {
 		Carp::croak('Illegal Operation: This method can only be called by a subclass or ourself');
+	}
+
+	if(!defined($syslog_values{$level})) {
+		Carp::Croak(ref($self), ": Invalid level '$level'");	# "Can't happen"
+	}
+
+	if($self->{'level'} < $syslog_values{$level}) {
+		# The level is too low to log
+		return;
 	}
 
 	if((scalar(@messages) == 1) && (ref($messages[0]) eq 'ARRAY')) {
@@ -285,6 +311,26 @@ sub _log {
 	}
 }
 
+=head2 level
+
+Get/set the minimum level to log at
+
+=cut
+
+sub level
+{
+	my ($self, $level) = @_;
+
+	if($level) {
+		if(!defined($syslog_values{$level})) {
+			Carp::carp(ref($self), ": invalid syslog level '$level'");
+			return;
+		}
+		$self->{'level'} = $syslog_values{$level};
+	}
+	return $self->{'level'};
+}
+
 =head2 debug
 
   $logger->debug(@messages);
@@ -355,6 +401,10 @@ sub warn {
 
 	# Validate input parameters
 	return unless ($params && (ref($params) eq 'HASH'));
+
+	# Only logging things higher than warn level
+	return if($self->{'level'} < $syslog_values{'warn'});
+
 	my $warning = $params->{warning};
 	if(!defined($warning)) {
 		if(scalar(@_) && !ref($_[0])) {
