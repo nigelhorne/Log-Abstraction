@@ -7,6 +7,7 @@ Revision history for Log-Abstraction
 	Added 'array' to the logger hash
 	Introduced 'level' - minimum level to log at, defaults to 'warn'
 	Fixed where to log bugs
+	Check and untaint the filename
 
 0.13	Wed May 14 08:30:53 EDT 2025
 	Use '>' after level rather than ':' to files, like lower level loggers

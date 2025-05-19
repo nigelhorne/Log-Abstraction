@@ -257,10 +257,15 @@ sub _log {
 			# If logger is an array reference, push the log message to the array
 			push @{$logger}, { level => $level, message => join('', grep defined, @messages) };
 		} elsif(ref($logger) eq 'HASH') {
-			if($logger->{'file'}) {
+			if(my $file = $logger->{'file'}) {
+				if($file =~ /^([a-zA-Z0-9_\.\-\/]+)$/) {
+					my $file = $1;	# Will untaint
+				} else {
+					Carp::croak(ref($self), ": Invalid file name: $file");
+				}
 				if(open(my $fout, '>>', $logger->{'file'})) {
 					print $fout uc($level), "> $class ", (caller(1))[1], ' ', (caller(1))[2], ' ', join('', @messages), "\n" or
-						die "ref($self): Can't write to ", $logger->{'file'}, ": $!";
+						Carp::croak(ref($self), ": Can't write to $file: $!");
 					close $fout;
 				}
 			}
