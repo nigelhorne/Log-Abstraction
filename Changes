@@ -1,6 +1,6 @@
 Revision history for Log-Abstraction
 
-0.14
+0.14	Tue May 20 07:44:19 EDT 2025
 	Adjusted minimum version of Config::Abstraction.
 		It should be 0.19 in terms of testing but it's best to use the fixes in 0.25
 		RT#165420 - ANDK

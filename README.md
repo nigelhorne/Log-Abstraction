@@ -4,7 +4,7 @@ Log::Abstraction - Logging Abstraction Layer
 
 # VERSION
 
-0.13
+0.14
 
 # SYNOPSIS
 
@@ -57,6 +57,11 @@ The following arguments can be provided:
 
     It doesn't work on Windows because of the case-insensitive nature of that system.
 
+- `level`
+
+    The minimum level at which to log something,
+    the default is "warning".
+
 - `logger`
 
     A logger can be one or more of:
@@ -80,6 +85,10 @@ The following arguments can be provided:
 Clone existing objects with or without modifications:
 
     my $clone = $logger->new();
+
+## level
+
+Get/set the minimum level to log at
 
 ## debug
 
