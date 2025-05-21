@@ -181,21 +181,23 @@ sub new {
 		croak("$class: syslog needs to know the script name") if(!defined($args{'script_name'}));
 	}
 
+	my $level = $args{'level'};
 	if(defined(my $logger = $args{logger})) {
 		if(Scalar::Util::blessed($logger) && (ref($logger) eq __PACKAGE__)) {
 			croak("$class: attempt to encapulate ", __PACKAGE__, ' as a logging class, that would add a needless indirection');
 		}
-	} else {
+	} elsif(!$args{'file'}) {
 		# Default to Log4perl
 		# FIXME: add default minimum logging level
 		Log::Log4perl->easy_init($args{verbose} ? $Log::Log4perl::DEBUG : $Log::Log4perl::ERROR);
 		$args{'logger'} = Log::Log4perl->get_logger();
 	}
 
-	if(my $level = $args{'level'}) {
+	if($level) {
 		if(!defined($syslog_values{$level})) {
 			Carp::croak("$class: invalid syslog level '$level'");
 		}
+		$args{'level'} = $level;
 	} else {
 		# The default minimum level at which to log something is 'warning'
 		$args{'level'} = 'warning';
