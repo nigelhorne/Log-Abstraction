@@ -37,7 +37,9 @@ WriteMakefile(
 		'YAML::XS' => 0
 	},
 	dist => $dist,
-	META_MERGE => {	# https://perldoc.perl.org/CPAN::Meta::Spec
+	clean	 => {
+		FILES => 'Log-Abstraction-*'
+	}, META_MERGE => {	# https://perldoc.perl.org/CPAN::Meta::Spec
 		'meta-spec' => { version => 2 },
 		resources => {
 			homepage => 'https://metacpan.org/pod/Log::Abstraction',
