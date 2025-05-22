@@ -194,6 +194,7 @@ sub new {
 	}
 
 	if($level) {
+		$level = lc($level);
 		if(!defined($syslog_values{$level})) {
 			Carp::croak("$class: invalid syslog level '$level'");
 		}
