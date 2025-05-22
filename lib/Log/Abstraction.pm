@@ -207,7 +207,8 @@ sub new {
 # $logger->_log($level, @messages);
 # $logger->_log($level, \@messages);
 
-sub _log {
+sub _log
+{
 	my ($self, $level, @messages) = @_;
 
 	if(!UNIVERSAL::isa((caller)[0], __PACKAGE__)) {

@@ -9,9 +9,7 @@ BEGIN { use_ok('Log::Abstraction') }
 
 # Test logging to an in-memory array
 my @log_array;
-diag __LINE__;
 my $logger = Log::Abstraction->new({ logger => \@log_array, level => 'debug' });
-diag __LINE__;
 
 $logger->debug('This is a debug message');
 $logger->info('This is an info message');
@@ -107,13 +105,13 @@ is_deeply(
 		{
 			class => 'Log::Abstraction',
 			file => 't/30-basics.t',
-			line => 100,	# Adjust line number if needed
+			line => 98,	# Adjust line number if needed
 			level => 'debug',
 			message => ['Code debug message']
 		}, {
 			class => 'Log::Abstraction',
 			file => 't/30-basics.t',
-			line => 101,	# Adjust line number if needed
+			line => 99,	# Adjust line number if needed
 			level => 'info',
 			message => ['Code info message']
 		}
