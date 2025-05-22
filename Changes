@@ -1,5 +1,8 @@
 Revision history for Log-Abstraction
 
+0.17
+	Added the messages() method
+
 0.16	Thu May 22 07:40:24 EDT 2025
 	Handle upper case levels, such as 'INFO'
 

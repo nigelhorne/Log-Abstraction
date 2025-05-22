@@ -7,7 +7,7 @@ use warnings;
 use Carp;	# Import Carp for warnings
 use Config::Abstraction 0.25;
 use Log::Log4perl;
-use Params::Get 0.04;	# Import Params::Get for parameter handling
+use Params::Get 0.05;	# Import Params::Get for parameter handling
 use Readonly::Values::Syslog 0.02;
 use Sys::Syslog;	# Import Sys::Syslog for syslog support
 use Scalar::Util 'blessed';	# Import Scalar::Util for object reference checking
@@ -329,6 +329,19 @@ sub level
 		$self->{'level'} = $syslog_values{$level};
 	}
 	return $self->{'level'};
+}
+
+=head2 messages
+
+Return all the messages emmitted so far
+
+=cut
+
+sub messages
+{
+	my $self = shift;
+
+	return $self->{'messages'};
 }
 
 =head2 debug
