@@ -18,11 +18,11 @@ Log::Abstraction - Logging Abstraction Layer
 
 =head1 VERSION
 
-0.15
+0.16
 
 =cut
 
-our $VERSION = 0.15;
+our $VERSION = 0.16;
 
 =head1 SYNOPSIS
 
@@ -126,19 +126,10 @@ sub new {
 	# Handle hash or hashref arguments
 	my %args;
 
-	if(@_ == 1) {
-		if(ref($_[0]) eq 'HASH') {
-			# If the first argument is a hash reference, dereference it
-			%args = %{$_[0]};
-		} else {
-			$args{'logger'} = shift;	# Just a string as an argument, which will be a file to output to
-		}
-	} elsif((scalar(@_) % 2) == 0) {
-		# If there is an even number of arguments, treat them as key-value pairs
-		%args = @_;
-	} else {
-		# If there is an odd number of arguments, treat it as an error
-		croak(__PACKAGE__, ': Invalid arguments passed to new()');
+	if((scalar(@_) == 1) && (ref($_[0]) ne 'HASH')) {
+		$args{'logger'} = shift;
+	} elsif(my $params = Params::Get::get_params(undef, @_)) {
+		%args = %{$params};
 	}
 
 	# Load the configuration from a config file, if provided

@@ -15,4 +15,5 @@ t/eol.t
 t/error.t
 t/manifest.t
 t/pod-cm.t
+t/pod-coverage.t
 t/pod-synopsis.t
