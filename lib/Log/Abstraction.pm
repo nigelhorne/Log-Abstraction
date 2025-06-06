@@ -223,7 +223,7 @@ sub _log
 		Carp::Croak(ref($self), ": Invalid level '$level'");	# "Can't happen"
 	}
 
-	if($self->{'level'} < $syslog_values{$level}) {
+	if($syslog_values{$level} > $self->{'level'}) {
 		# The level is too low to log
 		return;
 	}
