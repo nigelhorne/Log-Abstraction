@@ -9,7 +9,7 @@ use Config::Abstraction 0.25;
 use Log::Log4perl;
 use Params::Get 0.05;	# Import Params::Get for parameter handling
 use Readonly::Values::Syslog 0.02;
-use Sys::Syslog;	# Import Sys::Syslog for syslog support
+use Sys::Syslog 0.28;	# Import Sys::Syslog for syslog support
 use Scalar::Util 'blessed';	# Import Scalar::Util for object reference checking
 
 =head1 NAME
@@ -450,7 +450,8 @@ sub warn {
 	if($self->{syslog}) {
 		# Handle syslog-based logging
 		if(ref($self->{syslog}) eq 'HASH') {
-			Sys::Syslog::setlogsock($self->{syslog});
+			# HASH argument to setlogsocket introduced in Sys::Syslog 0.28
+			Sys::Syslog::setlogsock($self->{'syslog'});
 		}
 		openlog($self->{script_name}, 'cons,pid', 'user');
 		eval {
