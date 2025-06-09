@@ -300,7 +300,17 @@ sub _log
 		push @{$self->{'array'}}, { level => $level, message => join('', grep defined, @messages) };
 	}
 	if($self->{'file'}) {
-		if(open(my $fout, '>>', $self->{'file'})) {
+		my $file = $self->{'file'};
+
+		# Untaint the file name
+		# if($file =~ /^([-\@\w.\/\\]+)$/) {
+		if($file =~ /^([a-zA-Z0-9_\.\-\/\\:]+)$/) {
+			$file = $1;  # untainted version
+		} else {
+			croak(ref($self), ": Tainted or unsafe filename: $file");
+		}
+
+		if (open(my $fout, '>>', $file)) {
 			if(blessed($self) eq __PACKAGE__) {
 				print $fout uc($level), '> ', (caller(1))[1], '(', (caller(1))[2], ') ', join('', @messages), "\n" or
 					die "ref($self): Can't write to ", $self->{'file'}, ": $!";
@@ -313,7 +323,7 @@ sub _log
 	}
 	if(my $fout = $self->{'fd'}) {
 		print $fout uc($level), '> ', blessed($self) || '', ' ', (caller(1))[1], ' ', (caller(1))[2], ' ', join('', @messages), "\n" or
-			die "ref($self): Can't write to file descriptor: $!";
+			croak(ref($self), ": Can't write to file descriptor: $!");
 	}
 }
 
