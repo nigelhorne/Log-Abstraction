@@ -199,12 +199,12 @@ sub new {
 		$args{'level'} = 'warning';
 	}
 
-	my $self = {
+	# Bless and return the object
+	return bless {
 		messages => [],	# Initialize messages array
 		%args,
 		level => $syslog_values{$args{'level'}},
-	};
-	return bless $self, $class;	# Bless and return the object
+	}, $class;
 }
 
 # Internal method to log messages. This method is called by other logging methods.
