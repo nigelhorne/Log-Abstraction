@@ -18,11 +18,11 @@ Log::Abstraction - Logging Abstraction Layer
 
 =head1 VERSION
 
-0.18
+0.19
 
 =cut
 
-our $VERSION = 0.18;
+our $VERSION = 0.19;
 
 =head1 SYNOPSIS
 
@@ -289,7 +289,7 @@ sub _log
 					join('', @messages), "\n";
 				close $fout;
 			}
-		} elsif(Scalar::Util::blessed($logger) && ($logger->can($level))) {
+		} elsif(Scalar::Util::blessed($logger) && $logger->can($level)) {
 			# If logger is an object, call the appropriate method on the object
 			# The test is because Log::Log4perl doesn't understand notice()
 			$logger->$level(@messages);
@@ -310,7 +310,7 @@ sub _log
 			croak(ref($self), ": Tainted or unsafe filename: $file");
 		}
 
-		if (open(my $fout, '>>', $file)) {
+		if(open(my $fout, '>>', $file)) {
 			if(blessed($self) eq __PACKAGE__) {
 				print $fout uc($level), '> ', (caller(1))[1], '(', (caller(1))[2], ') ', join('', @messages), "\n" or
 					die "ref($self): Can't write to ", $self->{'file'}, ": $!";

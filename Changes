@@ -1,6 +1,6 @@
 Revision history for Log-Abstraction
 
-0.19
+0.19	Tue Jun 10 08:32:28 EDT 2025
 	Bump minimum version of Sys::Syslog
 	More untaint checking
 
