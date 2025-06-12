@@ -120,9 +120,13 @@ is_deeply(
 );
 
 # Test logging to syslog
-$logger = Log::Abstraction->new(syslog => { type => 'unix' }, script_name => 'test');
+if($^O ne 'MSWin32') {
+	diag('Ignore message about path not available') if($^O eq 'Solaris');
 
-$logger->warn({ warning => 'Syslog warning message' });
+	$logger = Log::Abstraction->new(syslog => { type => 'unix' }, script_name => 'test');
+
+	$logger->warn({ warning => 'Syslog warning message' });
+}
 
 # Note: Verifying syslog output requires checking the syslog file, not done here
 
