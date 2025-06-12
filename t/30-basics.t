@@ -121,7 +121,7 @@ is_deeply(
 
 # Test logging to syslog
 if($^O ne 'MSWin32') {
-	diag('Ignore message about path not available') if($^O eq 'Solaris');
+	diag('Ignore message about no connection to syslog available') if($^O eq 'solaris');
 
 	$logger = Log::Abstraction->new(syslog => { type => 'unix' }, script_name => 'test');
 
