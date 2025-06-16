@@ -99,6 +99,16 @@ $logger->debug('Code debug message');
 $logger->info('Code info message');
 
 diag(Data::Dumper->new([\@code_log])->Dump()) if($ENV{'TEST_VERBOSE'});
+
+# GitHub#2
+if($^O eq 'MSWin32') {
+	foreach my $log_entry(@code_log) {
+		if($log_entry->{'file'} eq 't\30-basics.t') {
+			$log_entry->{'file'} = 't/30-basics.t';
+		}
+	}
+}
+
 is_deeply(
 	\@code_log,
 	[
