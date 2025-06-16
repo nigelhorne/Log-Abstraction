@@ -114,13 +114,13 @@ is_deeply(
 	[
 		{
 			class => 'Log::Abstraction',
-			file => ($^O eq 'MSWin32') ? 't\30-basics.t' : 't/30-basics.t',
+			file => 't/30-basics.t',
 			line => 98,	# Adjust line number if needed
 			level => 'debug',
 			message => ['Code debug message']
 		}, {
 			class => 'Log::Abstraction',
-			file => ($^O eq 'MSWin32') ? 't\30-basics.t' : 't/30-basics.t',
+			file => 't/30-basics.t',
 			line => 99,	# Adjust line number if needed
 			level => 'info',
 			message => ['Code info message']
