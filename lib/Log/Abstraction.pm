@@ -305,7 +305,7 @@ sub _log
 		# Untaint the file name
 		# if($file =~ /^([-\@\w.\/\\]+)$/) {
 		if($file =~ /^([a-zA-Z0-9_\.\-\/\\:~]+)$/) {
-			$file = $1;  # untainted version
+			$file = $1;	# untainted version
 		} else {
 			croak(ref($self), ": Tainted or unsafe filename: $file");
 		}
