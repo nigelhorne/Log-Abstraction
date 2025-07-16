@@ -18,11 +18,11 @@ Log::Abstraction - Logging Abstraction Layer
 
 =head1 VERSION
 
-0.20
+0.21
 
 =cut
 
-our $VERSION = 0.20;
+our $VERSION = 0.21;
 
 =head1 SYNOPSIS
 
@@ -397,6 +397,20 @@ Logs a notice message.
 sub notice {
 	my $self = shift;
 	$self->_log('notice', @_);
+}
+
+=head2 error
+
+    $logger->error(@messages);
+
+Logs an error message.
+
+=cut
+
+# TODO: do similar things to warn()
+sub error {
+	my $self = shift;
+	$self->_log('error', @_);
 }
 
 =head2 trace
