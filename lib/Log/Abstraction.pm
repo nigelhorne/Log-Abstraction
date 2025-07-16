@@ -403,14 +403,17 @@ sub notice {
 
     $logger->error(@messages);
 
-Logs an error message.
+Logs an error message. This method also supports logging to syslog if configured.
+If not logging mechanism is set,
+falls back to C<Carp>.
 
 =cut
 
 # TODO: do similar things to warn()
 sub error {
 	my $self = shift;
-	$self->_log('error', @_);
+
+	$self->_high_priority('error', @_);
 }
 
 =head2 trace
@@ -440,13 +443,27 @@ falls back to C<Carp>.
 
 sub warn {
 	my $self = shift;
+
+	$self->_high_priority('warn', @_);
+}
+
+=head2 _high_priority
+
+Helper to handle important messages.
+
+=cut
+
+sub _high_priority
+{
+	my $self = shift;
+	my $level = shift;	# 'warn' or 'error'
 	my $params = Params::Get::get_params('warning', @_);	# Get parameters
 
 	# Validate input parameters
 	return unless ($params && (ref($params) eq 'HASH'));
 
 	# Only logging things higher than warn level
-	return if($self->{'level'} < $syslog_values{'warn'});
+	return if($self->{'level'} < $syslog_values{$level});
 
 	my $warning = $params->{warning};
 	if(!defined($warning)) {
@@ -469,7 +486,7 @@ sub warn {
 	}
 
 	# Log the warning message
-	$self->_log('warn', $warning);
+	$self->_log($level, $warning);
 
 	if($self->{syslog}) {
 		# Handle syslog-based logging
@@ -479,7 +496,8 @@ sub warn {
 		}
 		openlog($self->{script_name}, 'cons,pid', 'user');
 		eval {
-			syslog('warning|local0', $warning);
+			my $ident = ($level eq 'error') ? 'err' : 'warning';
+			syslog("$ident|local0", $warning);
 		};
 		my $err = $@;
 		closelog();
