@@ -496,7 +496,7 @@ sub _high_priority
 
 			# CHI uses server, Sys::Syslog uses host :-(
 			if($self->{'syslog'}->{'server'}) {
-				$self->{'syslog'}->{'host'} = delete $self->{'syslog'}->{'host'};
+				$self->{'syslog'}->{'host'} = delete $self->{'syslog'}->{'server'};
 			}
 			Sys::Syslog::setlogsock($self->{'syslog'});
 		}
