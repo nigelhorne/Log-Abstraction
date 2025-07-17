@@ -2,6 +2,7 @@ Revision history for Log-Abstraction
 
 0.22
 	Error() now sends to syslog like warn()
+	Ensure undef isn't passed in the messages array to coderefs
 
 0.21	Wed Jul 16 16:21:25 EDT 2025
 	Added error()

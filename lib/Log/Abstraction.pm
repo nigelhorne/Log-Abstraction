@@ -230,11 +230,11 @@ sub _log
 
 	if((scalar(@messages) == 1) && (ref($messages[0]) eq 'ARRAY')) {
 		# Passed a reference to an array
-		@messages = @{$messages[0]};
+		@messages = grep defined, @{$messages[0]};
 	}
 
 	# Push the message to the internal messages array
-	push @{$self->{messages}}, { level => $level, message => join('', grep defined, @messages) };
+	push @{$self->{messages}}, { level => $level, message => join('', @messages) };
 
 	my $class = blessed($self) || '';
 	if($class eq __PACKAGE__) {
@@ -254,7 +254,7 @@ sub _log
 			});
 		} elsif(ref($logger) eq 'ARRAY') {
 			# If logger is an array reference, push the log message to the array
-			push @{$logger}, { level => $level, message => join('', grep defined, @messages) };
+			push @{$logger}, { level => $level, message => join('', @messages) };
 		} elsif(ref($logger) eq 'HASH') {
 			if(my $file = $logger->{'file'}) {
 				if($file =~ /^([a-zA-Z0-9_\.\-\/\\~:]+)$/) {
@@ -269,7 +269,7 @@ sub _log
 				}
 			}
 			if(my $array = $logger->{'array'}) {
-				push @{$array}, { level => $level, message => join('', grep defined, @messages) };
+				push @{$array}, { level => $level, message => join('', @messages) };
 			}
 			if(my $fout = $logger->{'fd'}) {
 				print $fout uc($level), "> $class ", (caller(1))[1], ' ', (caller(1))[2], ' ', join('', @messages), "\n" or
@@ -297,7 +297,7 @@ sub _log
 			croak(ref($self), ": Don't know how to deal with the $level message");
 		}
 	} elsif($self->{'array'}) {
-		push @{$self->{'array'}}, { level => $level, message => join('', grep defined, @messages) };
+		push @{$self->{'array'}}, { level => $level, message => join('', @messages) };
 	}
 	if($self->{'file'}) {
 		my $file = $self->{'file'};
