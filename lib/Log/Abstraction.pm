@@ -493,6 +493,11 @@ sub _high_priority
 		# Handle syslog-based logging
 		if(ref($self->{syslog}) eq 'HASH') {
 			# HASH argument to setlogsock introduced in Sys::Syslog 0.28
+
+			# CHI uses server, Sys::Syslog uses host :-(
+			if($self->{'syslog'}->{'server'}) {
+				$self->{'syslog'}->{'host'} = delete $self->{'syslog'}->{'host'};
+			}
 			Sys::Syslog::setlogsock($self->{'syslog'});
 		}
 		my $ident = (($level eq 'error') ? 'err' : 'warning') . '|local0';
