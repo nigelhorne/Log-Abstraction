@@ -1,6 +1,6 @@
 Revision history for Log-Abstraction
 
-0.23
+0.23	Thu Jul 17 14:45:54 EDT 2025
 	Better error message when we don't know what to do
 	Allow the syslog config to say 'server' instead of 'host' for consistency with CHI
 
