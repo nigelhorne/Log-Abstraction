@@ -489,7 +489,7 @@ sub _high_priority
 	# Log the warning message
 	$self->_log($level, $warning);
 
-	if($self->{syslog}) {
+	if($self->{'syslog'}) {
 		# Handle syslog-based logging
 		if(ref($self->{syslog}) eq 'HASH') {
 			# HASH argument to setlogsocket introduced in Sys::Syslog 0.28
@@ -503,6 +503,7 @@ sub _high_priority
 		my $err = $@;
 		closelog();
 		if($err) {
+			$err .= ": \n" . Data::Dumper->new([$self->{'syslog'}])->Dump();
 			Carp::carp($err);
 		} elsif($self->{'carp_on_warn'}) {
 			Carp::carp($warning);
