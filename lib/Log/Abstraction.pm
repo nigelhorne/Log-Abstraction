@@ -492,13 +492,13 @@ sub _high_priority
 	if($self->{'syslog'}) {
 		# Handle syslog-based logging
 		if(ref($self->{syslog}) eq 'HASH') {
-			# HASH argument to setlogsocket introduced in Sys::Syslog 0.28
+			# HASH argument to setlogsock introduced in Sys::Syslog 0.28
 			Sys::Syslog::setlogsock($self->{'syslog'});
 		}
+		my $ident = (($level eq 'error') ? 'err' : 'warning') . '|local0';
 		openlog($self->{script_name}, 'cons,pid', 'user');
 		eval {
-			my $ident = ($level eq 'error') ? 'err' : 'warning';
-			syslog("$ident|local0", $warning);
+			syslog($ident, $warning);
 		};
 		my $err = $@;
 		closelog();
