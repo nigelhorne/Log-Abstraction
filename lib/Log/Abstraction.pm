@@ -230,8 +230,9 @@ sub _log
 
 	if((scalar(@messages) == 1) && (ref($messages[0]) eq 'ARRAY')) {
 		# Passed a reference to an array
-		@messages = grep defined, @{$messages[0]};
+		@messages = @{$messages[0]};
 	}
+	@messages = grep defined, @messages;
 
 	# Push the message to the internal messages array
 	push @{$self->{messages}}, { level => $level, message => join('', @messages) };
