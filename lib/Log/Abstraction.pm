@@ -295,7 +295,7 @@ sub _log
 			# The test is because Log::Log4perl doesn't understand notice()
 			$logger->$level(@messages);
 		} else {
-			croak(ref($self), ": Don't know how to deal with the $level message");
+			croak(ref($self), ': ', ref($logger), " doesn't know how to deal with the $level message");
 		}
 	} elsif($self->{'array'}) {
 		push @{$self->{'array'}}, { level => $level, message => join('', @messages) };
