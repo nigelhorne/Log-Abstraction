@@ -331,6 +331,33 @@ sub _log
 					}
 				}
 			}
+			if(my $syslog = $logger->{'syslog'}) {
+				if(!$self->{_syslog_opened}) {
+					# Open persistent syslog connection
+					my $facility = delete $syslog->{'facility'} || 'local0';
+					# CHI uses server, Sys::Syslog uses host :-(
+					if($syslog->{'server'}) {
+						$syslog->{'host'} = delete $syslog->{'server'};
+					}
+					Sys::Syslog::setlogsock($syslog) if(scalar keys %{$syslog});
+					$syslog->{'facility'} = $facility;
+
+					openlog($self->{script_name}, 'cons,pid', 'user');
+					$self->{_syslog_opened} = 1;	# Flag to track active connection
+				}
+
+				# Handle syslog-based logging
+				eval {
+					my $priority = ($level eq 'error') ? 'err' : 'warning';
+					my $facility = $syslog->{'facility'};
+					Sys::Syslog::syslog("$priority|$facility", join(' ', @messages));
+				};
+				if($@) {
+					my $err = $@;
+					$err .= ":\n" . Data::Dumper->new([$syslog])->Dump();
+					Carp::carp($err);
+				}
+			}
 				
 			if(my $fout = $logger->{'fd'}) {
 				print $fout uc($level), "> $class ", (caller(1))[1], ' ', (caller(1))[2], ' ', join('', @messages), "\n" or
@@ -556,35 +583,7 @@ sub _high_priority
 	# Log the warning message
 	$self->_log($level, $warning);
 
-	if(my $syslog = $self->{'syslog'}) {
-		if(!$self->{_syslog_opened}) {
-			# Open persistent syslog connection
-			my $facility = delete $syslog->{'facility'} || 'local0';
-			# CHI uses server, Sys::Syslog uses host :-(
-			if($syslog->{'server'}) {
-				$syslog->{'host'} = delete $syslog->{'server'};
-			}
-			Sys::Syslog::setlogsock($syslog);
-			$syslog->{'facility'} = $facility;
-
-			openlog($self->{script_name}, 'cons,pid', 'user');
-			$self->{_syslog_opened} = 1;	# Flag to track active connection
-		}
-
-		# Handle syslog-based logging
-		eval {
-			my $priority = ($level eq 'error') ? 'err' : 'warning';
-			my $facility = $syslog->{'facility'};
-			syslog("$priority|$facility", $warning);
-		};
-		if($@) {
-			my $err = $@;
-			$err .= ": \n" . Data::Dumper->new([$syslog])->Dump();
-			Carp::carp($err);
-		} elsif($self->{'carp_on_warn'}) {
-			Carp::carp($warning);
-		}
-	} elsif($self->{'carp_on_warn'} || !defined($self->{logger})) {
+	if($self->{'carp_on_warn'} || !defined($self->{logger})) {
 		# Fallback to Carp if no logger or syslog is defined
 		Carp::carp($warning);
 	}
