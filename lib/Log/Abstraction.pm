@@ -185,13 +185,28 @@ sub new {
 		return $clone;
 	}
 
-	if($args{'syslog'} && !$args{'script_name'}) {
-		require File::Basename && File::Basename->import() unless File::Basename->can('basename');
+	if($args{'syslog'}) {
+		if(!$args{'script_name'}) {
+			require File::Basename && File::Basename->import() unless File::Basename->can('basename');
 
-		# Determine script name
-		$args{'script_name'} = File::Basename::basename($ENV{'SCRIPT_NAME'} || $0);
+			# Determine script name
+			$args{'script_name'} = File::Basename::basename($ENV{'SCRIPT_NAME'} || $0);
 
-		croak("$class: syslog needs to know the script name") if(!defined($args{'script_name'}));
+			croak("$class: syslog needs to know the script name") if(!defined($args{'script_name'}));
+		}
+		if(ref($args{syslog}) eq 'HASH') {
+			my $facility = delete $args{'syslog'}->{'facility'} || 'local0';
+			# CHI uses server, Sys::Syslog uses host :-(
+			if($args{'syslog'}->{'server'}) {
+				$args{'syslog'}->{'host'} = delete $args{'syslog'}->{'server'};
+			}
+			Sys::Syslog::setlogsock($args{'syslog'}) if(scalar keys %{$args{'syslog'}});
+			$args{'syslog'}->{'facility'} = $facility;
+		}
+
+		# Open persistent syslog connection
+		openlog($args{script_name}, 'cons,pid', 'user');
+		$args{_syslog_opened} = 1;	# Flag to track active connection
 	}
 
 	my $level = $args{'level'};
@@ -551,26 +566,16 @@ sub _high_priority
 	# Log the warning message
 	$self->_log($level, $warning);
 
-	if($self->{'syslog'}) {
+	if(my $syslog = $self->{'syslog'}) {
 		# Handle syslog-based logging
-		if(ref($self->{syslog}) eq 'HASH') {
-			# HASH argument to setlogsock introduced in Sys::Syslog 0.28
-
-			# CHI uses server, Sys::Syslog uses host :-(
-			if($self->{'syslog'}->{'server'}) {
-				$self->{'syslog'}->{'host'} = delete $self->{'syslog'}->{'server'};
-			}
-			Sys::Syslog::setlogsock($self->{'syslog'});
-		}
-		my $ident = (($level eq 'error') ? 'err' : 'warning') . '|local0';
-		openlog($self->{script_name}, 'cons,pid', 'user');
 		eval {
-			syslog($ident, $warning);
+			my $priority = ($level eq 'error') ? 'err' : 'warning';
+			my $facility = $syslog->{'facility'};
+			syslog("$priority|$facility", $warning);
 		};
-		my $err = $@;
-		closelog();
-		if($err) {
-			$err .= ": \n" . Data::Dumper->new([$self->{'syslog'}])->Dump();
+		if($@) {
+			my $err = $@;
+			$err .= ": \n" . Data::Dumper->new([$syslog])->Dump();
 			Carp::carp($err);
 		} elsif($self->{'carp_on_warn'}) {
 			Carp::carp($warning);
@@ -578,6 +583,15 @@ sub _high_priority
 	} elsif($self->{'carp_on_warn'} || !defined($self->{logger})) {
 		# Fallback to Carp if no logger or syslog is defined
 		Carp::carp($warning);
+	}
+}
+
+# Destructor to close syslog connection
+sub DESTROY {
+	my $self = shift;
+	if ($self->{_syslog_opened}) {
+		closelog();
+		delete $self->{_syslog_opened};
 	}
 }
 
