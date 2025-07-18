@@ -29,7 +29,7 @@ Test::Mockingbird::mock('Email::Sender::Transport::SMTP', 'send_email', sub {
 
 	$called++;
 	isa_ok($email, 'Email::Abstract', 'Email is correct object');
-	like($email->as_string(), qr/Test message/, 'Message body looks correct');
+	like($email->as_string(), qr/Info message/, 'Message body looks correct');
 
 	return 1;
 });
@@ -37,7 +37,8 @@ Test::Mockingbird::mock('Email::Sender::Transport::SMTP', 'send_email', sub {
 # Instantiate and log
 eval {
 	my $log = Log::Abstraction->new($config);
-	$log->info('Test message');
+	$log->debug('Debug message');
+	$log->info('Info message');
 	1;
 } or do {
 	fail("Log::Abstraction threw error: $@");
@@ -45,6 +46,6 @@ eval {
 
 Test::Mockingbird::unmock('Email::Sender::Transport::SMTP', 'send_email');
 
-ok($called, 'sendmail was called');
+cmp_ok($called, '==', 1, 'sendmail was called just once');
 
 done_testing();
