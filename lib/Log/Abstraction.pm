@@ -72,7 +72,7 @@ The file can be in any common format,
 including C<YAML>, C<XML>, and C<INI>.
 This allows the parameters to be set at run time.
 
-On non-Windows system,
+On a non-Windows system,
 the class can be configured using environment variables starting with C<"Log::Abstraction::">.
 For example:
 
@@ -180,7 +180,9 @@ sub new {
 		$class = __PACKAGE__;
 	} elsif(Scalar::Util::blessed($class)) {
 		# If $class is an object, clone it with new arguments
-		return bless { %{$class}, %args }, ref($class);
+		my $clone = bless { %{$class}, %args }, ref($class);
+		$clone->{messages} = [ @{$class->{messages}} ];	# Deep copy
+		return $clone;
 	}
 
 	if($args{'syslog'} && !$args{'script_name'}) {
@@ -293,6 +295,7 @@ sub _log
 			}
 			if($logger->{'sendmail'}->{'to'}) {
 				# Send an email
+				# TODO: throttle the number of emails
 				if((!defined($logger->{'sendmail'}->{'level'})) ||
 				   ($syslog_values{$level} <= $syslog_values{$logger->{'sendmail'}->{'level'}})) {
 					eval {

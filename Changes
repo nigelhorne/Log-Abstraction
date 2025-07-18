@@ -2,6 +2,8 @@ Revision history for Log-Abstraction
 
 0.24
 	Added the ability to send an email for higher priority messages
+	Only load Log::Log4perl when needed
+	Deep-clone the messages array during cloning
 
 0.23	Thu Jul 17 14:45:54 EDT 2025
 	Better error message when we don't know what to do
