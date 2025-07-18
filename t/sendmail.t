@@ -4,7 +4,7 @@ use strict;
 use warnings;
 
 use Email::Sender::Transport::SMTP;
-use Test::MockingBird;
+use Test::Mockingbird;
 use Test::Most;
 
 BEGIN { use_ok('Log::Abstraction') }
