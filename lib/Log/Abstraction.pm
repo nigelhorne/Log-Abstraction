@@ -284,7 +284,8 @@ sub _log
 			push @{$logger}, { level => $level, message => join('', @messages) };
 		} elsif(ref($logger) eq 'HASH') {
 			if(my $file = $logger->{'file'}) {
-				if($file =~ /^([^<>|*?;!`$"\\\0-\037]+)$/) {
+				# if($file =~ /^([-\@\w.\/\\]+)$/) {
+				if($file =~ /^([^<>|*?;!`$"\0-\037]+)$/) {
 					$file = $1;	# Will untaint
 				} else {
 					Carp::croak(ref($self), ": Invalid file name: $file");
@@ -332,30 +333,34 @@ sub _log
 				}
 			}
 			if(my $syslog = $logger->{'syslog'}) {
-				if(!$self->{_syslog_opened}) {
-					# Open persistent syslog connection
-					my $facility = delete $syslog->{'facility'} || 'local0';
-					# CHI uses server, Sys::Syslog uses host :-(
-					if($syslog->{'server'}) {
-						$syslog->{'host'} = delete $syslog->{'server'};
+				if((!defined($syslog->{'level'})) || ($syslog_values{$level} <= $syslog->{'level'})) {
+					if(!$self->{_syslog_opened}) {
+						# Open persistent syslog connection
+						my $facility = delete $syslog->{'facility'} || 'local0';
+						my $min_level = delete $syslog->{'level'};
+						# CHI uses server, Sys::Syslog uses host :-(
+						if($syslog->{'server'}) {
+							$syslog->{'host'} = delete $syslog->{'server'};
+						}
+						Sys::Syslog::setlogsock($syslog) if(scalar keys %{$syslog});
+						$syslog->{'facility'} = $facility;
+						$syslog->{'level'} = $min_level;
+
+						openlog($self->{script_name}, 'cons,pid', 'user');
+						$self->{_syslog_opened} = 1;	# Flag to track active connection
 					}
-					Sys::Syslog::setlogsock($syslog) if(scalar keys %{$syslog});
-					$syslog->{'facility'} = $facility;
 
-					openlog($self->{script_name}, 'cons,pid', 'user');
-					$self->{_syslog_opened} = 1;	# Flag to track active connection
-				}
-
-				# Handle syslog-based logging
-				eval {
-					my $priority = ($level eq 'error') ? 'err' : 'warning';
-					my $facility = $syslog->{'facility'};
-					Sys::Syslog::syslog("$priority|$facility", join(' ', @messages));
-				};
-				if($@) {
-					my $err = $@;
-					$err .= ":\n" . Data::Dumper->new([$syslog])->Dump();
-					Carp::carp($err);
+					# Handle syslog-based logging
+					eval {
+						my $priority = ($level eq 'error') ? 'err' : 'warning';
+						my $facility = $syslog->{'facility'};
+						Sys::Syslog::syslog("$priority|$facility", join(' ', @messages));
+					};
+					if($@) {
+						my $err = $@;
+						$err .= ":\n" . Data::Dumper->new([$syslog])->Dump();
+						Carp::carp($err);
+					}
 				}
 			}
 				
@@ -399,7 +404,7 @@ sub _log
 
 		# Untaint the file name
 		# if($file =~ /^([-\@\w.\/\\]+)$/) {
-		if($file =~ /^([^<>|*?;!`$"\\\0-\037]+)$/) {
+		if($file =~ /^([^<>|*?;!`$"\0-\037]+)$/) {
 			$file = $1;	# untainted version
 		} else {
 			croak(ref($self), ": Tainted or unsafe filename: $file");
