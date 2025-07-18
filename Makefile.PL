@@ -33,6 +33,7 @@ WriteMakefile(
 	},
 	TEST_REQUIRES => {
 		'Test::DescribeMe' => 0,
+		'Test::MockingBird' => 0,
 		'Test::Most' => 0,
 		'Test::Needs' => 0,
 		'File::Spec' => 0,

@@ -10,7 +10,6 @@ use Data::Dumper;
 use Email::Simple;
 use Email::Sender::Simple qw(sendmail);
 use Email::Sender::Transport::SMTP;
-use Log::Log4perl;
 use Params::Get 0.05;	# Import Params::Get for parameter handling
 use Readonly::Values::Syslog 0.02;
 use Sys::Syslog 0.28;	# Import Sys::Syslog for syslog support
@@ -200,6 +199,9 @@ sub new {
 		}
 	} elsif((!$args{'file'}) && (!$args{'array'})) {
 		# Default to Log4perl
+		require Log::Log4perl;
+		Log::Log4perl->import();
+
 		# FIXME: add default minimum logging level
 		Log::Log4perl->easy_init($args{verbose} ? $Log::Log4perl::DEBUG : $Log::Log4perl::ERROR);
 		$args{'logger'} = Log::Log4perl->get_logger();
@@ -259,7 +261,7 @@ sub _log
 		$class = '';
 	}
 
-	if(my $logger = $self->{logger}) {
+	if(my $logger = $self->{'logger'}) {
 		if(ref($logger) eq 'CODE') {
 			# If logger is a code reference, call it with log details
 			$logger->({
@@ -294,7 +296,7 @@ sub _log
 				if((!defined($logger->{'sendmail'}->{'level'})) ||
 				   ($syslog_values{$level} <= $syslog_values{$logger->{'sendmail'}->{'level'}})) {
 					eval {
-						my $email = Email::Simple->new(join('', @messages));
+						my $email = Email::Simple->new('');
 						$email->header_set('to', $logger->{'sendmail'}->{'to'});
 						if(my $from = $logger->{'sendmail'}->{'from'}) {
 							$email->header_set('from', $from);
@@ -302,6 +304,7 @@ sub _log
 						if(my $subject = $logger->{'sendmail'}->{'subject'}) {
 							$email->header_set('subject', $subject);
 						}
+						$email->body_set(join(' ', @messages));
 
 						# Configure SMTP transport (adjust for your SMTP server)
 						my $transport = Email::Sender::Transport::SMTP->new({

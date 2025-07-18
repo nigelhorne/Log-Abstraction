@@ -19,7 +19,7 @@ my $config = {
 			subject => 'Subject',
 		}
 	},
-	level => 'info',
+	level => 'info'
 };
 
 # Mock sendmail
@@ -29,8 +29,8 @@ Test::Mockingbird::mock('Email::Sender::Transport::SMTP', 'send_email', sub {
 
 	$called++;
 	isa_ok($email, 'Email::Abstract', 'Email is correct object');
-	like($email->as_string, qr/Test message/, 'Message body looks correct');
-	pass('sendmail was called');
+	like($email->as_string(), qr/Test message/, 'Message body looks correct');
+
 	return 1;
 });
 
@@ -45,6 +45,6 @@ eval {
 
 Test::Mockingbird::unmock('Email::Sender::Transport::SMTP', 'send_email');
 
-ok($called, 'sendmail was actually called');
+ok($called, 'sendmail was called');
 
 done_testing();
