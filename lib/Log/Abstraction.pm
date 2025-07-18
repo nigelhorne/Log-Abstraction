@@ -279,7 +279,7 @@ sub _log
 			push @{$logger}, { level => $level, message => join('', @messages) };
 		} elsif(ref($logger) eq 'HASH') {
 			if(my $file = $logger->{'file'}) {
-				if($file =~ /^([a-zA-Z0-9_\.\-\/\\~:]+)$/) {
+				if($file =~ /^([^<>|*?;!`$"\\\0-\037]+)$/) {
 					$file = $1;	# Will untaint
 				} else {
 					Carp::croak(ref($self), ": Invalid file name: $file");
@@ -367,7 +367,7 @@ sub _log
 
 		# Untaint the file name
 		# if($file =~ /^([-\@\w.\/\\]+)$/) {
-		if($file =~ /^([a-zA-Z0-9_\.\-\/\\:~]+)$/) {
+		if($file =~ /^([^<>|*?;!`$"\\\0-\037]+)$/) {
 			$file = $1;	# untainted version
 		} else {
 			croak(ref($self), ": Tainted or unsafe filename: $file");
