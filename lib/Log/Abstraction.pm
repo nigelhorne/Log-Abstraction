@@ -120,7 +120,12 @@ A logger can be one or more of:
 Defaults to L<Log::Log4perl>.
 In that case the argument 'verbose' to new() will raise the logging level.
 
-=item * C<syslog> - A hash reference for syslog configuration.
+=item * C<syslog>
+
+A hash reference for syslog configuration.
+Only warnings and above will be sent to syslog.
+This restriction should be lifted in the future,
+since it's reasonable to send notices and above to the syslog.
 
 =item * C<script_name>
 
@@ -185,28 +190,13 @@ sub new {
 		return $clone;
 	}
 
-	if($args{'syslog'}) {
-		if(!$args{'script_name'}) {
-			require File::Basename && File::Basename->import() unless File::Basename->can('basename');
+	if($args{'syslog'} && !$args{'script_name'}) {
+		require File::Basename && File::Basename->import() unless File::Basename->can('basename');
 
-			# Determine script name
-			$args{'script_name'} = File::Basename::basename($ENV{'SCRIPT_NAME'} || $0);
+		# Determine script name
+		$args{'script_name'} = File::Basename::basename($ENV{'SCRIPT_NAME'} || $0);
 
-			croak("$class: syslog needs to know the script name") if(!defined($args{'script_name'}));
-		}
-		if(ref($args{syslog}) eq 'HASH') {
-			my $facility = delete $args{'syslog'}->{'facility'} || 'local0';
-			# CHI uses server, Sys::Syslog uses host :-(
-			if($args{'syslog'}->{'server'}) {
-				$args{'syslog'}->{'host'} = delete $args{'syslog'}->{'server'};
-			}
-			Sys::Syslog::setlogsock($args{'syslog'}) if(scalar keys %{$args{'syslog'}});
-			$args{'syslog'}->{'facility'} = $facility;
-		}
-
-		# Open persistent syslog connection
-		openlog($args{script_name}, 'cons,pid', 'user');
-		$args{_syslog_opened} = 1;	# Flag to track active connection
+		croak("$class: syslog needs to know the script name") if(!defined($args{'script_name'}));
 	}
 
 	my $level = $args{'level'};
@@ -567,6 +557,20 @@ sub _high_priority
 	$self->_log($level, $warning);
 
 	if(my $syslog = $self->{'syslog'}) {
+		if(!$self->{_syslog_opened}) {
+			# Open persistent syslog connection
+			my $facility = delete $syslog->{'facility'} || 'local0';
+			# CHI uses server, Sys::Syslog uses host :-(
+			if($syslog->{'server'}) {
+				$syslog->{'host'} = delete $syslog->{'server'};
+			}
+			Sys::Syslog::setlogsock($syslog);
+			$syslog->{'facility'} = $facility;
+
+			openlog($self->{script_name}, 'cons,pid', 'user');
+			$self->{_syslog_opened} = 1;	# Flag to track active connection
+		}
+
 		# Handle syslog-based logging
 		eval {
 			my $priority = ($level eq 'error') ? 'err' : 'warning';
