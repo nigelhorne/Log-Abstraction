@@ -303,6 +303,8 @@ sub _log
 						$email->header_set('to', $logger->{'sendmail'}->{'to'});
 						if(my $from = $logger->{'sendmail'}->{'from'}) {
 							$email->header_set('from', $from);
+						} else {
+							$email->header_set('from', 'noreply@localhost');
 						}
 						if(my $subject = $logger->{'sendmail'}->{'subject'}) {
 							$email->header_set('subject', $subject);
@@ -524,7 +526,7 @@ sub _high_priority
 	return unless ($params && (ref($params) eq 'HASH'));
 
 	# Only logging things higher than warn level
-	return if($self->{'level'} < $syslog_values{$level});
+	return if($syslog_values{$level} > $WARNING);
 
 	my $warning = $params->{warning};
 	if(!defined($warning)) {
