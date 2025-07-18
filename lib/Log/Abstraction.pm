@@ -6,6 +6,7 @@ use strict;
 use warnings;
 use Carp;	# Import Carp for warnings
 use Config::Abstraction 0.25;
+use Data::Dumper;
 use Email::Simple;
 use Email::Sender::Simple qw(sendmail);
 use Email::Sender::Transport::SMTP;
@@ -118,6 +119,7 @@ A logger can be one or more of:
 =back
 
 Defaults to L<Log::Log4perl>.
+In that case the argument 'verbose' to new() will raise the logging level.
 
 =item * C<syslog> - A hash reference for syslog configuration.
 
@@ -274,7 +276,7 @@ sub _log
 		} elsif(ref($logger) eq 'HASH') {
 			if(my $file = $logger->{'file'}) {
 				if($file =~ /^([a-zA-Z0-9_\.\-\/\\~:]+)$/) {
-					my $file = $1;	# Will untaint
+					$file = $1;	# Will untaint
 				} else {
 					Carp::croak(ref($self), ": Invalid file name: $file");
 				}
@@ -289,31 +291,30 @@ sub _log
 			}
 			if($logger->{'sendmail'}->{'to'}) {
 				# Send an email
-				if(my $level = $logger->{'sendmail'}->{'level'}) {
-					if($syslog_values{$level} <= $level) {
-						eval {
-							my $email = Email::Simple->new(join('', @messages));
-							$email->header_set('to', $logger->{'sendmail'}->{'to'});
-							if(my $from = $logger->{'sendmail'}->{'from'}) {
-								$email->header_set('from', $from);
-							}
-							if(my $subject = $logger->{'sendmail'}->{'subject'}) {
-								$email->header_set('subject', $subject);
-							}
-
-							# Configure SMTP transport (adjust for your SMTP server)
-							my $transport = Email::Sender::Transport::SMTP->new({
-								host => $logger->{'sendmail'}->{'host'} || 'localhost',
-								port => $logger->{'sendmail'}->{'port'} || 25
-							});
-
-							sendmail($email, { transport => $transport });
-						};
-
-						if ($@) {
-							Carp::carp("Failed to send email: $@");
-							return;
+				if((!defined($logger->{'sendmail'}->{'level'})) ||
+				   ($syslog_values{$level} <= $syslog_values{$logger->{'sendmail'}->{'level'}})) {
+					eval {
+						my $email = Email::Simple->new(join('', @messages));
+						$email->header_set('to', $logger->{'sendmail'}->{'to'});
+						if(my $from = $logger->{'sendmail'}->{'from'}) {
+							$email->header_set('from', $from);
 						}
+						if(my $subject = $logger->{'sendmail'}->{'subject'}) {
+							$email->header_set('subject', $subject);
+						}
+
+						# Configure SMTP transport (adjust for your SMTP server)
+						my $transport = Email::Sender::Transport::SMTP->new({
+							host => $logger->{'sendmail'}->{'host'} || 'localhost',
+							port => $logger->{'sendmail'}->{'port'} || 25
+						});
+
+						sendmail($email, { transport => $transport });
+					};
+
+					if ($@) {
+						Carp::carp("Failed to send email: $@");
+						return;
 					}
 				}
 			}

@@ -20,6 +20,7 @@ WriteMakefile(
 	PREREQ_PM => {
 		'Carp'	 => 0,
 		'Config::Abstraction' => 0.25,
+		'Data::Dumper' => 0,
 		'Email::Simple' => 0,
 		'Email::Sender::Simple' => 0,
 		'Email::Sender::Transport::SMTP' => 0,
