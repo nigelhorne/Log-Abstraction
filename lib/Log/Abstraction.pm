@@ -343,12 +343,19 @@ sub _log
 					join('', @messages), "\n";
 				close $fout;
 			}
-		} elsif(Scalar::Util::blessed($logger) && $logger->can($level)) {
+		} elsif(Scalar::Util::blessed($logger)) {
 			# If logger is an object, call the appropriate method on the object
-			# The test is because Log::Log4perl doesn't understand notice()
+			if(!$logger->can($level)) {
+				if(($level eq 'notice') && $logger->can('info')) {
+					# Map notice to info for Log::Log4perl
+					$level = 'info';
+				} else {
+					croak(ref($self), ': ', ref($logger), " doesn't know how to deal with the $level message");
+				}
+			}
 			$logger->$level(@messages);
 		} else {
-			croak(ref($self), ': ', ref($logger), " doesn't know how to deal with the $level message");
+			croak(ref($self), ": configuration error, no handler written for the $level message");
 		}
 	} elsif($self->{'array'}) {
 		push @{$self->{'array'}}, { level => $level, message => join('', @messages) };
