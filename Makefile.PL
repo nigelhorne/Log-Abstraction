@@ -20,6 +20,9 @@ WriteMakefile(
 	PREREQ_PM => {
 		'Carp'	 => 0,
 		'Config::Abstraction' => 0.25,
+		'Email::Simple' => 0,
+		'Email::Sender::Simple' => 0,
+		'Email::Sender::Transport::SMTP' => 0,
 		'ExtUtils::MakeMaker' => 6.64,	# Minimum version for TEST_REQUIRES
 		'Log::Log4perl' => 0,
 		'Params::Get' => 0.05,

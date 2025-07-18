@@ -6,6 +6,9 @@ use strict;
 use warnings;
 use Carp;	# Import Carp for warnings
 use Config::Abstraction 0.25;
+use Email::Simple;
+use Email::Sender::Simple qw(sendmail);
+use Email::Sender::Transport::SMTP;
 use Log::Log4perl;
 use Params::Get 0.05;	# Import Params::Get for parameter handling
 use Readonly::Values::Syslog 0.02;
@@ -98,7 +101,19 @@ A logger can be one or more of:
 
 =item * an object
 
-=item * a hash of options, e.g. 'file' containing the filename, 'array' a reference to an array, or 'fd' containing a file descriptor to log to
+=item * a hash of options
+
+=item * sendmail - send higher priority messages to an email address
+
+=over
+
+=item * array - a reference to an array
+
+=item * fd - containing a file descriptor to log to
+
+=item * file - containing the filename
+
+=back
 
 =back
 
@@ -272,10 +287,41 @@ sub _log
 			if(my $array = $logger->{'array'}) {
 				push @{$array}, { level => $level, message => join('', @messages) };
 			}
+			if($logger->{'sendmail'}->{'to'}) {
+				# Send an email
+				if(my $level = $logger->{'sendmail'}->{'level'}) {
+					if($syslog_values{$level} <= $level) {
+						eval {
+							my $email = Email::Simple->new(join('', @messages));
+							$email->header_set('to', $logger->{'sendmail'}->{'to'});
+							if(my $from = $logger->{'sendmail'}->{'from'}) {
+								$email->header_set('from', $from);
+							}
+							if(my $subject = $logger->{'sendmail'}->{'subject'}) {
+								$email->header_set('subject', $subject);
+							}
+
+							# Configure SMTP transport (adjust for your SMTP server)
+							my $transport = Email::Sender::Transport::SMTP->new({
+								host => $logger->{'sendmail'}->{'host'} || 'localhost',
+								port => $logger->{'sendmail'}->{'port'} || 25
+							});
+
+							sendmail($email, { transport => $transport });
+						};
+
+						if ($@) {
+							Carp::carp("Failed to send email: $@");
+							return;
+						}
+					}
+				}
+			}
+				
 			if(my $fout = $logger->{'fd'}) {
 				print $fout uc($level), "> $class ", (caller(1))[1], ' ', (caller(1))[2], ' ', join('', @messages), "\n" or
 					die "ref($self): Can't write to file descriptor: $!";
-			} elsif((!$logger->{'file'}) && (!$logger->{'syslog'})) {
+			} elsif((!$logger->{'file'}) && (!$logger->{'syslog'}) && (!$logger->{'sendmail'})) {
 				croak(ref($self), ": Don't know how to deal with the $level message");
 			}
 		} elsif(!ref($logger)) {

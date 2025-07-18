@@ -71,7 +71,11 @@ The following arguments can be provided:
     - a file path
     - a file descriptor
     - an object
-    - a hash of options, e.g. 'file' containing the filename, 'array' a reference to an array, or 'fd' containing a file descriptor to log to
+    - a hash of options
+        - array - a reference to an array
+        - fd - containing a file descriptor to log to
+        - file - containing the filename
+        - sendmail - send higher priority messages to an email address
 
     Defaults to [Log::Log4perl](https://metacpan.org/pod/Log%3A%3ALog4perl).
 
