@@ -267,7 +267,7 @@ sub _log
 	chomp($str);
 
 	# Push the message to the internal messages array
-	push @{$self->{messages}}, { level => $level, message => join('', @messages) };
+	push @{$self->{messages}}, { level => $level, message => $str };
 
 	my $class = blessed($self) || '';
 	if($class eq __PACKAGE__) {
@@ -287,7 +287,7 @@ sub _log
 			});
 		} elsif(ref($logger) eq 'ARRAY') {
 			# If logger is an array reference, push the log message to the array
-			push @{$logger}, { level => $level, message => join('', @messages) };
+			push @{$logger}, { level => $level, message => $str };
 		} elsif(ref($logger) eq 'HASH') {
 			if(my $file = $logger->{'file'}) {
 				# if($file =~ /^([-\@\w.\/\\]+)$/) {
@@ -303,7 +303,7 @@ sub _log
 				}
 			}
 			if(my $array = $logger->{'array'}) {
-				push @{$array}, { level => $level, message => join('', @messages) };
+				push @{$array}, { level => $level, message => $str };
 			}
 			if($logger->{'sendmail'}->{'to'}) {
 				# Send an email
@@ -402,7 +402,7 @@ sub _log
 			croak(ref($self), ": configuration error, no handler written for the $level message");
 		}
 	} elsif($self->{'array'}) {
-		push @{$self->{'array'}}, { level => $level, message => join('', @messages) };
+		push @{$self->{'array'}}, { level => $level, message => $str };
 	}
 
 	if($self->{'file'}) {
@@ -603,7 +603,8 @@ sub _high_priority
 # Destructor to close syslog connection
 sub DESTROY {
 	my $self = shift;
-	if ($self->{_syslog_opened}) {
+
+	if($self->{_syslog_opened}) {
 		closelog();
 		delete $self->{_syslog_opened};
 	}
