@@ -215,6 +215,9 @@ sub new {
 	}
 
 	if($level) {
+		if(ref($level) eq 'ARRAY') {
+			$level = $level->[0];
+		}
 		$level = lc($level);
 		if(!defined($syslog_values{$level})) {
 			Carp::croak("$class: invalid syslog level '$level'");
@@ -439,7 +442,7 @@ sub level
 
 	if($level) {
 		if(!defined($syslog_values{$level})) {
-			Carp::cluck(ref($self), ": invalid syslog level '$level'");
+			Carp::carp(ref($self), ": invalid syslog level '$level'");
 			return;
 		}
 		$self->{'level'} = $syslog_values{$level};
