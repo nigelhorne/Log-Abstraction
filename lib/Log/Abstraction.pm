@@ -402,6 +402,10 @@ sub _log
 	} elsif($self->{'array'}) {
 		push @{$self->{'array'}}, { level => $level, message => join('', @messages) };
 	}
+
+	my $str = join('', @messages);
+	chomp($str);
+
 	if($self->{'file'}) {
 		my $file = $self->{'file'};
 
@@ -415,17 +419,17 @@ sub _log
 
 		if(open(my $fout, '>>', $file)) {
 			if(blessed($self) eq __PACKAGE__) {
-				print $fout uc($level), '> ', (caller(1))[1], '(', (caller(1))[2], ') ', join('', @messages), "\n" or
+				print $fout uc($level), '> ', (caller(1))[1], '(', (caller(1))[2], ") $str\n" or
 					die "ref($self): Can't write to ", $self->{'file'}, ": $!";
 			} else {
-				print $fout uc($level), '> ', blessed($self) || '', ' ', (caller(1))[1], '(', (caller(1))[2], ') ', join('', @messages), "\n" or
+				print $fout uc($level), '> ', blessed($self) || '', ' ', (caller(1))[1], '(', (caller(1))[2], ") $str\n" or
 					die "ref($self): Can't write to ", $self->{'file'}, ": $!";
 			}
 			close $fout;
 		}
 	}
 	if(my $fout = $self->{'fd'}) {
-		print $fout uc($level), '> ', blessed($self) || '', ' ', (caller(1))[1], ' ', (caller(1))[2], ' ', join('', @messages), "\n" or
+		print $fout uc($level), '> ', blessed($self) || '', ' ', (caller(1))[1], '(', (caller(1))[2], ") $str\n" or
 			croak(ref($self), ": Can't write to file descriptor: $!");
 	}
 }
