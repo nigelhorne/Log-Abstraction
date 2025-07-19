@@ -263,6 +263,9 @@ sub _log
 	}
 	@messages = grep defined, @messages;
 
+	my $str = join('', @messages);
+	chomp($str);
+
 	# Push the message to the internal messages array
 	push @{$self->{messages}}, { level => $level, message => join('', @messages) };
 
@@ -294,7 +297,7 @@ sub _log
 					Carp::croak(ref($self), ": Invalid file name: $file");
 				}
 				if(open(my $fout, '>>', $logger->{'file'})) {
-					print $fout uc($level), "> $class ", (caller(1))[1], ' ', (caller(1))[2], ' ', join('', @messages), "\n" or
+					print $fout uc($level), "> $class ", (caller(1))[1], ' ', (caller(1))[2], " $str\n" or
 						Carp::croak(ref($self), ": Can't write to $file: $!");
 					close $fout;
 				}
@@ -368,7 +371,7 @@ sub _log
 			}
 				
 			if(my $fout = $logger->{'fd'}) {
-				print $fout uc($level), "> $class ", (caller(1))[1], ' ', (caller(1))[2], ' ', join('', @messages), "\n" or
+				print $fout uc($level), "> $class ", (caller(1))[1], ' ', (caller(1))[2], " $str\n" or
 					die "ref($self): Can't write to file descriptor: $!";
 			} elsif((!$logger->{'file'}) && (!$logger->{'syslog'}) && (!$logger->{'sendmail'})) {
 				croak(ref($self), ": Don't know how to deal with the $level message");
@@ -381,8 +384,7 @@ sub _log
 					(caller(1))[1],
 					' (',
 					(caller(1))[2],
-					'): ',
-					join('', @messages), "\n";
+					"): $str\n";
 				close $fout;
 			}
 		} elsif(Scalar::Util::blessed($logger)) {
@@ -402,9 +404,6 @@ sub _log
 	} elsif($self->{'array'}) {
 		push @{$self->{'array'}}, { level => $level, message => join('', @messages) };
 	}
-
-	my $str = join('', @messages);
-	chomp($str);
 
 	if($self->{'file'}) {
 		my $file = $self->{'file'};
