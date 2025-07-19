@@ -4,7 +4,7 @@ Log::Abstraction - Logging Abstraction Layer
 
 # VERSION
 
-0.23
+0.24
 
 # SYNOPSIS
 
@@ -49,7 +49,7 @@ The following arguments can be provided:
     including `YAML`, `XML`, and `INI`.
     This allows the parameters to be set at run time.
 
-    On non-Windows system,
+    On a non-Windows system,
     the class can be configured using environment variables starting with `"Log::Abstraction::"`.
     For example:
 
@@ -72,14 +72,21 @@ The following arguments can be provided:
     - a file descriptor
     - an object
     - a hash of options
+    - sendmail - send higher priority messages to an email address
         - array - a reference to an array
         - fd - containing a file descriptor to log to
         - file - containing the filename
-        - sendmail - send higher priority messages to an email address
 
     Defaults to [Log::Log4perl](https://metacpan.org/pod/Log%3A%3ALog4perl).
+    In that case the argument 'verbose' to new() will raise the logging level.
 
-- `syslog` - A hash reference for syslog configuration.
+- `syslog`
+
+    A hash reference for syslog configuration.
+    Only warnings and above will be sent to syslog.
+    This restriction should be lifted in the future,
+    since it's reasonable to send notices and above to the syslog.
+
 - `script_name`
 
     The name of the script.
