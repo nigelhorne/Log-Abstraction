@@ -439,7 +439,7 @@ sub level
 
 	if($level) {
 		if(!defined($syslog_values{$level})) {
-			Carp::carp(ref($self), ": invalid syslog level '$level'");
+			Carp::cluck(ref($self), ": invalid syslog level '$level'");
 			return;
 		}
 		$self->{'level'} = $syslog_values{$level};
