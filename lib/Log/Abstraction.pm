@@ -455,7 +455,8 @@ sub level
 
 =head2	is_debug
 
-For Compatability with L<Log::Any>.
+Are we at a debug level that will emit debug messages?
+For compatability with L<Log::Any>.
 
 =cut
 

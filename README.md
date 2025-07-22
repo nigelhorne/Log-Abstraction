@@ -101,6 +101,11 @@ Clone existing objects with or without modifications:
 
 Get/set the minimum level to log at
 
+## is\_debug
+
+Are we at a debug level that will emit debug messages?
+For compatability with [Log::Any](https://metacpan.org/pod/Log%3A%3AAny).
+
 ## messages
 
 Return all the messages emmitted so far
