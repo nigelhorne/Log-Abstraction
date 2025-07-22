@@ -32,6 +32,8 @@ my ($fh, $filename) = tempfile();
 $logger = Log::Abstraction->new($filename);
 $logger->level('debug');
 
+cmp_ok($logger->is_debug(), '==', 1, 'is_debug is set');
+
 $logger->debug('File debug message');
 $logger->info('File info message');
 
@@ -115,13 +117,13 @@ is_deeply(
 		{
 			class => 'Log::Abstraction',
 			file => 't/30-basics.t',
-			line => 98,	# Adjust line number if needed
+			line => 100,	# Adjust line number if needed
 			level => 'debug',
 			message => ['Code debug message']
 		}, {
 			class => 'Log::Abstraction',
 			file => 't/30-basics.t',
-			line => 99,	# Adjust line number if needed
+			line => 101,	# Adjust line number if needed
 			level => 'info',
 			message => ['Code info message']
 		}

@@ -1,5 +1,8 @@
 Revision history for Log-Abstraction
 
+0.25
+	Added is_debug for consistency with Log::Any
+
 0.24	Sat Jul 19 16:52:41 EDT 2025
 	Added the ability to send an email for higher priority messages
 	Only load Log::Log4perl when needed

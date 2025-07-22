@@ -453,6 +453,19 @@ sub level
 	return $self->{'level'};
 }
 
+=head2	is_debug
+
+For Compatability with L<Log::Any>.
+
+=cut
+
+sub is_debug
+{
+	my $self = $_[0];
+
+	return ($self->{'level'} && ($self->{'level'} >= $DEBUG)) ? 1 : 0;
+}
+
 =head2 messages
 
 Return all the messages emmitted so far
