@@ -268,19 +268,19 @@ If the input is undefined (∅), the output is also undefined (∅).
 
 If the input is defined, the result is a defined string with CR and LF characters removed.
 
-[CHAR]
+    [CHAR]
 
-CR, LF : CHAR
-CR == '\r'
-LF == '\n'
+    CR, LF : CHAR
+    CR == '\r'
+    LF == '\n'
 
-STRING == seq CHAR
+    STRING == seq CHAR
 
-SanitizeEmailHeader
-    raw?: STRING
-    sanitized!: STRING
-    -------------------------------------------------
-    sanitized! = [ c : raw? | c ≠ CR ∧ c ≠ LF ]
+    SanitizeEmailHeader
+        raw?: STRING
+        sanitized!: STRING
+        -------------------------------------------------
+        sanitized! = [ c : raw? | c ≠ CR ∧ c ≠ LF ]
 
 =cut
 
