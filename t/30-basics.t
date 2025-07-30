@@ -149,6 +149,8 @@ $logger->debug('This ', 'is ', 'a ', 'list');
 $logger->warn('This ', 'is ', 'another ', 'list');
 $logger->warn(warning => ['This ', 'is ', 'a ', 'ref ', 'to ', 'a ', 'list']);
 
+throws_ok(sub { $logger->_log('warn', 'should not be logged') }, qr/private method/, '_log is private method');
+
 diag(Data::Dumper->new([\@log_array])->Dump()) if($ENV{'TEST_VERBOSE'});
 
 is_deeply(

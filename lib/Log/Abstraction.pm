@@ -16,6 +16,10 @@ use Return::Set;
 use Sys::Syslog 0.28;	# Import Sys::Syslog for syslog support
 use Scalar::Util 'blessed';	# Import Scalar::Util for object reference checking
 
+BEGIN {
+	require mro;
+}
+
 =encoding utf-8
 
 =head1 NAME
@@ -297,12 +301,11 @@ sub _sanitize_email_header {
 # $logger->_log($level, @messages);
 # $logger->_log($level, \@messages);
 
-sub _log
-{
+sub _log {
 	my ($self, $level, @messages) = @_;
 
 	if(!UNIVERSAL::isa((caller)[0], __PACKAGE__)) {
-		Carp::croak('Illegal Operation: This method can only be called by a subclass or ourself');
+		Carp::croak('Illegal Operation: _log is a private method');
 	}
 
 	if(!defined($syslog_values{$level})) {
@@ -326,7 +329,7 @@ sub _log
 	# Push the message to the internal messages array
 	push @{$self->{messages}}, { level => $level, message => $str };
 
-	my $class = blessed($self) || '';
+	my $class = blessed($self) || $self;
 	if($class eq __PACKAGE__) {
 		$class = '';
 	}
@@ -426,7 +429,7 @@ sub _log
 					}
 				}
 			}
-				
+
 			if(my $fout = $logger->{'fd'}) {
 				print $fout uc($level), "> $class ", (caller(1))[1], ' ', (caller(1))[2], " $str\n" or
 					die "ref($self): Can't write to file descriptor: $!";
@@ -535,7 +538,7 @@ sub messages
 {
 	my $self = $_[0];
 
-	return $self->{'messages'};
+	return [ @{$self->{messages}} ];	# Return a shallow copy
 }
 
 =head2 debug
