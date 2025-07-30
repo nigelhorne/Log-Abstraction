@@ -3,6 +3,7 @@ Revision history for Log-Abstraction
 0.25
 	Added is_debug for consistency with Log::Any
 	Use Return::Set to assert return values within specification
+	Sanitize the e-mail headers
 
 0.24	Sat Jul 19 16:52:41 EDT 2025
 	Added the ability to send an email for higher priority messages

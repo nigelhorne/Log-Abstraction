@@ -238,6 +238,14 @@ sub new {
 	}, $class;
 }
 
+sub _sanitize_email_header {
+	my $value = $_[0];
+
+	return unless defined $value;
+	$value =~ s/\r\n?|\n//g;  # Remove CR/LF characters
+	return $value;
+}
+
 # Internal method to log messages. This method is called by other logging methods.
 # $logger->_log($level, @messages);
 # $logger->_log($level, \@messages);
@@ -314,14 +322,14 @@ sub _log
 				   ($syslog_values{$level} <= $syslog_values{$logger->{'sendmail'}->{'level'}})) {
 					eval {
 						my $email = Email::Simple->new('');
-						$email->header_set('to', $logger->{'sendmail'}->{'to'});
+						$email->header_set('to', _sanitize_email_header($logger->{'sendmail'}->{'to'}));
 						if(my $from = $logger->{'sendmail'}->{'from'}) {
-							$email->header_set('from', $from);
+							$email->header_set('from', _sanitize_email_header($from));
 						} else {
 							$email->header_set('from', 'noreply@localhost');
 						}
 						if(my $subject = $logger->{'sendmail'}->{'subject'}) {
-							$email->header_set('subject', $subject);
+							$email->header_set('subject', _sanitize_email_header($subject));
 						}
 						$email->body_set(join(' ', @messages));
 
@@ -478,7 +486,7 @@ Return all the messages emitted so far
 
 sub messages
 {
-	my $self = shift;
+	my $self = $_[0];
 
 	return $self->{'messages'};
 }
@@ -619,7 +627,7 @@ sub _high_priority
 
 # Destructor to close syslog connection
 sub DESTROY {
-	my $self = shift;
+	my $self = $_[0];
 
 	if($self->{_syslog_opened}) {
 		closelog();
