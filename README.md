@@ -78,7 +78,8 @@ The following arguments can be provided:
         - file - containing the filename
 
     Defaults to [Log::Log4perl](https://metacpan.org/pod/Log%3A%3ALog4perl).
-    In that case the argument 'verbose' to new() will raise the logging level.
+    In that case,
+    the argument 'verbose' to new() will raise the logging level.
 
 - `syslog`
 
@@ -99,7 +100,8 @@ Clone existing objects with or without modifications:
 
 ## level
 
-Get/set the minimum level to log at
+Get/set the minimum level to log at.
+Returns the current level, as an integer.
 
 ## is\_debug
 
@@ -108,7 +110,7 @@ For compatability with [Log::Any](https://metacpan.org/pod/Log%3A%3AAny).
 
 ## messages
 
-Return all the messages emmitted so far
+Return all the messages emitted so far
 
 ## debug
 

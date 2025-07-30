@@ -12,6 +12,7 @@ use Email::Sender::Simple qw(sendmail);
 use Email::Sender::Transport::SMTP;
 use Params::Get 0.05;	# Import Params::Get for parameter handling
 use Readonly::Values::Syslog 0.02;
+use Return::Set;
 use Sys::Syslog 0.28;	# Import Sys::Syslog for syslog support
 use Scalar::Util 'blessed';	# Import Scalar::Util for object reference checking
 
@@ -118,7 +119,8 @@ A logger can be one or more of:
 =back
 
 Defaults to L<Log::Log4perl>.
-In that case the argument 'verbose' to new() will raise the logging level.
+In that case,
+the argument 'verbose' to new() will raise the logging level.
 
 =item * C<syslog>
 
@@ -435,7 +437,8 @@ sub _log
 
 =head2 level
 
-Get/set the minimum level to log at
+Get/set the minimum level to log at.
+Returns the current level, as an integer.
 
 =cut
 
@@ -450,7 +453,7 @@ sub level
 		}
 		$self->{'level'} = $syslog_values{$level};
 	}
-	return $self->{'level'};
+	return Return::Set::set_return($self->{'level'}, { 'type' => 'integer', 'min' => 0, 'max' => 7 });
 }
 
 =head2	is_debug
@@ -469,7 +472,7 @@ sub is_debug
 
 =head2 messages
 
-Return all the messages emmitted so far
+Return all the messages emitted so far
 
 =cut
 
