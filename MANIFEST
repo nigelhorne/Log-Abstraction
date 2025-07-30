@@ -19,4 +19,5 @@ t/pod-coverage.t
 t/pod-synopsis.t
 t/pod.t
 t/sendmail.t
+t/subclass.t
 t/syslog.t
