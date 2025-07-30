@@ -16,6 +16,8 @@ use Return::Set;
 use Sys::Syslog 0.28;	# Import Sys::Syslog for syslog support
 use Scalar::Util 'blessed';	# Import Scalar::Util for object reference checking
 
+=encoding utf-8
+
 =head1 NAME
 
 Log::Abstraction - Logging Abstraction Layer
@@ -238,12 +240,57 @@ sub new {
 	}, $class;
 }
 
+=head2 _sanitize_email_header
+
+    my $clean_value = _sanitize_email_header($raw_value);
+
+Internal routine to remove carriage return and line feed characters from an email header value to prevent header injection or formatting issues.
+
+=over 4
+
+=item * Input
+
+Takes a single scalar value, typically a string representing an email header field.
+
+=item * Behavior
+
+If the input is undefined, returns `undef`. Otherwise, removes all newline characters (`\n`), carriage returns (`\r`), and CRLF pairs from the string.
+
+=item * Output
+
+Returns the sanitized string with CR/LF characters removed.
+
+=back
+
+=head3 FORMAL SPECIFICATION
+
+If the input is undefined (∅), the output is also undefined (∅).
+
+If the input is defined, the result is a defined string with CR and LF characters removed.
+
+[CHAR]
+
+CR, LF : CHAR
+CR == '\r'
+LF == '\n'
+
+STRING == seq CHAR
+
+SanitizeEmailHeader
+    raw?: STRING
+    sanitized!: STRING
+    -------------------------------------------------
+    sanitized! = [ c : raw? | c ≠ CR ∧ c ≠ LF ]
+
+=cut
+
 sub _sanitize_email_header {
 	my $value = $_[0];
 
 	return unless defined $value;
-	$value =~ s/\r\n?|\n//g;  # Remove CR/LF characters
-	return $value;
+	$value =~ s/\r\n?|\n//g;	# Remove CR/LF characters
+
+	return Return::Set::set_return($value, { type => 'string', 'matches' => qr /^[^\r\n]*$/ });
 }
 
 # Internal method to log messages. This method is called by other logging methods.

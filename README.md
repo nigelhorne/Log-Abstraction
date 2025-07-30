@@ -98,6 +98,44 @@ Clone existing objects with or without modifications:
 
     my $clone = $logger->new();
 
+## \_sanitize\_email\_header
+
+    my $clean_value = _sanitize_email_header($raw_value);
+
+Internal routine to remove carriage return and line feed characters from an email header value to prevent header injection or formatting issues.
+
+- Input
+
+    Takes a single scalar value, typically a string representing an email header field.
+
+- Behavior
+
+    If the input is undefined, returns \`undef\`. Otherwise, removes all newline characters (\`\\n\`), carriage returns (\`\\r\`), and CRLF pairs from the string.
+
+- Output
+
+    Returns the sanitized string with CR/LF characters removed.
+
+### FORMAL SPECIFICATION
+
+If the input is undefined (∅), the output is also undefined (∅).
+
+If the input is defined, the result is a defined string with CR and LF characters removed.
+
+\[CHAR\]
+
+CR, LF : CHAR
+CR == '\\r'
+LF == '\\n'
+
+STRING == seq CHAR
+
+SanitizeEmailHeader
+    raw?: STRING
+    sanitized!: STRING
+    -------------------------------------------------
+    sanitized! = \[ c : raw? | c ≠ CR ∧ c ≠ LF \]
+
 ## level
 
 Get/set the minimum level to log at.
