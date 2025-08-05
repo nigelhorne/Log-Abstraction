@@ -26,7 +26,7 @@ WriteMakefile(
 		'Email::Sender::Transport::SMTP' => 0,
 		'ExtUtils::MakeMaker' => 6.64,	# Minimum version for TEST_REQUIRES
 		'Log::Log4perl' => 0,
-		'Params::Get' => 0.05,
+		'Params::Get' => 0.13,
 		'Readonly::Values::Syslog' => 0.02,
 		'Return::Set' => 0,
 		'Sys::Syslog' => 0.28,

@@ -10,15 +10,11 @@ use Data::Dumper;
 use Email::Simple;
 use Email::Sender::Simple qw(sendmail);
 use Email::Sender::Transport::SMTP;
-use Params::Get 0.05;	# Import Params::Get for parameter handling
+use Params::Get 0.13;	# Import Params::Get for parameter handling
 use Readonly::Values::Syslog 0.02;
 use Return::Set;
 use Sys::Syslog 0.28;	# Import Sys::Syslog for syslog support
 use Scalar::Util 'blessed';	# Import Scalar::Util for object reference checking
-
-BEGIN {
-	require mro;
-}
 
 =encoding utf-8
 
@@ -687,7 +683,7 @@ sub DESTROY {
 
 =head1 AUTHOR
 
-Nigel Horne C< <njh@nigelhorne.com> >
+Nigel Horne C<njh@nigelhorne.com>
 
 =head1 SUPPORT
 
