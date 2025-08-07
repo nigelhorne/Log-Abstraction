@@ -46,9 +46,9 @@ like($log_lines[0], qr/File debug message/, 'Logged correct debug message to fil
 like($log_lines[1], qr/INFO> /, 'Logged info message to file');
 like($log_lines[1], qr/File info message/, 'Logged correct info message to file');
 
-# As above but with the file argument
+# As above but with the file argument, and changing the output format
 ($fh, $filename) = tempfile();
-$logger = Log::Abstraction->new(logger => { file => $filename }, level => 'debug');
+$logger = Log::Abstraction->new(logger => { file => $filename }, level => 'debug', format => '<%level%!! %message%');
 
 $logger->debug('File debug message2');
 $logger->info('File info message2');
@@ -57,9 +57,9 @@ open $log_fh, '<', $filename or die "Could not open log file: $!";
 @log_lines = <$log_fh>;
 close $log_fh;
 
-like($log_lines[0], qr/DEBUG> /, 'Logged debug message to file');
+like($log_lines[0], qr/<DEBUG!! /, 'Logged debug message to file');
 like($log_lines[0], qr/File debug message2/, 'Logged correct debug message to file');
-like($log_lines[1], qr/INFO> /, 'Logged info message to file');
+like($log_lines[1], qr/<INFO!! /, 'Logged info message to file');
 like($log_lines[1], qr/File info message2/, 'Logged correct info message to file');
 
 # As above but by default debug and info aren't stashed
