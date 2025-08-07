@@ -365,7 +365,7 @@ sub _log {
 					Carp::croak(ref($self), ": Invalid file name: $file");
 				}
 				if(open(my $fout, '>>', $logger->{'file'})) {
-					my $format = $self->{'format'} || '%level%> %timestamp% %class% %callstack% %message%';
+					my $format = $self->{'format'} || '%level%> [%timestamp%] %class% %callstack% %message%';
 					my $ulevel = uc($level);
 					my $callstack = (caller(1))[1] . ' ' . (caller(1))[2];
 
@@ -447,7 +447,7 @@ sub _log {
 			}
 
 			if(my $fout = $logger->{'fd'}) {
-				my $format = $self->{'format'} || '%level%> %timestamp% %class% %callstack% %message%';
+				my $format = $self->{'format'} || '%level%> [%timestamp%] %class% %callstack% %message%';
 				my $ulevel = uc($level);
 				my $callstack = (caller(1))[1] . ' ' . (caller(1))[2];
 
@@ -464,7 +464,7 @@ sub _log {
 		} elsif(!ref($logger)) {
 			# If logger is a file path, append the log message to the file
 			if(open(my $fout, '>>', $logger)) {
-				my $format = $self->{'format'} || '%level%> %timestamp% %class% %callstack% %message%';
+				my $format = $self->{'format'} || '%level%> [%timestamp%] %class% %callstack% %message%';
 				my $ulevel = uc($level);
 				my $callstack = (caller(1))[1] . ' ' . (caller(1))[2];
 
@@ -512,9 +512,9 @@ sub _log {
 			my $format;
 
 			if(blessed($self) eq __PACKAGE__) {
-				$format = $self->{'format'} || '%level%> %timestamp% %callstack% %message%';
+				$format = $self->{'format'} || '%level%> [%timestamp%] %callstack% %message%';
 			} else {
-				$format = $self->{'format'} || '%level%> %timestamp% %class% %callstack% %message%';
+				$format = $self->{'format'} || '%level%> [%timestamp%] %class% %callstack% %message%';
 			}
 
 			$format =~ s/%level%/$ulevel/g;
@@ -533,9 +533,9 @@ sub _log {
 		my $format;
 
 		if(blessed($self) eq __PACKAGE__) {
-			$format = $self->{'format'} || '%level%> %timestamp% %callstack% %message%';
+			$format = $self->{'format'} || '%level%> [%timestamp%] %callstack% %message%';
 		} else {
-			$format = $self->{'format'} || '%level%> %timestamp% %class% %callstack% %message%';
+			$format = $self->{'format'} || '%level%> [%timestamp%] %class% %callstack% %message%';
 		}
 
 		$format =~ s/%level%/$ulevel/g;
