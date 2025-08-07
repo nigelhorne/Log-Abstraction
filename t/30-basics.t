@@ -88,9 +88,9 @@ open($log_fh, '<', $filename) or die "Could not open log file: $!";
 @log_lines = <$log_fh>;
 close $log_fh;
 
-like($log_lines[0], qr/DEBUG> Log::Abstraction/, 'Logged debug message to file descriptor');
+like($log_lines[0], qr/DEBUG>\s/, 'Logged debug message to file descriptor');
 like($log_lines[0], qr/File debug message/, 'Logged correct debug message to file descriptor');
-like($log_lines[1], qr/INFO> Log::Abstraction/, 'Logged info message to file descriptor');
+like($log_lines[1], qr/INFO>\s/, 'Logged info message to file descriptor');
 like($log_lines[1], qr/File info message/, 'Logged correct info message to file descriptor');
 
 # Test logging to a code reference

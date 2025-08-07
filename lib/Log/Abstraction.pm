@@ -360,17 +360,15 @@ sub _log {
 					Carp::croak(ref($self), ": Invalid file name: $file");
 				}
 				if(open(my $fout, '>>', $logger->{'file'})) {
-					if(my $format = $self->{'format'}) {
-						$format =~ s/%level%/uc($level)/g;
-						$format =~ s/%class%/$class)/g;
-						$format =~ s/%message%/$str/g;
-						$format =~ s/%callstack/(caller(1))[1] . ' ' . (caller(1))[2]/g;
-						print $fout "$format\n" or
-							Carp::croak(ref($self), ": Can't write to $file: $!");
-					} else {
-						print $fout uc($level), "> $class ", (caller(1))[1], ' ', (caller(1))[2], " $str\n" or
-							Carp::croak(ref($self), ": Can't write to $file: $!");
-					}
+					my $format = $self->{'format'} || '%level%> %class% %callstack% %message%';
+					my $ulevel = uc($level);
+					my $callstack = (caller(1))[1] . ' ' . (caller(1))[2];
+
+					$format =~ s/%level%/$ulevel/g;
+					$format =~ s/%class%/$class/g;
+					$format =~ s/%message%/$str/g;
+					$format =~ s/%callstack%/$callstack/g;
+					print $fout "$format\n" or Carp::croak(ref($self), ": Can't write to $file: $!");
 					close $fout;
 				}
 			}
@@ -443,20 +441,30 @@ sub _log {
 			}
 
 			if(my $fout = $logger->{'fd'}) {
-				print $fout uc($level), "> $class ", (caller(1))[1], ' ', (caller(1))[2], " $str\n" or
-					die "ref($self): Can't write to file descriptor: $!";
+				my $format = $self->{'format'} || '%level%> %class% %callstack% %message%';
+				my $ulevel = uc($level);
+				my $callstack = (caller(1))[1] . ' ' . (caller(1))[2];
+
+				$format =~ s/%level%/$ulevel/g;
+				$format =~ s/%class%/$class/g;
+				$format =~ s/%message%/$str/g;
+				$format =~ s/%callstack%/$callstack/g;
+				print $fout "$format\n" or Carp::croak(ref($self), ": Can't write to file descriptor: $!");
 			} elsif((!$logger->{'file'}) && (!$logger->{'syslog'}) && (!$logger->{'sendmail'})) {
 				croak(ref($self), ": Don't know how to deal with the $level message");
 			}
 		} elsif(!ref($logger)) {
 			# If logger is a file path, append the log message to the file
 			if(open(my $fout, '>>', $logger)) {
-				print $fout uc($level),
-					"> $class ",
-					(caller(1))[1],
-					' (',
-					(caller(1))[2],
-					"): $str\n";
+				my $format = $self->{'format'} || '%level%> %class% %callstack% %message%';
+				my $ulevel = uc($level);
+				my $callstack = (caller(1))[1] . ' ' . (caller(1))[2];
+
+				$format =~ s/%level%/$ulevel/g;
+				$format =~ s/%class%/$class/g;
+				$format =~ s/%message%/$str/g;
+				$format =~ s/%callstack%/$callstack/g;
+				print $fout "$format\n" or Carp::croak(ref($self), ": Can't write to $logger: $!");
 				close $fout;
 			}
 		} elsif(Scalar::Util::blessed($logger)) {
@@ -489,19 +497,42 @@ sub _log {
 		}
 
 		if(open(my $fout, '>>', $file)) {
+			my $ulevel = uc($level);
+			my $callstack = (caller(1))[1] . ' ' . (caller(1))[2];
+			my $format;
+
 			if(blessed($self) eq __PACKAGE__) {
-				print $fout uc($level), '> ', (caller(1))[1], '(', (caller(1))[2], ") $str\n" or
-					die "ref($self): Can't write to ", $self->{'file'}, ": $!";
+				$format = $self->{'format'} || '%level%> %callstack% %message%';
 			} else {
-				print $fout uc($level), '> ', blessed($self) || '', ' ', (caller(1))[1], '(', (caller(1))[2], ") $str\n" or
-					die "ref($self): Can't write to ", $self->{'file'}, ": $!";
+				$format = $self->{'format'} || '%level%> %class% %callstack% %message%';
 			}
+
+			$format =~ s/%level%/$ulevel/g;
+			$format =~ s/%class%/$class/g;
+			$format =~ s/%message%/$str/g;
+			$format =~ s/%callstack%/$callstack/g;
+
+			print $fout "$format\n" or Carp::croak("ref($self): Can't write to ", $self->{'file'}, ": $!");
 			close $fout;
 		}
 	}
 	if(my $fout = $self->{'fd'}) {
-		print $fout uc($level), '> ', blessed($self) || '', ' ', (caller(1))[1], '(', (caller(1))[2], ") $str\n" or
-			croak(ref($self), ": Can't write to file descriptor: $!");
+		my $ulevel = uc($level);
+		my $callstack = (caller(1))[1] . ' ' . (caller(1))[2];
+		my $format;
+
+		if(blessed($self) eq __PACKAGE__) {
+			$format = $self->{'format'} || '%level%> %callstack% %message%';
+		} else {
+			$format = $self->{'format'} || '%level%> %class% %callstack% %message%';
+		}
+
+		$format =~ s/%level%/$ulevel/g;
+		$format =~ s/%class%/$class/g;
+		$format =~ s/%message%/$str/g;
+		$format =~ s/%callstack%/$callstack/g;
+
+		print $fout "$format\n" or Carp::croak(ref($self), ": Can't write to file descriptor: $!");
 	}
 }
 
