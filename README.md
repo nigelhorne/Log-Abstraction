@@ -67,19 +67,26 @@ The following arguments can be provided:
     A logger can be one or more of:
 
     - a code reference
-    - an array reference
-    - a file path
-    - a file descriptor
     - an object
     - a hash of options
     - sendmail - send higher priority messages to an email address
-        - array - a reference to an array
-        - fd - containing a file descriptor to log to
-        - file - containing the filename
+    - array - a reference to an array
+    - fd - containing a file descriptor to log to
+    - file - containing the filename
 
     Defaults to [Log::Log4perl](https://metacpan.org/pod/Log%3A%3ALog4perl).
     In that case,
     the argument 'verbose' to new() will raise the logging level.
+
+- `format`
+
+    The format of the message.
+    Expands:
+
+    - %level%
+    - %class%
+    - %message%
+    - %callstack%
 
 - `syslog`
 
@@ -198,7 +205,7 @@ Helper to handle important messages.
 
 # AUTHOR
 
-Nigel Horne ` <njh@nigelhorne.com` >
+Nigel Horne `njh@nigelhorne.com`
 
 # SUPPORT
 

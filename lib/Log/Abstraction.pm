@@ -96,19 +96,11 @@ A logger can be one or more of:
 
 =item * a code reference
 
-=item * an array reference
-
-=item * a file path
-
-=item * a file descriptor
-
 =item * an object
 
 =item * a hash of options
 
 =item * sendmail - send higher priority messages to an email address
-
-=over
 
 =item * array - a reference to an array
 
@@ -118,11 +110,26 @@ A logger can be one or more of:
 
 =back
 
-=back
-
 Defaults to L<Log::Log4perl>.
 In that case,
 the argument 'verbose' to new() will raise the logging level.
+
+=item * C<format>
+
+The format of the message.
+Expands:
+
+=over
+
+=item * %level%
+
+=item * %class%
+
+=item * %message%
+
+=item * %callstack%
+
+=back
 
 =item * C<syslog>
 
@@ -353,8 +360,17 @@ sub _log {
 					Carp::croak(ref($self), ": Invalid file name: $file");
 				}
 				if(open(my $fout, '>>', $logger->{'file'})) {
-					print $fout uc($level), "> $class ", (caller(1))[1], ' ', (caller(1))[2], " $str\n" or
-						Carp::croak(ref($self), ": Can't write to $file: $!");
+					if(my $format = $self->{'format'}) {
+						$format =~ s/%level%/uc($level)/g;
+						$format =~ s/%class%/$class)/g;
+						$format =~ s/%message%/$str/g;
+						$format =~ s/%callstack/(caller(1))[1] . ' ' . (caller(1))[2]/g;
+						print $fout "$format\n" or
+							Carp::croak(ref($self), ": Can't write to $file: $!");
+					} else {
+						print $fout uc($level), "> $class ", (caller(1))[1], ' ', (caller(1))[2], " $str\n" or
+							Carp::croak(ref($self), ": Can't write to $file: $!");
+					}
 					close $fout;
 				}
 			}
