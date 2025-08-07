@@ -27,7 +27,8 @@ WriteMakefile(
 		'ExtUtils::MakeMaker' => 6.64,	# Minimum version for TEST_REQUIRES
 		'Log::Log4perl' => 0,
 		'Params::Get' => 0.13,
-		'Readonly::Values::Syslog' => 0.02,
+		'POSIX' => 0,
+		'Readonly::Values::Syslog' => 0.03,
 		'Return::Set' => 0,
 		'Sys::Syslog' => 0.28,
 		'Scalar::Util'=> 0

@@ -83,10 +83,11 @@ The following arguments can be provided:
     The format of the message.
     Expands:
 
+    - %callstack%
     - %level%
     - %class%
     - %message%
-    - %callstack%
+    - %timestamp%
 
 - `syslog`
 
