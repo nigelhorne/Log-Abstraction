@@ -132,6 +132,10 @@ Expands:
 
 =item * %timestamp%
 
+=%item * %env_foo%
+
+Replaces with C<$ENV{foo}>
+
 =back
 
 =item * C<syslog>
@@ -374,6 +378,7 @@ sub _log {
 					$format =~ s/%message%/$str/g;
 					$format =~ s/%callstack%/$callstack/g;
 					$format =~ s/%timestamp%/$timestamp/g;
+					$format =~ s/%env_(\w+)%/$ENV{$1}/g;
 					print $fout "$format\n" or Carp::croak(ref($self), ": Can't write to $file: $!");
 					close $fout;
 				}
@@ -456,6 +461,7 @@ sub _log {
 				$format =~ s/%message%/$str/g;
 				$format =~ s/%callstack%/$callstack/g;
 				$format =~ s/%timestamp%/$timestamp/g;
+				$format =~ s/%env_(\w+)%/$ENV{$1}/g;
 
 				print $fout "$format\n" or Carp::croak(ref($self), ": Can't write to file descriptor: $!");
 			} elsif((!$logger->{'file'}) && (!$logger->{'syslog'}) && (!$logger->{'sendmail'})) {
@@ -473,6 +479,7 @@ sub _log {
 				$format =~ s/%message%/$str/g;
 				$format =~ s/%callstack%/$callstack/g;
 				$format =~ s/%timestamp%/$timestamp/g;
+				$format =~ s/%env_(\w+)%/$ENV{$1}/g;
 
 				print $fout "$format\n" or Carp::croak(ref($self), ": Can't write to $logger: $!");
 				close $fout;
@@ -522,6 +529,7 @@ sub _log {
 			$format =~ s/%message%/$str/g;
 			$format =~ s/%callstack%/$callstack/g;
 			$format =~ s/%timestamp%/$timestamp/g;
+			$format =~ s/%env_(\w+)%/$ENV{$1}/g;
 
 			print $fout "$format\n" or Carp::croak("ref($self): Can't write to ", $self->{'file'}, ": $!");
 			close $fout;
@@ -543,6 +551,7 @@ sub _log {
 		$format =~ s/%message%/$str/g;
 		$format =~ s/%callstack%/$callstack/g;
 		$format =~ s/%timestamp%/$timestamp/g;
+		$format =~ s/%env_(\w+)%/$ENV{$1}/g;
 
 		print $fout "$format\n" or Carp::croak(ref($self), ": Can't write to file descriptor: $!");
 	}
