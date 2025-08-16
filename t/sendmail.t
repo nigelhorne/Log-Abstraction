@@ -3,7 +3,8 @@
 use strict;
 use warnings;
 
-use Email::Sender::Transport::SMTP;
+use Test::Needs 'Email::Sender::Transport::SMTP';
+
 use Test::Mockingbird;
 use Test::Most;
 

@@ -7,9 +7,6 @@ use warnings;
 use Carp;	# Import Carp for warnings
 use Config::Abstraction 0.25;
 use Data::Dumper;
-use Email::Simple;
-use Email::Sender::Simple qw(sendmail);
-use Email::Sender::Transport::SMTP;
 use Params::Get 0.13;	# Import Params::Get for parameter handling
 use POSIX qw(strftime);
 use Readonly::Values::Syslog 0.03;
@@ -392,6 +389,12 @@ sub _log {
 				if((!defined($logger->{'sendmail'}->{'level'})) ||
 				   ($syslog_values{$level} <= $syslog_values{$logger->{'sendmail'}->{'level'}})) {
 					eval {
+						# require Email::Sender::Simple qw(sendmail);
+
+						Email::Simple->import();
+						Email::Sender::Simple->import();
+						Email::Sender::Transport::SMTP->import();
+
 						my $email = Email::Simple->new('');
 						$email->header_set('to', _sanitize_email_header($logger->{'sendmail'}->{'to'}));
 						if(my $from = $logger->{'sendmail'}->{'from'}) {
