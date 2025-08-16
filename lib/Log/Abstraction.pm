@@ -100,6 +100,8 @@ A logger can be one or more of:
 
 =item * sendmail - send higher priority messages to an email address
 
+To send an e-mail you need L<require Email::Simple>, L<require Email::Sender::Simple> and L<Email::Sender::Transport::SMTP>.
+
 =item * array - a reference to an array
 
 =item * fd - containing a file descriptor to log to
@@ -389,10 +391,12 @@ sub _log {
 				if((!defined($logger->{'sendmail'}->{'level'})) ||
 				   ($syslog_values{$level} <= $syslog_values{$logger->{'sendmail'}->{'level'}})) {
 					eval {
-						# require Email::Sender::Simple qw(sendmail);
+						require Email::Simple;
+						require Email::Sender::Simple;
+						require Email::Sender::Transport::SMTP;
 
 						Email::Simple->import();
-						Email::Sender::Simple->import();
+						Email::Sender::Simple->import('sendmail');
 						Email::Sender::Transport::SMTP->import();
 
 						my $email = Email::Simple->new('');

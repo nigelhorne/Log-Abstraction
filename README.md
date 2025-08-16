@@ -70,6 +70,9 @@ The following arguments can be provided:
     - an object
     - a hash of options
     - sendmail - send higher priority messages to an email address
+
+        To send an e-mail you need ["require Email::Simple"](#require-email-simple), ["require Email::Sender::Simple"](#require-email-sender-simple) and [Email::Sender::Transport::SMTP](https://metacpan.org/pod/Email%3A%3ASender%3A%3ATransport%3A%3ASMTP).
+
     - array - a reference to an array
     - fd - containing a file descriptor to log to
     - file - containing the filename
@@ -88,6 +91,10 @@ The following arguments can be provided:
     - %class%
     - %message%
     - %timestamp%
+
+        &#x3d;%item \* %env\_foo%
+
+        Replaces with `$ENV{foo}`
 
 - `syslog`
 
