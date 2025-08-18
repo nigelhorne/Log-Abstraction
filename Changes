@@ -1,6 +1,6 @@
 Revision history for Log-Abstraction
 
-0.25
+0.25	Sun Aug 17 20:41:38 EDT 2025
 	Added is_debug for consistency with Log::Any
 	Use Return::Set to assert return values within specification
 	Sanitize the e-mail headers
