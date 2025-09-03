@@ -51,10 +51,16 @@
 <h1>Log::Abstraction</h1><h2>Coverage Report</h2>
 <table>
 <tr><th>File</th><th>Stmt</th><th>Branch</th><th>Cond</th><th>Sub</th><th>Total</th><th>&Delta;</th></tr>
-<tr class="low"><td><a href="blib-lib-Log-Abstraction-pm.html" title="View coverage line by line">blib/lib/Log/Abstraction.pm</a> <a href="https://github.com/nigelhorne/Log-Abstraction/blob/3ae55b2ea6873eee257116d3b6de23fcc6b14655/blib/lib/Log/Abstraction.pm" class="icon-link" title="View source on GitHub">&#128269;</a></td><td>69.6</td><td>57.9</td><td>34.3</td><td>92.0</td><td><span class="coverage-badge badge-bad" title="Needs improvement">62.7%</span></td><td class="neutral" title="No previous data">&#9679;</td></tr>
+<tr class="low"><td><a href="blib-lib-Log-Abstraction-pm.html" title="View coverage line by line">blib/lib/Log/Abstraction.pm</a> <a href="https://github.com/nigelhorne/Log-Abstraction/blob/9bbed27e3c67289f4648d758db8864500858f0fa/blib/lib/Log/Abstraction.pm" class="icon-link" title="View source on GitHub">&#128269;</a></td><td>69.6</td><td>57.9</td><td>34.3</td><td>92.0</td><td><span class="coverage-badge badge-bad" title="Needs improvement">62.7%</span></td><td class="neutral" title="Previous: 62.7%">&#9679; 0.0%</td></tr>
 <tr class="summary-row"><td colspan="2"><strong>Summary</strong></td><td colspan="2">1 files</td><td colspan="3">Avg: 62%, Low: 1</td></tr>
 <tr class="med"><td><strong>Total</strong></td><td>69.6</td><td>57.9</td><td>34.3</td><td>92.0</td><td colspan="2"><strong>62.7</strong></td></tr>
 </table>
+<p>
+	<label>
+		<input type="checkbox" id="toggleTrend" checked>
+		Show regression trend
+	</label>
+</p>
 <canvas id="coverageTrend" width="600" height="300"></canvas>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
@@ -78,7 +84,7 @@ function linearRegression(data) {
 	}));
 }
 
-const dataPoints = [  ];
+const dataPoints = [ { x: "2025-09-03T08:28:59-04:00", y: 62.6641651031895, delta: 0, url: "https://github.com/nigelhorne/Log-Abstraction/commit/3ae55b2", label: "2025-09-03T08:28:59-04:00", pointBackgroundColor: "gray", comment: "Fix clashing names" } ];
 const regressionPoints = linearRegression(dataPoints);
 const ctx = document.getElementById('coverageTrend').getContext('2d');
 const chart = new Chart(ctx, {
@@ -161,7 +167,7 @@ document.getElementById('toggleTrend').addEventListener('change', function(e) {
 </script>
 <footer>
 	<p>Project: <a href="https://github.com/nigelhorne/Log-Abstraction">Log-Abstraction</a></p>
-	<p><em>Last updated: 2025-09-03 12:33:11 - <a href="https://github.com/nigelhorne/Log-Abstraction/commit/3ae55b2ea6873eee257116d3b6de23fcc6b14655">commit <code>3ae55b2</code></a></em></p>
+	<p><em>Last updated: 2025-09-03 12:43:29 - <a href="https://github.com/nigelhorne/Log-Abstraction/commit/9bbed27e3c67289f4648d758db8864500858f0fa">commit <code>9bbed27</code></a></em></p>
 </footer>
 </body>
 </html>
