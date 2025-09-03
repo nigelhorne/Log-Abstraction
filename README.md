@@ -67,6 +67,15 @@ The following arguments can be provided:
     A logger can be one or more of:
 
     - a code reference
+
+        The code will be called with a hashref containing:
+
+        - class
+        - file
+        - line
+        - level
+        - message - an arrayref of messages
+
     - an object
     - a hash of options
     - sendmail - send higher priority messages to an email address

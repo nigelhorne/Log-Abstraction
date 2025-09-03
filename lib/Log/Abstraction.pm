@@ -94,6 +94,22 @@ A logger can be one or more of:
 
 =item * a code reference
 
+The code will be called with a hashref containing:
+
+=over
+
+=item * class
+
+=item * file
+
+=item * line
+
+=item * level
+
+=item * message - an arrayref of messages
+
+=back
+
 =item * an object
 
 =item * a hash of options
