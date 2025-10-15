@@ -42,6 +42,14 @@ The following arguments can be provided:
     and `logger` is not given,
     call `Carp:carp` on `warn()`.
 
+    Causes `error()` to `carp` if `croak_on_error` is not given.
+
+- `croak_on_error`
+
+    If set to 1,
+    and `logger` is not given,
+    call `Carp:croak` on `error()`.
+
 - `config_file`
 
     Points to a configuration file which contains the parameters to `new()`.
@@ -168,7 +176,7 @@ Returns the current level, as an integer.
 ## is\_debug
 
 Are we at a debug level that will emit debug messages?
-For compatability with [Log::Any](https://metacpan.org/pod/Log%3A%3AAny).
+For compatibility with [Log::Any](https://metacpan.org/pod/Log%3A%3AAny).
 
 ## messages
 

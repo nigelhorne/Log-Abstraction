@@ -66,6 +66,14 @@ If set to 1,
 and C<logger> is not given,
 call C<Carp:carp> on C<warn()>.
 
+Causes C<error()> to C<carp> if C<croak_on_error> is not given.
+
+=item * C<croak_on_error>
+
+If set to 1,
+and C<logger> is not given,
+call C<Carp:croak> on C<error()>.
+
 =item * C<config_file>
 
 Points to a configuration file which contains the parameters to C<new()>.
@@ -604,7 +612,7 @@ sub level
 =head2	is_debug
 
 Are we at a debug level that will emit debug messages?
-For compatability with L<Log::Any>.
+For compatibility with L<Log::Any>.
 
 =cut
 
@@ -677,7 +685,6 @@ falls back to C<Carp>.
 
 =cut
 
-# TODO: do similar things to warn()
 sub error {
 	my $self = shift;
 
@@ -748,13 +755,23 @@ sub _high_priority
 	}
 
 	if($self eq __PACKAGE__) {
-		# If called from a class method, use Carp to warn
+		# If called from a class method, use Croak/Carp to warn
+		if($syslog_values{$level} <= $syslog_values{'error'}) {
+			Carp::croak($warning);
+		}
 		Carp::carp($warning);
 		return;
 	}
 
 	# Log the warning message
 	$self->_log($level, $warning);
+
+	if($syslog_values{$level} <= $syslog_values{'error'}) {
+		# Fallback to Croak if no logger or syslog is defined
+		if($self->{'croak_on_error'} || !defined($self->{logger})) {
+			Carp::croak($warning);
+		}
+	}
 
 	if($self->{'carp_on_warn'} || !defined($self->{logger})) {
 		# Fallback to Carp if no logger or syslog is defined
