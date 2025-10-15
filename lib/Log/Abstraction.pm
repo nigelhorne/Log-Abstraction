@@ -5,7 +5,7 @@ package Log::Abstraction;
 use strict;
 use warnings;
 use Carp;	# Import Carp for warnings
-use Config::Abstraction 0.25;
+use Config::Abstraction 0.36;
 use Data::Dumper;
 use Params::Get 0.13;	# Import Params::Get for parameter handling
 use POSIX qw(strftime);
@@ -22,11 +22,11 @@ Log::Abstraction - Logging Abstraction Layer
 
 =head1 VERSION
 
-0.25
+0.26
 
 =cut
 
-our $VERSION = 0.25;
+our $VERSION = 0.26;
 
 =head1 SYNOPSIS
 

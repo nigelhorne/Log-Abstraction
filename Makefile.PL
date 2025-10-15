@@ -19,7 +19,7 @@ WriteMakefile(
 		: ()),
 	PREREQ_PM => {
 		'Carp'	 => 0,
-		'Config::Abstraction' => 0.25,
+		'Config::Abstraction' => 0.36,
 		'Data::Dumper' => 0,
 		'ExtUtils::MakeMaker' => 6.64,	# Minimum version for TEST_REQUIRES
 		'Log::Log4perl' => 0,
