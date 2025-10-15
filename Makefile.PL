@@ -61,9 +61,10 @@ WriteMakefile(
 				web => 'https://github.com/nigelhorne/Log-Abstraction'
 			}, bugtracker => {
 				mailto => 'bug-Log-Abstraction@rt.cpan.org',
-				url => 'https://github.com/nigelhorne/Log-Abstraction/issues',
-				# web => 'https://rt.cpan.org/Public/Dist/Display.html?Name=Log-Abstraction',
-				web => 'https://github.com/nigelhorne/Log-Abstraction/issues'
+				url => 'https://rt.cpan.org/Public/Dist/Display.html?Name=Log-Abstraction',
+				web => 'https://rt.cpan.org/Public/Dist/Display.html?Name=Log-Abstraction',
+				# url => 'https://github.com/nigelhorne/Log-Abstraction/issues',
+				# web => 'https://github.com/nigelhorne/Log-Abstraction/issues'
 			}
 		},
 	},

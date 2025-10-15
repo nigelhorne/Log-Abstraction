@@ -88,7 +88,8 @@ The following arguments can be provided:
     - a hash of options
     - sendmail - send higher priority messages to an email address
 
-        To send an e-mail you need ["require Email::Simple"](#require-email-simple), ["require Email::Sender::Simple"](#require-email-sender-simple) and [Email::Sender::Transport::SMTP](https://metacpan.org/pod/Email%3A%3ASender%3A%3ATransport%3A%3ASMTP).
+        To send an e-mail,
+        you need ["require Email::Simple"](#require-email-simple), ["require Email::Sender::Simple"](#require-email-sender-simple) and [Email::Sender::Transport::SMTP](https://metacpan.org/pod/Email%3A%3ASender%3A%3ATransport%3A%3ASMTP).
 
     - array - a reference to an array
     - fd - containing a file descriptor to log to
@@ -231,6 +232,10 @@ Helper to handle important messages.
 # AUTHOR
 
 Nigel Horne `njh@nigelhorne.com`
+
+# SEE ALSO
+
+- Test coverage report: [https://nigelhorne.github.io/Log-Abstraction/coverage/](https://nigelhorne.github.io/Log-Abstraction/coverage/)
 
 # SUPPORT
 
