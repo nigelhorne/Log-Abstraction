@@ -124,7 +124,8 @@ The code will be called with a hashref containing:
 
 =item * sendmail - send higher priority messages to an email address
 
-To send an e-mail you need L<require Email::Simple>, L<require Email::Sender::Simple> and L<Email::Sender::Transport::SMTP>.
+To send an e-mail,
+you need L<require Email::Simple>, L<require Email::Sender::Simple> and L<Email::Sender::Transport::SMTP>.
 
 =item * array - a reference to an array
 
@@ -792,6 +793,14 @@ sub DESTROY {
 =head1 AUTHOR
 
 Nigel Horne C<njh@nigelhorne.com>
+
+=head1 SEE ALSO
+
+=over 4
+
+=item * Test coverage report: L<https://nigelhorne.github.io/Log-Abstraction/coverage/>
+
+=back
 
 =head1 SUPPORT
 

@@ -31,13 +31,20 @@ WriteMakefile(
 		'Scalar::Util'=> 0
 	},
 	TEST_REQUIRES => {
+		'File::Glob' => 0,	# scripts/generate_index
+		'File::Slurp' => 0,
+		'File::Spec' => 0,
+		'File::stat' => 0,
+		'File::Temp' => 0,
+		'JSON::MaybeXS' => 0,
+		'POSIX' => 0,
+		'Readonly' => 0,
+		'IPC::System::Simple' => 0,
 		'Test::DescribeMe' => 0,
 		'Test::Mockingbird' => 0,
 		'Test::Most' => 0,
 		'Test::Needs' => 0,
 		'Test::Returns' => 0,
-		'File::Spec' => 0,
-		'File::Temp' => 0,
 		'YAML::XS' => 0
 	},
 	dist => $dist,
