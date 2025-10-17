@@ -757,7 +757,7 @@ sub _high_priority
 
 	if($self eq __PACKAGE__) {
 		# If called from a class method, use Croak/Carp to warn
-		if($syslog_values{$level} <= $syslog_values{'error'}) {
+		if($syslog_values{$level} <= $ERROR) {
 			Carp::croak($warning);
 		}
 		Carp::carp($warning);
@@ -767,8 +767,8 @@ sub _high_priority
 	# Log the warning message
 	$self->_log($level, $warning);
 
-	if($syslog_values{$level} <= $syslog_values{'error'}) {
-		# Fallback to Croak if no logger or syslog is defined
+	if($syslog_values{$level} <= $ERROR) {
+		# Fall back to Croak if no logger or syslog is defined
 		if($self->{'croak_on_error'} || !defined($self->{logger})) {
 			Carp::croak($warning);
 		}
