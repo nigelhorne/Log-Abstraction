@@ -28,16 +28,16 @@ https://pjcj.net
 <tr><td class="h"><a id="L192">192</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if (scalar @_ == 1 and ref $_[0] ne &#39;HASH&#39;) { }</td></tr>
 <tr><td class="h"></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">elsif (my $params = Params::Get::get_params(undef, @_)) { }</td></tr>
 <tr><td class="h"><a id="L199">199</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if (exists $args{&#39;config_file&#39;})</td></tr>
-<tr><td class="h"><a id="L201">201</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">unless (-r $args{&quot;config_file&quot;})</td></tr>
+<tr><td class="h"><a id="L201">201</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">unless (-r $args{&#39;config_file&#39;})</td></tr>
 <tr><td class="h"><a id="L204">204</a></td><td class="c0">50</td><td class="c3">T</td><td class="c0">F</td><td class="s">if (my $config = &#39;Config::Abstraction&#39;-&gt;new(&#39;config_dirs&#39;, [&#39;&#39;], &#39;config_file&#39;, $args{&#39;config_file&#39;}, &#39;env_prefix&#39;, &quot;${class}::&quot;)) { }</td></tr>
-<tr><td class="h"><a id="L206">206</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if ($$config{$class})</td></tr>
+<tr><td class="h"><a id="L206">206</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if ($config-&gt;{$class})</td></tr>
 <tr><td class="h"><a id="L211">211</a></td><td class="c0">50</td><td class="c0">T</td><td class="c3">F</td><td class="s">if ($array)</td></tr>
 <tr><td class="h"><a id="L219">219</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if (not defined $class) { }</td></tr>
 <tr><td class="h"></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">elsif (&amp;Scalar::Util::blessed($class)) { }</td></tr>
 <tr><td class="h"><a id="L220">220</a></td><td class="c0">50</td><td class="c0">T</td><td class="c3">F</td><td class="s">if (scalar keys %args &gt; 0)</td></tr>
-<tr><td class="h"><a id="L235">235</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if ($args{&quot;syslog&quot;} and not $args{&quot;script_name&quot;})</td></tr>
+<tr><td class="h"><a id="L235">235</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if ($args{&#39;syslog&#39;} and not $args{&#39;script_name&#39;})</td></tr>
 <tr><td class="h"><a id="L236">236</a></td><td class="c0">50</td><td class="c0">T</td><td class="c3">F</td><td class="s">unless &quot;File::Basename&quot;-&gt;can(&quot;basename&quot;)</td></tr>
-<tr><td class="h"><a id="L241">241</a></td><td class="c0">50</td><td class="c0">T</td><td class="c3">F</td><td class="s">unless defined $args{&quot;script_name&quot;}</td></tr>
+<tr><td class="h"><a id="L241">241</a></td><td class="c0">50</td><td class="c0">T</td><td class="c3">F</td><td class="s">unless defined $args{&#39;script_name&#39;}</td></tr>
 <tr><td class="h"><a id="L245">245</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if (defined(my $logger = $args{&#39;logger&#39;})) { }</td></tr>
 <tr><td class="h"></td><td class="c0">50</td><td class="c3">T</td><td class="c0">F</td><td class="s">elsif (not $args{&#39;file&#39;} || $args{&#39;array&#39;}) { }</td></tr>
 <tr><td class="h"><a id="L246">246</a></td><td class="c0">50</td><td class="c0">T</td><td class="c3">F</td><td class="s">if (&amp;Scalar::Util::blessed($logger) and ref $logger eq __PACKAGE__)</td></tr>
@@ -48,51 +48,51 @@ https://pjcj.net
 <tr><td class="h"><a id="L328">328</a></td><td class="c0">0</td><td class="c0">T</td><td class="c0">F</td><td class="s">unless defined $value</td></tr>
 <tr><td class="h"><a id="L341">341</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">unless (UNIVERSAL::isa((&amp;CORE::GLOBAL::caller())[0], __PACKAGE__))</td></tr>
 <tr><td class="h"><a id="L345">345</a></td><td class="c0">50</td><td class="c0">T</td><td class="c3">F</td><td class="s">unless (defined $Log::Abstraction::syslog_values{$level})</td></tr>
-<tr><td class="h"><a id="L349">349</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if ($Log::Abstraction::syslog_values{$level} &gt; $$self{&quot;level&quot;})</td></tr>
+<tr><td class="h"><a id="L349">349</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if ($Log::Abstraction::syslog_values{$level} &gt; $self-&gt;{&#39;level&#39;})</td></tr>
 <tr><td class="h"><a id="L354">354</a></td><td class="c0">50</td><td class="c0">T</td><td class="c3">F</td><td class="s">if (scalar @messages == 1 and ref $messages[0] eq &quot;ARRAY&quot;)</td></tr>
 <tr><td class="h"><a id="L367">367</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if ($class eq __PACKAGE__)</td></tr>
-<tr><td class="h"><a id="L373">373</a></td><td class="c0">50</td><td class="c3">T</td><td class="c0">F</td><td class="s">if (my $logger = $$self{&#39;logger&#39;}) { }</td></tr>
-<tr><td class="h"></td><td class="c0">0</td><td class="c0">T</td><td class="c0">F</td><td class="s">elsif ($$self{&#39;array&#39;}) { }</td></tr>
+<tr><td class="h"><a id="L373">373</a></td><td class="c0">50</td><td class="c3">T</td><td class="c0">F</td><td class="s">if (my $logger = $self-&gt;{&#39;logger&#39;}) { }</td></tr>
+<tr><td class="h"></td><td class="c0">0</td><td class="c0">T</td><td class="c0">F</td><td class="s">elsif ($self-&gt;{&#39;array&#39;}) { }</td></tr>
 <tr><td class="h"><a id="L374">374</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if (ref $logger eq &#39;CODE&#39;) { }</td></tr>
 <tr><td class="h"></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">elsif (ref $logger eq &#39;ARRAY&#39;) { }</td></tr>
 <tr><td class="h"></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">elsif (ref $logger eq &#39;HASH&#39;) { }</td></tr>
 <tr><td class="h"></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">elsif (not ref $logger) { }</td></tr>
 <tr><td class="h"></td><td class="c0">50</td><td class="c3">T</td><td class="c0">F</td><td class="s">elsif (&amp;Scalar::Util::blessed($logger)) { }</td></tr>
-<tr><td class="h"><a id="L388">388</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if (my $file = $$logger{&quot;file&quot;})</td></tr>
+<tr><td class="h"><a id="L388">388</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if (my $file = $logger-&gt;{&#39;file&#39;})</td></tr>
 <tr><td class="h"><a id="L390">390</a></td><td class="c0">50</td><td class="c3">T</td><td class="c0">F</td><td class="s">if ($file =~ /^([^&lt;&gt;|*?;!`$&quot;\0-\037]+)$/) { }</td></tr>
-<tr><td class="h"><a id="L395">395</a></td><td class="c0">50</td><td class="c3">T</td><td class="c0">F</td><td class="s">if (open my $fout, &quot;&gt;&gt;&quot;, $$logger{&quot;file&quot;})</td></tr>
+<tr><td class="h"><a id="L395">395</a></td><td class="c0">50</td><td class="c3">T</td><td class="c0">F</td><td class="s">if (open my $fout, &quot;&gt;&gt;&quot;, $logger-&gt;{&#39;file&#39;})</td></tr>
 <tr><td class="h"><a id="L406">406</a></td><td class="c0">50</td><td class="c0">T</td><td class="c3">F</td><td class="s">unless print $fout &quot;$format\n&quot;</td></tr>
-<tr><td class="h"><a id="L410">410</a></td><td class="c0">50</td><td class="c0">T</td><td class="c3">F</td><td class="s">if (my $array = $$logger{&quot;array&quot;})</td></tr>
-<tr><td class="h"><a id="L413">413</a></td><td class="c0">50</td><td class="c0">T</td><td class="c3">F</td><td class="s">if ($$logger{&quot;sendmail&quot;}{&quot;to&quot;})</td></tr>
-<tr><td class="h"><a id="L416">416</a></td><td class="c0">0</td><td class="c0">T</td><td class="c0">F</td><td class="s">if (not defined $$logger{&quot;sendmail&quot;}{&quot;level&quot;} or $Log::Abstraction::syslog_values{$level} &lt;= $Log::Abstraction::syslog_values{$$logger{&quot;sendmail&quot;}{&quot;level&quot;}})</td></tr>
-<tr><td class="h"><a id="L429">429</a></td><td class="c0">0</td><td class="c0">T</td><td class="c0">F</td><td class="s">if (my $from = $$logger{&#39;sendmail&#39;}{&#39;from&#39;}) { }</td></tr>
-<tr><td class="h"><a id="L434">434</a></td><td class="c0">0</td><td class="c0">T</td><td class="c0">F</td><td class="s">if (my $subject = $$logger{&quot;sendmail&quot;}{&quot;subject&quot;})</td></tr>
+<tr><td class="h"><a id="L410">410</a></td><td class="c0">50</td><td class="c0">T</td><td class="c3">F</td><td class="s">if (my $array = $logger-&gt;{&#39;array&#39;})</td></tr>
+<tr><td class="h"><a id="L413">413</a></td><td class="c0">50</td><td class="c0">T</td><td class="c3">F</td><td class="s">if ($logger-&gt;{&#39;sendmail&#39;}{&#39;to&#39;})</td></tr>
+<tr><td class="h"><a id="L416">416</a></td><td class="c0">0</td><td class="c0">T</td><td class="c0">F</td><td class="s">if (not defined $logger-&gt;{&#39;sendmail&#39;}{&#39;level&#39;} or $Log::Abstraction::syslog_values{$level} &lt;= $Log::Abstraction::syslog_values{$logger-&gt;{&#39;sendmail&#39;}{&#39;level&#39;}})</td></tr>
+<tr><td class="h"><a id="L429">429</a></td><td class="c0">0</td><td class="c0">T</td><td class="c0">F</td><td class="s">if (my $from = $logger-&gt;{&#39;sendmail&#39;}{&#39;from&#39;}) { }</td></tr>
+<tr><td class="h"><a id="L434">434</a></td><td class="c0">0</td><td class="c0">T</td><td class="c0">F</td><td class="s">if (my $subject = $logger-&gt;{&#39;sendmail&#39;}{&#39;subject&#39;})</td></tr>
 <tr><td class="h"><a id="L448">448</a></td><td class="c0">0</td><td class="c0">T</td><td class="c0">F</td><td class="s">if ($@)</td></tr>
-<tr><td class="h"><a id="L454">454</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if (my $syslog = $$logger{&quot;syslog&quot;})</td></tr>
-<tr><td class="h"><a id="L455">455</a></td><td class="c0">50</td><td class="c3">T</td><td class="c0">F</td><td class="s">if (not defined $$syslog{&quot;level&quot;} or $Log::Abstraction::syslog_values{$level} &lt;= $$syslog{&quot;level&quot;})</td></tr>
-<tr><td class="h"><a id="L456">456</a></td><td class="c0">50</td><td class="c3">T</td><td class="c0">F</td><td class="s">unless ($$self{&quot;_syslog_opened&quot;})</td></tr>
-<tr><td class="h"><a id="L461">461</a></td><td class="c0">50</td><td class="c0">T</td><td class="c3">F</td><td class="s">if ($$syslog{&quot;server&quot;})</td></tr>
+<tr><td class="h"><a id="L454">454</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if (my $syslog = $logger-&gt;{&#39;syslog&#39;})</td></tr>
+<tr><td class="h"><a id="L455">455</a></td><td class="c0">50</td><td class="c3">T</td><td class="c0">F</td><td class="s">if (not defined $syslog-&gt;{&#39;level&#39;} or $Log::Abstraction::syslog_values{$level} &lt;= $syslog-&gt;{&#39;level&#39;})</td></tr>
+<tr><td class="h"><a id="L456">456</a></td><td class="c0">50</td><td class="c3">T</td><td class="c0">F</td><td class="s">unless ($self-&gt;{&#39;_syslog_opened&#39;})</td></tr>
+<tr><td class="h"><a id="L461">461</a></td><td class="c0">50</td><td class="c0">T</td><td class="c3">F</td><td class="s">if ($syslog-&gt;{&#39;server&#39;})</td></tr>
 <tr><td class="h"><a id="L464">464</a></td><td class="c0">50</td><td class="c0">T</td><td class="c3">F</td><td class="s">if scalar keys %{$syslog;}</td></tr>
 <tr><td class="h"><a id="L474">474</a></td><td class="c0">50</td><td class="c0">T</td><td class="c3">F</td><td class="s">$level eq &#39;error&#39; ? :</td></tr>
 <tr><td class="h"><a id="L478">478</a></td><td class="c0">50</td><td class="c0">T</td><td class="c3">F</td><td class="s">if ($@)</td></tr>
-<tr><td class="h"><a id="L486">486</a></td><td class="c0">50</td><td class="c0">T</td><td class="c3">F</td><td class="s">if (my $fout = $$logger{&#39;fd&#39;}) { }</td></tr>
-<tr><td class="h"></td><td class="c0">50</td><td class="c0">T</td><td class="c3">F</td><td class="s">elsif (not $$logger{&#39;file&#39;} || $$logger{&#39;syslog&#39;} || $$logger{&#39;sendmail&#39;}) { }</td></tr>
+<tr><td class="h"><a id="L486">486</a></td><td class="c0">50</td><td class="c0">T</td><td class="c3">F</td><td class="s">if (my $fout = $logger-&gt;{&#39;fd&#39;}) { }</td></tr>
+<tr><td class="h"></td><td class="c0">50</td><td class="c0">T</td><td class="c3">F</td><td class="s">elsif (not $logger-&gt;{&#39;file&#39;} || $logger-&gt;{&#39;syslog&#39;} || $logger-&gt;{&#39;sendmail&#39;}) { }</td></tr>
 <tr><td class="h"><a id="L498">498</a></td><td class="c0">0</td><td class="c0">T</td><td class="c0">F</td><td class="s">unless print $fout &quot;$format\n&quot;</td></tr>
 <tr><td class="h"><a id="L504">504</a></td><td class="c0">50</td><td class="c3">T</td><td class="c0">F</td><td class="s">if (open my $fout, &quot;&gt;&gt;&quot;, $logger)</td></tr>
 <tr><td class="h"><a id="L516">516</a></td><td class="c0">50</td><td class="c0">T</td><td class="c3">F</td><td class="s">unless print $fout &quot;$format\n&quot;</td></tr>
 <tr><td class="h"><a id="L521">521</a></td><td class="c0">50</td><td class="c0">T</td><td class="c3">F</td><td class="s">unless ($logger-&gt;can($level))</td></tr>
 <tr><td class="h"><a id="L522">522</a></td><td class="c0">0</td><td class="c0">T</td><td class="c0">F</td><td class="s">if ($level eq &#39;notice&#39; and $logger-&gt;can(&#39;info&#39;)) { }</td></tr>
-<tr><td class="h"><a id="L537">537</a></td><td class="c0">50</td><td class="c0">T</td><td class="c3">F</td><td class="s">if ($$self{&quot;file&quot;})</td></tr>
+<tr><td class="h"><a id="L537">537</a></td><td class="c0">50</td><td class="c0">T</td><td class="c3">F</td><td class="s">if ($self-&gt;{&#39;file&#39;})</td></tr>
 <tr><td class="h"><a id="L542">542</a></td><td class="c0">0</td><td class="c0">T</td><td class="c0">F</td><td class="s">if ($file =~ /^([^&lt;&gt;|*?;!`$&quot;\0-\037]+)$/) { }</td></tr>
 <tr><td class="h"><a id="L548">548</a></td><td class="c0">0</td><td class="c0">T</td><td class="c0">F</td><td class="s">if (open my $fout, &quot;&gt;&gt;&quot;, $file)</td></tr>
 <tr><td class="h"><a id="L553">553</a></td><td class="c0">0</td><td class="c0">T</td><td class="c0">F</td><td class="s">if (&amp;blessed($self) eq __PACKAGE__) { }</td></tr>
 <tr><td class="h"><a id="L566">566</a></td><td class="c0">0</td><td class="c0">T</td><td class="c0">F</td><td class="s">unless print $fout &quot;$format\n&quot;</td></tr>
-<tr><td class="h"><a id="L570">570</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if (my $fout = $$self{&quot;fd&quot;})</td></tr>
+<tr><td class="h"><a id="L570">570</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if (my $fout = $self-&gt;{&#39;fd&#39;})</td></tr>
 <tr><td class="h"><a id="L575">575</a></td><td class="c0">50</td><td class="c3">T</td><td class="c0">F</td><td class="s">if (&amp;blessed($self) eq __PACKAGE__) { }</td></tr>
 <tr><td class="h"><a id="L588">588</a></td><td class="c0">50</td><td class="c0">T</td><td class="c3">F</td><td class="s">unless print $fout &quot;$format\n&quot;</td></tr>
 <tr><td class="h"><a id="L603">603</a></td><td class="c0">50</td><td class="c3">T</td><td class="c0">F</td><td class="s">if ($level)</td></tr>
 <tr><td class="h"><a id="L604">604</a></td><td class="c0">50</td><td class="c0">T</td><td class="c3">F</td><td class="s">unless (defined $Log::Abstraction::syslog_values{$level})</td></tr>
-<tr><td class="h"><a id="L624">624</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">$$self{&#39;level&#39;} &amp;&amp; $$self{&#39;level&#39;} &gt;= $Log::Abstraction::DEBUG ? :</td></tr>
+<tr><td class="h"><a id="L624">624</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">$self-&gt;{&#39;level&#39;} &amp;&amp; $self-&gt;{&#39;level&#39;} &gt;= $Log::Abstraction::DEBUG ? :</td></tr>
 <tr><td class="h"><a id="L739">739</a></td><td class="c0">50</td><td class="c0">T</td><td class="c3">F</td><td class="s">unless $params and ref $params eq &quot;HASH&quot;</td></tr>
 <tr><td class="h"><a id="L742">742</a></td><td class="c0">50</td><td class="c0">T</td><td class="c3">F</td><td class="s">if $Log::Abstraction::syslog_values{$level} &gt; $Log::Abstraction::WARNING</td></tr>
 <tr><td class="h"><a id="L745">745</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">unless (defined $warning)</td></tr>
@@ -101,9 +101,9 @@ https://pjcj.net
 <tr><td class="h"><a id="L758">758</a></td><td class="c0">50</td><td class="c0">T</td><td class="c3">F</td><td class="s">if ($self eq __PACKAGE__)</td></tr>
 <tr><td class="h"><a id="L760">760</a></td><td class="c0">0</td><td class="c0">T</td><td class="c0">F</td><td class="s">if ($Log::Abstraction::syslog_values{$level} &lt;= $Log::Abstraction::ERROR)</td></tr>
 <tr><td class="h"><a id="L770">770</a></td><td class="c0">50</td><td class="c0">T</td><td class="c3">F</td><td class="s">if ($Log::Abstraction::syslog_values{$level} &lt;= $Log::Abstraction::ERROR)</td></tr>
-<tr><td class="h"><a id="L772">772</a></td><td class="c0">0</td><td class="c0">T</td><td class="c0">F</td><td class="s">if ($$self{&quot;croak_on_error&quot;} or not defined $$self{&quot;logger&quot;})</td></tr>
-<tr><td class="h"><a id="L777">777</a></td><td class="c0">50</td><td class="c0">T</td><td class="c3">F</td><td class="s">if ($$self{&quot;carp_on_warn&quot;} or not defined $$self{&quot;logger&quot;})</td></tr>
-<tr><td class="h"><a id="L787">787</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if ($$self{&quot;_syslog_opened&quot;})</td></tr>
+<tr><td class="h"><a id="L772">772</a></td><td class="c0">0</td><td class="c0">T</td><td class="c0">F</td><td class="s">if ($self-&gt;{&#39;croak_on_error&#39;} or not defined $self-&gt;{&#39;logger&#39;})</td></tr>
+<tr><td class="h"><a id="L777">777</a></td><td class="c0">50</td><td class="c0">T</td><td class="c3">F</td><td class="s">if ($self-&gt;{&#39;carp_on_warn&#39;} or not defined $self-&gt;{&#39;logger&#39;})</td></tr>
+<tr><td class="h"><a id="L787">787</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if ($self-&gt;{&#39;_syslog_opened&#39;})</td></tr>
 </table>
 </body>
 </html>
