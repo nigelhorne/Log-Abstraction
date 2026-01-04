@@ -682,11 +682,25 @@ sub notice {
 
 Logs an error message. This method also supports logging to syslog if configured.
 If not logging mechanism is set,
-falls back to C<Carp>.
+falls back to C<Croak>.
 
 =cut
 
 sub error {
+	my $self = shift;
+
+	$self->_high_priority('error', @_);
+}
+
+=head2 fatal
+
+    $logger->fatal(@messages);
+
+Synonym of error.
+
+=cut
+
+sub fatal {
 	my $self = shift;
 
 	$self->_high_priority('error', @_);
@@ -840,7 +854,7 @@ L<http://deps.cpantesters.org/?module=Log::Abstraction>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2025 Nigel Horne
+Copyright (C) 2025-2026 Nigel Horne
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.
