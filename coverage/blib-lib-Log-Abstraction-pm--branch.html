@@ -93,17 +93,17 @@ https://pjcj.net
 <tr><td class="h"><a id="L603">603</a></td><td class="c0">50</td><td class="c3">T</td><td class="c0">F</td><td class="s">if ($level)</td></tr>
 <tr><td class="h"><a id="L604">604</a></td><td class="c0">50</td><td class="c0">T</td><td class="c3">F</td><td class="s">unless (defined $Log::Abstraction::syslog_values{$level})</td></tr>
 <tr><td class="h"><a id="L624">624</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">$self-&gt;{&#39;level&#39;} &amp;&amp; $self-&gt;{&#39;level&#39;} &gt;= $Log::Abstraction::DEBUG ? :</td></tr>
-<tr><td class="h"><a id="L739">739</a></td><td class="c0">50</td><td class="c0">T</td><td class="c3">F</td><td class="s">unless $params and ref $params eq &quot;HASH&quot;</td></tr>
-<tr><td class="h"><a id="L742">742</a></td><td class="c0">50</td><td class="c0">T</td><td class="c3">F</td><td class="s">if $Log::Abstraction::syslog_values{$level} &gt; $Log::Abstraction::WARNING</td></tr>
-<tr><td class="h"><a id="L745">745</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">unless (defined $warning)</td></tr>
-<tr><td class="h"><a id="L746">746</a></td><td class="c0">50</td><td class="c3">T</td><td class="c0">F</td><td class="s">if (scalar @_ and not ref $_[0]) { }</td></tr>
-<tr><td class="h"><a id="L753">753</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if (ref $warning eq &quot;ARRAY&quot;)</td></tr>
-<tr><td class="h"><a id="L758">758</a></td><td class="c0">50</td><td class="c0">T</td><td class="c3">F</td><td class="s">if ($self eq __PACKAGE__)</td></tr>
-<tr><td class="h"><a id="L760">760</a></td><td class="c0">0</td><td class="c0">T</td><td class="c0">F</td><td class="s">if ($Log::Abstraction::syslog_values{$level} &lt;= $Log::Abstraction::ERROR)</td></tr>
-<tr><td class="h"><a id="L770">770</a></td><td class="c0">50</td><td class="c0">T</td><td class="c3">F</td><td class="s">if ($Log::Abstraction::syslog_values{$level} &lt;= $Log::Abstraction::ERROR)</td></tr>
-<tr><td class="h"><a id="L772">772</a></td><td class="c0">0</td><td class="c0">T</td><td class="c0">F</td><td class="s">if ($self-&gt;{&#39;croak_on_error&#39;} or not defined $self-&gt;{&#39;logger&#39;})</td></tr>
-<tr><td class="h"><a id="L777">777</a></td><td class="c0">50</td><td class="c0">T</td><td class="c3">F</td><td class="s">if ($self-&gt;{&#39;carp_on_warn&#39;} or not defined $self-&gt;{&#39;logger&#39;})</td></tr>
-<tr><td class="h"><a id="L787">787</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if ($self-&gt;{&#39;_syslog_opened&#39;})</td></tr>
+<tr><td class="h"><a id="L753">753</a></td><td class="c0">50</td><td class="c0">T</td><td class="c3">F</td><td class="s">unless $params and ref $params eq &quot;HASH&quot;</td></tr>
+<tr><td class="h"><a id="L756">756</a></td><td class="c0">50</td><td class="c0">T</td><td class="c3">F</td><td class="s">if $Log::Abstraction::syslog_values{$level} &gt; $Log::Abstraction::WARNING</td></tr>
+<tr><td class="h"><a id="L759">759</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">unless (defined $warning)</td></tr>
+<tr><td class="h"><a id="L760">760</a></td><td class="c0">50</td><td class="c3">T</td><td class="c0">F</td><td class="s">if (scalar @_ and not ref $_[0]) { }</td></tr>
+<tr><td class="h"><a id="L767">767</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if (ref $warning eq &quot;ARRAY&quot;)</td></tr>
+<tr><td class="h"><a id="L772">772</a></td><td class="c0">50</td><td class="c0">T</td><td class="c3">F</td><td class="s">if ($self eq __PACKAGE__)</td></tr>
+<tr><td class="h"><a id="L774">774</a></td><td class="c0">0</td><td class="c0">T</td><td class="c0">F</td><td class="s">if ($Log::Abstraction::syslog_values{$level} &lt;= $Log::Abstraction::ERROR)</td></tr>
+<tr><td class="h"><a id="L784">784</a></td><td class="c0">50</td><td class="c0">T</td><td class="c3">F</td><td class="s">if ($Log::Abstraction::syslog_values{$level} &lt;= $Log::Abstraction::ERROR)</td></tr>
+<tr><td class="h"><a id="L786">786</a></td><td class="c0">0</td><td class="c0">T</td><td class="c0">F</td><td class="s">if ($self-&gt;{&#39;croak_on_error&#39;} or not defined $self-&gt;{&#39;logger&#39;})</td></tr>
+<tr><td class="h"><a id="L791">791</a></td><td class="c0">50</td><td class="c0">T</td><td class="c3">F</td><td class="s">if ($self-&gt;{&#39;carp_on_warn&#39;} or not defined $self-&gt;{&#39;logger&#39;})</td></tr>
+<tr><td class="h"><a id="L801">801</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if ($self-&gt;{&#39;_syslog_opened&#39;})</td></tr>
 </table>
 </body>
 </html>
