@@ -589,14 +589,14 @@ sub _log {
 	}
 }
 
-=head2 level
+=head2 level($self, $level)
 
 Get/set the minimum level to log at.
 Returns the current level, as an integer.
 
 =cut
 
-sub level
+sub level()
 {
 	my ($self, $level) = @_;
 
