@@ -1,6 +1,6 @@
 Revision history for Log-Abstraction
 
-0.27
+0.27	Sun Jan 11 09:52:54 EST 2026
 	Easier to read tests
 	Added fatal as a synonym for error
 
