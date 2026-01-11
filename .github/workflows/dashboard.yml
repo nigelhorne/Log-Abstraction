@@ -1,6 +1,6 @@
 ---
 # Create https://nigelhorne.github.io/Log-Abstraction/coverage/
-name: CI
+name: Test Dashboard
 
 permissions:
   contents: write  # needed to push to gh-pages
@@ -41,7 +41,7 @@ jobs:
       - name: Install dependencies
         run: |
           cpanm --notest --installdeps .
-          cpanm -iqn ExtUtils::MakeMaker Test::Most Devel::Cover Devel::Cover::Report::Html
+          cpanm -iqn ExtUtils::MakeMaker Test::Most Devel::Cover Devel::Cover::Report::Html POSIX File::Glob File::Slurp File::stat Readonly IPC::System::Simple
 
       # Optional: run Perl::Critic static checks
       # - name: Run Perl::Critic
@@ -54,7 +54,7 @@ jobs:
           prove -l -b -v t
 
       # Run the tests with Devel::Cover for coverage
-      - name: Run Test Coverage
+      - name: Run tests with coverage
         env:
           PERL5LIB: ${{ github.workspace }}/local/lib/perl5
           COVER_VERBOSE: 1
