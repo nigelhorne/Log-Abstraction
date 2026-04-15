@@ -1,0 +1,395 @@
+{
+   "runs" : [
+      {
+         "OS" : "linux",
+         "abstract" : "Logging Abstraction Layer",
+         "dir" : "/home/runner/work/Log-Abstraction/Log-Abstraction",
+         "finish" : 1776295477.6517,
+         "name" : "Log-Abstraction",
+         "perl" : "5.40.4",
+         "run" : "-e",
+         "start" : 1776295477.65141,
+         "version" : 0.27
+      },
+      {
+         "OS" : "linux",
+         "abstract" : "Logging Abstraction Layer",
+         "dir" : "/home/runner/work/Log-Abstraction/Log-Abstraction",
+         "finish" : 1776295477.81252,
+         "name" : "Log-Abstraction",
+         "perl" : "5.40.4",
+         "run" : "-e",
+         "start" : 1776295477.81229,
+         "version" : 0.27
+      },
+      {
+         "OS" : "linux",
+         "abstract" : "Logging Abstraction Layer",
+         "dir" : "/home/runner/work/Log-Abstraction/Log-Abstraction",
+         "finish" : 1776295477.97444,
+         "name" : "Log-Abstraction",
+         "perl" : "5.40.4",
+         "run" : "-e",
+         "start" : 1776295477.97416,
+         "version" : 0.27
+      },
+      {
+         "OS" : "linux",
+         "abstract" : "Logging Abstraction Layer",
+         "dir" : "/home/runner/work/Log-Abstraction/Log-Abstraction",
+         "finish" : 1776295478.13667,
+         "name" : "Log-Abstraction",
+         "perl" : "5.40.4",
+         "run" : "-e",
+         "start" : 1776295478.13637,
+         "version" : 0.27
+      },
+      {
+         "OS" : "linux",
+         "abstract" : "Logging Abstraction Layer",
+         "dir" : "/home/runner/work/Log-Abstraction/Log-Abstraction",
+         "finish" : 1776295478.29818,
+         "name" : "Log-Abstraction",
+         "perl" : "5.40.4",
+         "run" : "-e",
+         "start" : 1776295478.29796,
+         "version" : 0.27
+      },
+      {
+         "OS" : "linux",
+         "abstract" : "Logging Abstraction Layer",
+         "dir" : "/home/runner/work/Log-Abstraction/Log-Abstraction",
+         "finish" : 1776295478.46325,
+         "name" : "Log-Abstraction",
+         "perl" : "5.40.4",
+         "run" : "-e",
+         "start" : 1776295478.46299,
+         "version" : 0.27
+      },
+      {
+         "OS" : "linux",
+         "abstract" : "Logging Abstraction Layer",
+         "dir" : "/home/runner/work/Log-Abstraction/Log-Abstraction",
+         "finish" : 1776295478.62927,
+         "name" : "Log-Abstraction",
+         "perl" : "5.40.4",
+         "run" : "-e",
+         "start" : 1776295478.62902,
+         "version" : 0.27
+      },
+      {
+         "OS" : "linux",
+         "abstract" : "Logging Abstraction Layer",
+         "dir" : "/home/runner/work/Log-Abstraction/Log-Abstraction",
+         "finish" : 1776295478.7973,
+         "name" : "Log-Abstraction",
+         "perl" : "5.40.4",
+         "run" : "-e",
+         "start" : 1776295478.79704,
+         "version" : 0.27
+      },
+      {
+         "OS" : "linux",
+         "abstract" : "Logging Abstraction Layer",
+         "dir" : "/home/runner/work/Log-Abstraction/Log-Abstraction",
+         "finish" : 1776295478.98162,
+         "name" : "Log-Abstraction",
+         "perl" : "5.40.4",
+         "run" : "-e",
+         "start" : 1776295478.97215,
+         "version" : 0.27
+      },
+      {
+         "OS" : "linux",
+         "abstract" : "Logging Abstraction Layer",
+         "dir" : "/home/runner/work/Log-Abstraction/Log-Abstraction",
+         "finish" : 1776295484.79547,
+         "name" : "Log-Abstraction",
+         "perl" : "5.40.4",
+         "run" : "-e",
+         "start" : 1776295479.18489,
+         "version" : 0.27
+      },
+      {
+         "OS" : "linux",
+         "abstract" : "Logging Abstraction Layer",
+         "dir" : "/home/runner/work/Log-Abstraction/Log-Abstraction",
+         "finish" : 1776295479.33194,
+         "name" : "Log-Abstraction",
+         "perl" : "5.40.4",
+         "run" : "-e",
+         "start" : 1776295479.33181,
+         "version" : 0.27
+      },
+      {
+         "OS" : "linux",
+         "abstract" : "Logging Abstraction Layer",
+         "dir" : "/home/runner/work/Log-Abstraction/Log-Abstraction",
+         "finish" : 1776295479.63825,
+         "name" : "Log-Abstraction",
+         "perl" : "5.40.4",
+         "run" : "t/00-load.t",
+         "start" : 1776295479.63712,
+         "version" : 0.27
+      },
+      {
+         "OS" : "linux",
+         "abstract" : "Logging Abstraction Layer",
+         "dir" : "/home/runner/work/Log-Abstraction/Log-Abstraction",
+         "finish" : 1776295479.91379,
+         "name" : "Log-Abstraction",
+         "perl" : "5.40.4",
+         "run" : "t/10-compile.t",
+         "start" : 1776295479.91375,
+         "version" : 0.27
+      },
+      {
+         "OS" : "linux",
+         "abstract" : "Logging Abstraction Layer",
+         "dir" : "/home/runner/work/Log-Abstraction/Log-Abstraction",
+         "finish" : 1776295480.22813,
+         "name" : "Log-Abstraction",
+         "perl" : "5.40.4",
+         "run" : "t/20-new.t",
+         "start" : 1776295480.20466,
+         "version" : 0.27
+      },
+      {
+         "OS" : "linux",
+         "abstract" : "Logging Abstraction Layer",
+         "dir" : "/home/runner/work/Log-Abstraction/Log-Abstraction",
+         "finish" : 1776295480.66637,
+         "name" : "Log-Abstraction",
+         "perl" : "5.40.4",
+         "run" : "t/30-basics.t",
+         "start" : 1776295480.63555,
+         "version" : 0.27
+      },
+      {
+         "OS" : "linux",
+         "abstract" : "Logging Abstraction Layer",
+         "dir" : "/home/runner/work/Log-Abstraction/Log-Abstraction",
+         "finish" : 1776295481.09548,
+         "name" : "Log-Abstraction",
+         "perl" : "5.40.4",
+         "run" : "t/code.t",
+         "start" : 1776295481.09321,
+         "version" : 0.27
+      },
+      {
+         "OS" : "linux",
+         "abstract" : "Logging Abstraction Layer",
+         "dir" : "/home/runner/work/Log-Abstraction/Log-Abstraction",
+         "finish" : 1776295481.43072,
+         "name" : "Log-Abstraction",
+         "perl" : "5.40.4",
+         "run" : "t/comment-spelling.t",
+         "start" : 1776295481.43047,
+         "version" : 0.27
+      },
+      {
+         "OS" : "linux",
+         "abstract" : "Logging Abstraction Layer",
+         "dir" : "/home/runner/work/Log-Abstraction/Log-Abstraction",
+         "finish" : 1776295481.76086,
+         "name" : "Log-Abstraction",
+         "perl" : "5.40.4",
+         "run" : "t/config_file.t",
+         "start" : 1776295481.69772,
+         "version" : 0.27
+      },
+      {
+         "OS" : "linux",
+         "abstract" : "Logging Abstraction Layer",
+         "dir" : "/home/runner/work/Log-Abstraction/Log-Abstraction",
+         "finish" : 1776295482.10266,
+         "name" : "Log-Abstraction",
+         "perl" : "5.40.4",
+         "run" : "t/eof.t",
+         "start" : 1776295482.1024,
+         "version" : 0.27
+      },
+      {
+         "OS" : "linux",
+         "abstract" : "Logging Abstraction Layer",
+         "dir" : "/home/runner/work/Log-Abstraction/Log-Abstraction",
+         "finish" : 1776295482.33315,
+         "name" : "Log-Abstraction",
+         "perl" : "5.40.4",
+         "run" : "t/eol.t",
+         "start" : 1776295482.33293,
+         "version" : 0.27
+      },
+      {
+         "OS" : "linux",
+         "abstract" : "Logging Abstraction Layer",
+         "dir" : "/home/runner/work/Log-Abstraction/Log-Abstraction",
+         "finish" : 1776295482.58978,
+         "name" : "Log-Abstraction",
+         "perl" : "5.40.4",
+         "run" : "t/error.t",
+         "start" : 1776295482.58953,
+         "version" : 0.27
+      },
+      {
+         "OS" : "linux",
+         "abstract" : "Logging Abstraction Layer",
+         "dir" : "/home/runner/work/Log-Abstraction/Log-Abstraction",
+         "finish" : 1776295482.82513,
+         "name" : "Log-Abstraction",
+         "perl" : "5.40.4",
+         "run" : "t/manifest.t",
+         "start" : 1776295482.82491,
+         "version" : 0.27
+      },
+      {
+         "OS" : "linux",
+         "abstract" : "Logging Abstraction Layer",
+         "dir" : "/home/runner/work/Log-Abstraction/Log-Abstraction",
+         "finish" : 1776295483.05454,
+         "name" : "Log-Abstraction",
+         "perl" : "5.40.4",
+         "run" : "t/pod-cm.t",
+         "start" : 1776295483.05431,
+         "version" : 0.27
+      },
+      {
+         "OS" : "linux",
+         "abstract" : "Logging Abstraction Layer",
+         "dir" : "/home/runner/work/Log-Abstraction/Log-Abstraction",
+         "finish" : 1776295483.28351,
+         "name" : "Log-Abstraction",
+         "perl" : "5.40.4",
+         "run" : "t/pod-coverage.t",
+         "start" : 1776295483.2833,
+         "version" : 0.27
+      },
+      {
+         "OS" : "linux",
+         "abstract" : "Logging Abstraction Layer",
+         "dir" : "/home/runner/work/Log-Abstraction/Log-Abstraction",
+         "finish" : 1776295483.51234,
+         "name" : "Log-Abstraction",
+         "perl" : "5.40.4",
+         "run" : "t/pod-synopsis.t",
+         "start" : 1776295483.51207,
+         "version" : 0.27
+      },
+      {
+         "OS" : "linux",
+         "abstract" : "Logging Abstraction Layer",
+         "dir" : "/home/runner/work/Log-Abstraction/Log-Abstraction",
+         "finish" : 1776295483.74187,
+         "name" : "Log-Abstraction",
+         "perl" : "5.40.4",
+         "run" : "t/pod.t",
+         "start" : 1776295483.74164,
+         "version" : 0.27
+      },
+      {
+         "OS" : "linux",
+         "abstract" : "Logging Abstraction Layer",
+         "dir" : "/home/runner/work/Log-Abstraction/Log-Abstraction",
+         "finish" : 1776295483.92186,
+         "name" : "Log-Abstraction",
+         "perl" : "5.40.4",
+         "run" : "t/sendmail.t",
+         "start" : 1776295483.92181,
+         "version" : 0.27
+      },
+      {
+         "OS" : "linux",
+         "abstract" : "Logging Abstraction Layer",
+         "dir" : "/home/runner/work/Log-Abstraction/Log-Abstraction",
+         "finish" : 1776295484.23173,
+         "name" : "Log-Abstraction",
+         "perl" : "5.40.4",
+         "run" : "t/subclass.t",
+         "start" : 1776295484.20992,
+         "version" : 0.27
+      },
+      {
+         "OS" : "linux",
+         "abstract" : "Logging Abstraction Layer",
+         "dir" : "/home/runner/work/Log-Abstraction/Log-Abstraction",
+         "finish" : 1776295484.6522,
+         "name" : "Log-Abstraction",
+         "perl" : "5.40.4",
+         "run" : "t/syslog.t",
+         "start" : 1776295484.65022,
+         "version" : 0.27
+      }
+   ],
+   "summary" : {
+      "Total" : {
+         "branch" : {
+            "covered" : 89,
+            "error" : 69,
+            "percentage" : 56.3291139240506,
+            "total" : 158,
+            "uncoverable" : 0
+         },
+         "condition" : {
+            "covered" : 24,
+            "error" : 49,
+            "percentage" : 32.8767123287671,
+            "total" : 73,
+            "uncoverable" : 0
+         },
+         "statement" : {
+            "covered" : 200,
+            "error" : 93,
+            "percentage" : 68.259385665529,
+            "total" : 293
+         },
+         "subroutine" : {
+            "covered" : 23,
+            "error" : 3,
+            "percentage" : 88.4615384615385,
+            "total" : 26
+         },
+         "total" : {
+            "covered" : 336,
+            "error" : 214,
+            "percentage" : 61.0909090909091,
+            "total" : 550,
+            "uncoverable" : 0
+         }
+      },
+      "blib/lib/Log/Abstraction.pm" : {
+         "branch" : {
+            "covered" : 89,
+            "error" : 69,
+            "percentage" : 56.3291139240506,
+            "total" : 158,
+            "uncoverable" : 0
+         },
+         "condition" : {
+            "covered" : 24,
+            "error" : 49,
+            "percentage" : 32.8767123287671,
+            "total" : 73,
+            "uncoverable" : 0
+         },
+         "statement" : {
+            "covered" : 200,
+            "error" : 93,
+            "percentage" : 68.259385665529,
+            "total" : 293
+         },
+         "subroutine" : {
+            "covered" : 23,
+            "error" : 3,
+            "percentage" : 88.4615384615385,
+            "total" : 26
+         },
+         "total" : {
+            "covered" : 336,
+            "error" : 214,
+            "percentage" : 61.0909090909091,
+            "total" : 550,
+            "uncoverable" : 0
+         }
+      }
+   }
+}
