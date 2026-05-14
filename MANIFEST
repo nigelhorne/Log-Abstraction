@@ -17,6 +17,7 @@ t/config_file.t
 t/eof.t
 t/eol.t
 t/error.t
+t/function.t
 t/manifest.t
 t/pod-cm.t
 t/pod-coverage.t
