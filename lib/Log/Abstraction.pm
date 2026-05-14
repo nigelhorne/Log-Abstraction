@@ -1,7 +1,5 @@
 package Log::Abstraction;
 
-# TODO: add a minimum logging level
-
 use strict;
 use warnings;
 use Carp;	# Import Carp for warnings
@@ -116,6 +114,8 @@ The code will be called with a hashref containing:
 
 =item * message - an arrayref of messages
 
+=item * ctx - passed to C<new()>, a argument that can help to give context to the caller
+
 =back
 
 =item * an object
@@ -191,7 +191,7 @@ sub new {
 
 	if((scalar(@_) == 1) && (ref($_[0]) ne 'HASH')) {
 		$args{'logger'} = shift;
-	} elsif(my $params = Params::Get::get_params(undef, @_)) {
+	} elsif(my $params = Params::Get::get_params(undef, \@_)) {
 		%args = %{$params};
 	}
 
@@ -228,6 +228,14 @@ sub new {
 	} elsif(Scalar::Util::blessed($class)) {
 		# If $class is an object, clone it with new arguments
 		my $clone = bless { %{$class}, %args }, ref($class);
+		if(my $level = $args{'level'}) {
+			# The clone is at a different level
+			$level = lc($level);
+			if(!defined($syslog_values{$level})) {
+				Carp::croak("$class: invalid syslog level '$level'");
+			}
+			$clone->{level} = $syslog_values{$level};
+		}
 		$clone->{messages} = [ @{$class->{messages}} ];	# Deep copy
 		return $clone;
 	}
@@ -343,7 +351,7 @@ sub _log {
 	}
 
 	if(!defined($syslog_values{$level})) {
-		Carp::Croak(ref($self), ": Invalid level '$level'");	# "Can't happen"
+		Carp::croak(ref($self), ": Invalid level '$level'");	# "Can't happen"
 	}
 
 	if($syslog_values{$level} > $self->{'level'}) {
@@ -373,14 +381,18 @@ sub _log {
 	if(my $logger = $self->{'logger'}) {
 		if(ref($logger) eq 'CODE') {
 			# If logger is a code reference, call it with log details
-			$logger->({
+			my $args = {
 				class => blessed($self) || __PACKAGE__,
 				file => (caller(1))[1],
 				# function => (caller(1))[3],
 				line => (caller(1))[2],
 				level => $level,
-				message => \@messages,
-			});
+				message => \@messages
+			};
+			if(my $ctx = $self->{ctx}) {
+				$args->{ctx} = $ctx;
+			};
+			$logger->($args);
 		} elsif(ref($logger) eq 'ARRAY') {
 			# If logger is an array reference, push the log message to the array
 			push @{$logger}, { level => $level, message => $str };
@@ -682,7 +694,7 @@ sub notice {
 
 Logs an error message. This method also supports logging to syslog if configured.
 If not logging mechanism is set,
-falls back to C<Croak>.
+falls back to C<croak>.
 
 =cut
 
@@ -747,12 +759,15 @@ sub _high_priority
 {
 	my $self = shift;
 	my $level = shift;	# 'warn' or 'error'
+
+	return if(scalar(@_) == 0);	# No message - return quickly
+
 	my $params = Params::Get::get_params('warning', @_);	# Get parameters
 
 	# Validate input parameters
 	return unless ($params && (ref($params) eq 'HASH'));
 
-	# Only logging things higher than warn level
+	# Only logging things at warning or higher
 	return if($syslog_values{$level} > $WARNING);
 
 	my $warning = $params->{warning};
@@ -770,7 +785,7 @@ sub _high_priority
 	}
 
 	if($self eq __PACKAGE__) {
-		# If called from a class method, use Croak/Carp to warn
+		# If called from a class method, use croak/carp to warn
 		if($syslog_values{$level} <= $ERROR) {
 			Carp::croak($warning);
 		}
@@ -782,13 +797,13 @@ sub _high_priority
 	$self->_log($level, $warning);
 
 	if($syslog_values{$level} <= $ERROR) {
-		# Fall back to Croak if no logger or syslog is defined
-		if($self->{'croak_on_error'} || !defined($self->{logger})) {
+		# Fall back to croak if no logger or syslog is defined
+		if($self->{'croak_on_error'} || (!defined($self->{logger}) && (!defined($self->{array})))) {
 			Carp::croak($warning);
 		}
 	}
 
-	if($self->{'carp_on_warn'} || !defined($self->{logger})) {
+	if($self->{'carp_on_warn'} || (!defined($self->{logger}) && (!defined($self->{array})))) {
 		# Fallback to Carp if no logger or syslog is defined
 		Carp::carp($warning);
 	}
@@ -799,7 +814,7 @@ sub DESTROY {
 	my $self = $_[0];
 
 	if($self->{_syslog_opened}) {
-		closelog();
+		Sys::Syslog::closelog();
 		delete $self->{_syslog_opened};
 	}
 }
@@ -856,8 +871,9 @@ L<http://deps.cpantesters.org/?module=Log::Abstraction>
 
 Copyright (C) 2025-2026 Nigel Horne
 
-This library is free software; you can redistribute it and/or modify
-it under the same terms as Perl itself.
+Usage is subject to the GPL2 licence terms.
+If you use it,
+please let me know.
 
 =cut
 
