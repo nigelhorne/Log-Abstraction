@@ -26,3 +26,4 @@ t/pod.t
 t/sendmail.t
 t/subclass.t
 t/syslog.t
+t/unit.t

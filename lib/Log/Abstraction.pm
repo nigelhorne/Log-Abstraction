@@ -12,8 +12,6 @@ use Return::Set;
 use Scalar::Util 'blessed';	# Import Scalar::Util for object reference checking
 use Sys::Syslog 0.28;	# Import Sys::Syslog for syslog support
 
-=encoding utf-8
-
 =head1 NAME
 
 Log::Abstraction - Logging Abstraction Layer
@@ -285,6 +283,8 @@ sub new {
 		level => $syslog_values{$args{'level'}},
 	}, $class;
 }
+
+=encoding utf-8
 
 =head2 _sanitize_email_header
 
@@ -827,7 +827,7 @@ Nigel Horne C<njh@nigelhorne.com>
 
 =over 4
 
-=item * Test coverage report: L<https://nigelhorne.github.io/Log-Abstraction/coverage/>
+=item * L<Test Dashboard|https://nigelhorne.github.io/Log-Abstraction/coverage/>
 
 =back
 
