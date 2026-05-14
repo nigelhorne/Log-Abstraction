@@ -505,7 +505,7 @@ sub _log {
 				$format =~ s/%message%/$str/g;
 				$format =~ s/%callstack%/$callstack/g;
 				$format =~ s/%timestamp%/$timestamp/g;
-				$format =~ s/%env_(\w+)%/$ENV{$1}/g;
+				$format =~ s/%env_(\w+)%/$ENV{$1} \/\/ ''/ge;
 
 				print $fout "$format\n" or Carp::croak(ref($self), ": Can't write to file descriptor: $!");
 			} elsif((!$logger->{'file'}) && (!$logger->{'syslog'}) && (!$logger->{'sendmail'})) {
@@ -523,7 +523,7 @@ sub _log {
 				$format =~ s/%message%/$str/g;
 				$format =~ s/%callstack%/$callstack/g;
 				$format =~ s/%timestamp%/$timestamp/g;
-				$format =~ s/%env_(\w+)%/$ENV{$1}/g;
+				$format =~ s/%env_(\w+)%/$ENV{$1} \/\/ ''/ge;
 
 				print $fout "$format\n" or Carp::croak(ref($self), ": Can't write to $logger: $!");
 				close $fout;
@@ -573,7 +573,7 @@ sub _log {
 			$format =~ s/%message%/$str/g;
 			$format =~ s/%callstack%/$callstack/g;
 			$format =~ s/%timestamp%/$timestamp/g;
-			$format =~ s/%env_(\w+)%/$ENV{$1}/g;
+			$format =~ s/%env_(\w+)%/$ENV{$1} \/\/ ''/ge;
 
 			print $fout "$format\n" or Carp::croak("ref($self): Can't write to ", $self->{'file'}, ": $!");
 			close $fout;
@@ -595,7 +595,7 @@ sub _log {
 		$format =~ s/%message%/$str/g;
 		$format =~ s/%callstack%/$callstack/g;
 		$format =~ s/%timestamp%/$timestamp/g;
-		$format =~ s/%env_(\w+)%/$ENV{$1}/g;
+		$format =~ s/%env_(\w+)%/$ENV{$1} \/\/ ''/ge;
 
 		print $fout "$format\n" or Carp::croak(ref($self), ": Can't write to file descriptor: $!");
 	}
@@ -746,6 +746,7 @@ falls back to C<Carp>.
 sub warn {
 	my $self = shift;
 
+	return if(scalar(@_) == 0);
 	$self->_high_priority('warn', @_);
 }
 
@@ -762,26 +763,26 @@ sub _high_priority
 
 	return if(scalar(@_) == 0);	# No message - return quickly
 
-	my $params = Params::Get::get_params('warning', @_);	# Get parameters
-
-	# Validate input parameters
-	return unless ($params && (ref($params) eq 'HASH'));
-
 	# Only logging things at warning or higher
 	return if($syslog_values{$level} > $WARNING);
 
-	my $warning = $params->{warning};
-	if(!defined($warning)) {
-		if(scalar(@_) && !ref($_[0])) {
-			# Given an array
-			$warning = join('', @_);
-		} else {
-			return;
+	my $warning;
+
+	# Check if called as warn(warning => ...) or warn('plain', 'args')
+	my $params = Params::Get::get_params('warning', @_);
+
+	if($params && ref($params) eq 'HASH' && exists($params->{warning})) {
+		$warning = $params->{warning};
+		return unless defined($warning);	# warn(warning => undef) → no-op
+		if(ref($warning) eq 'ARRAY') {
+			# Given "warning => [ ref to array ]"
+			$warning = join('', grep { defined } @{$warning});
 		}
-	}
-	if(ref($warning) eq 'ARRAY') {
-		# Given "message => [ ref to array ]"
-		$warning = join('', @{$warning});
+	} else {
+		# Plain list: warn('This ', 'is ', 'a ', 'list')
+		# Filter undefs and join
+		$warning = join('', grep { defined } @_);
+		return unless length($warning);		# all-undef list → no-op
 	}
 
 	if($self eq __PACKAGE__) {
