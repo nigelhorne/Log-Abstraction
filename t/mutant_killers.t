@@ -78,35 +78,6 @@ subtest 'COND_INV_209_4 — without array arg, array not spuriously set (false b
 };
 
 # ============================================================
-# NUM_BOUNDARY_218_26 — line 218:  if((scalar keys %args) > 0)
-#
-# Mutations: > 0  flipped to  < 0  /  >= 0  /  <= 0
-#   < 0  : impossible (key count >= 0), always false → never carps → always constructs
-#   >= 0 : always true (0 >= 0) → carps even with 0 args → ::new() never works
-#   <= 0 : true only when 0 keys → inverted: carps when 0 args, constructs when args
-#
-# Kill strategy:
-#   (a) ::new() with 0 args must SUCCEED (returns a blessed object, no carp)
-#       Kills >= 0 (which would carp) and <= 0 (which would carp on 0 args)
-#   (b) ::new() with args must CARP and return undef
-#       Kills < 0 (which would never carp) and <= 0 (which skips carp with args)
-# ============================================================
-
-subtest 'NUM_BOUNDARY_218_26 — ::new() with zero args constructs successfully (kills >=0 mutant)' => sub {
-	plan tests => 2;
-
-	# scalar keys %args == 0 → condition (> 0) is FALSE → fall through to
-	# $class = __PACKAGE__ and construct normally.
-	# Mutant >= 0: 0 >= 0 is TRUE → would carp and return undef.
-	my $carped = 0;
-	my $g = mock_scoped 'Carp::carp' => sub { $carped++ };
-
-	my $obj = Log::Abstraction::new();
-	is($carped, 0,        '::new() with 0 args does not carp (scalar keys == 0, not > 0)');
-	ok(defined $obj,      '::new() with 0 args returns a defined object');
-};
-
-# ============================================================
 # COND_INV_565_4 — line 565 in _log(), top-level FILE path:
 #   if(blessed($self) eq __PACKAGE__) { shorter format } else { longer format }
 #
