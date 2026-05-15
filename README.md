@@ -83,7 +83,7 @@ The following arguments can be provided:
         - line
         - level
         - message - an arrayref of messages
-        - ctx - passed to `new()`, a argument that can help to give context to the caller
+        - ctx - passed to `new()`, an argument that can help to give context to the caller
 
     - an object
     - a hash of options

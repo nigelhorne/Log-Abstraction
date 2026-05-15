@@ -112,7 +112,7 @@ The code will be called with a hashref containing:
 
 =item * message - an arrayref of messages
 
-=item * ctx - passed to C<new()>, a argument that can help to give context to the caller
+=item * ctx - passed to C<new()>, an argument that can help to give context to the caller
 
 =back
 
