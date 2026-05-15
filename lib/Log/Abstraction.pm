@@ -215,13 +215,7 @@ sub new {
 	}
 
 	if(!defined($class)) {
-		if((scalar keys %args) > 0) {
-			# Using Log::Abstraction:new(), not Log::Abstraction->new()
-			carp(__PACKAGE__, ' use ->new() not ::new() to instantiate');
-			return;
-		}
-
-		# FIXME: this only works when no arguments are given
+		# Using Log::Abstraction:new(), not Log::Abstraction->new()
 		$class = __PACKAGE__;
 	} elsif(Scalar::Util::blessed($class)) {
 		# If $class is an object, clone it with new arguments
@@ -376,7 +370,7 @@ sub _log {
 		$class = '';
 	}
 
-	my $timestamp = strftime "%Y-%m-%d %H:%M:%S", localtime;
+	my $timestamp = strftime '%Y-%m-%d %H:%M:%S', localtime;
 
 	if(my $logger = $self->{'logger'}) {
 		if(ref($logger) eq 'CODE') {
