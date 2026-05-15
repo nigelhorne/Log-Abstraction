@@ -513,89 +513,60 @@ Approximate LCSAJ segments: 175<br>
 </span><span class="">  215: 	}
 </span><span class="">  216: 
 </span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic."><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">217 → 217 → 235</span></span><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">217 → 217 → 0</span></span>  217: 	if(!defined($class)) {
-</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="survived-3 tooltip" data-tooltip="Boundary mutation survived. Add tests around edge values (e.g. min, max, off-by-one).">  218: 		# Using Log::Abstraction:new(), not Log::Abstraction-&gt;new()
-</span>
-					<details class="mutant-details">
-					<summary>Mutants (Total: 4, Killed: 1, Survived: 3)</summary>
-					<ul>
-				<li><b>NUM_BOUNDARY_218_26_<: Numeric boundary flip > to <</b><br>HIGH: Likely missing edge-case test (boundary value)
-
-								<div class="suggested-test">
-								<div class="suggest-label">🧪 Suggested Test</div>
-								<pre># Boundary test suggestion
-is( func(VALUE_AT_BOUNDARY), EXPECTED, &#39;Test boundary behaviour&#39; );
-</pre>
-								</div>
-							</li><li><b>NUM_BOUNDARY_218_26_>=: Numeric boundary flip > to >=</b><br>HIGH: Likely missing edge-case test (boundary value)
-
-								<div class="suggested-test">
-								<div class="suggest-label">🧪 Suggested Test</div>
-								<pre># Boundary test suggestion
-is( func(VALUE_AT_BOUNDARY), EXPECTED, &#39;Test boundary behaviour&#39; );
-</pre>
-								</div>
-							</li><li><b>NUM_BOUNDARY_218_26_<=: Numeric boundary flip > to <=</b><br>HIGH: Likely missing edge-case test (boundary value)
-
-								<div class="suggested-test">
-								<div class="suggest-label">🧪 Suggested Test</div>
-								<pre># Boundary test suggestion
-is( func(VALUE_AT_BOUNDARY), EXPECTED, &#39;Test boundary behaviour&#39; );
-</pre>
-								</div>
-							</li></ul></details>
-<span class="">  219: 		$class = __PACKAGE__;
+</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  218: 		# Using Log::Abstraction:new(), not Log::Abstraction-&gt;new()
+</span><span class="">  219: 		$class = __PACKAGE__;
 </span><span class="">  220: 	} elsif(Scalar::Util::blessed($class)) {
 </span><span class="">  221: 		# If $class is an object, clone it with new arguments
 </span><span class="">  222: 		my $clone = bless { %{$class}, %args }, ref($class);
-</span><span class="">  223: 		if(my $level = $args{&#39;level&#39;}) {
-</span><span class="">  224: 			# The clone is at a different level
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  223: 		if(my $level = $args{&#39;level&#39;}) {
+</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  224: 			# The clone is at a different level
 </span><span class="">  225: 			$level = lc($level);
-</span><span class="">  226: 			if(!defined($syslog_values{$level})) {
-</span><span class="">  227: 				Carp::croak(&quot;$class: invalid syslog level &#39;$level&#39;&quot;);
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  226: 			if(!defined($syslog_values{$level})) {
+</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  227: 				Carp::croak(&quot;$class: invalid syslog level &#39;$level&#39;&quot;);
 </span><span class="">  228: 			}
-</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  229: 			$clone-&gt;{level} = $syslog_values{$level};
-</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  230: 		}
+</span><span class="">  229: 			$clone-&gt;{level} = $syslog_values{$level};
+</span><span class="">  230: 		}
 </span><span class="">  231: 		$clone-&gt;{messages} = [ @{$class-&gt;{messages}} ];	# Deep copy
 </span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  232: 		return $clone;
-</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  233: 	}
+</span><p> <b> Mutants (Total: 2, Killed: 2, Survived: 0)</b><p><span class="">  233: 	}
 </span><span class="">  234: 
-</span><span class=""><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">235 → 235 → 244</span></span><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">235 → 235 → 0</span></span>  235: 	if($args{&#39;syslog&#39;} &amp;&amp; !$args{&#39;script_name&#39;}) {
-</span><span class="">  236: 		require File::Basename &amp;&amp; File::Basename-&gt;import() unless File::Basename-&gt;can(&#39;basename&#39;);
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic."><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">235 → 235 → 244</span></span><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">235 → 235 → 0</span></span>  235: 	if($args{&#39;syslog&#39;} &amp;&amp; !$args{&#39;script_name&#39;}) {
+</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  236: 		require File::Basename &amp;&amp; File::Basename-&gt;import() unless File::Basename-&gt;can(&#39;basename&#39;);
 </span><span class="">  237: 
-</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  238: 		# Determine script name
-</span><p> <b> Mutants (Total: 2, Killed: 2, Survived: 0)</b><p><span class="">  239: 		$args{&#39;script_name&#39;} = File::Basename::basename($ENV{&#39;SCRIPT_NAME&#39;} || $0);
+</span><span class="">  238: 		# Determine script name
+</span><span class="">  239: 		$args{&#39;script_name&#39;} = File::Basename::basename($ENV{&#39;SCRIPT_NAME&#39;} || $0);
 </span><span class="">  240: 
-</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  241: 		croak(&quot;$class: syslog needs to know the script name&quot;) if(!defined($args{&#39;script_name&#39;}));
-</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  242: 	}
+</span><span class="">  241: 		croak(&quot;$class: syslog needs to know the script name&quot;) if(!defined($args{&#39;script_name&#39;}));
+</span><span class="">  242: 	}
 </span><span class="">  243: 
 </span><span class=""><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">244 → 245 → 259</span></span><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">244 → 245 → 0</span></span>  244: 	my $level = $args{&#39;level&#39;};
-</span><span class="">  245: 	if(defined(my $logger = $args{logger})) {
-</span><span class="">  246: 		if(Scalar::Util::blessed($logger) &amp;&amp; (ref($logger) eq __PACKAGE__)) {
-</span><span class="">  247: 			croak(&quot;$class: attempt to encapulate &quot;, __PACKAGE__, &#39; as a logging class, that would add a needless indirection&#39;);
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  245: 	if(defined(my $logger = $args{logger})) {
+</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  246: 		if(Scalar::Util::blessed($logger) &amp;&amp; (ref($logger) eq __PACKAGE__)) {
+</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  247: 			croak(&quot;$class: attempt to encapulate &quot;, __PACKAGE__, &#39; as a logging class, that would add a needless indirection&#39;);
 </span><span class="">  248: 		}
 </span><span class="">  249: 	} elsif((!$args{&#39;file&#39;}) &amp;&amp; (!$args{&#39;array&#39;})) {
 </span><span class="">  250: 		# Default to Log4perl
-</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  251: 		require Log::Log4perl;
-</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  252: 		Log::Log4perl-&gt;import();
-</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  253: 
+</span><span class="">  251: 		require Log::Log4perl;
+</span><span class="">  252: 		Log::Log4perl-&gt;import();
+</span><span class="">  253: 
 </span><span class="">  254: 		# FIXME: add default minimum logging level
 </span><span class="">  255: 		Log::Log4perl-&gt;easy_init($args{verbose} ? $Log::Log4perl::DEBUG : $Log::Log4perl::ERROR);
 </span><span class="">  256: 		$args{&#39;logger&#39;} = Log::Log4perl-&gt;get_logger();
 </span><span class="">  257: 	}
 </span><span class="">  258: 
-</span><span class=""><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">259 → 259 → 274</span></span><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">259 → 259 → 0</span></span>  259: 	if($level) {
-</span><span class="">  260: 		if(ref($level) eq &#39;ARRAY&#39;) {
-</span><span class="">  261: 			$level = $level-&gt;[0];
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic."><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">259 → 259 → 274</span></span><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">259 → 259 → 0</span></span>  259: 	if($level) {
+</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  260: 		if(ref($level) eq &#39;ARRAY&#39;) {
+</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  261: 			$level = $level-&gt;[0];
 </span><span class="">  262: 		}
 </span><span class="">  263: 		$level = lc($level);
-</span><span class="">  264: 		if(!defined($syslog_values{$level})) {
-</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  265: 			Carp::croak(&quot;$class: invalid syslog level &#39;$level&#39;&quot;);
-</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  266: 		}
-</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  267: 		$args{&#39;level&#39;} = $level;
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  264: 		if(!defined($syslog_values{$level})) {
+</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  265: 			Carp::croak(&quot;$class: invalid syslog level &#39;$level&#39;&quot;);
+</span><span class="">  266: 		}
+</span><span class="">  267: 		$args{&#39;level&#39;} = $level;
 </span><span class="">  268: 	} else {
 </span><span class="">  269: 		# The default minimum level at which to log something is &#39;warning&#39;
-</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  270: 		$args{&#39;level&#39;} = &#39;warning&#39;;
-</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  271: 	}
+</span><span class="">  270: 		$args{&#39;level&#39;} = &#39;warning&#39;;
+</span><span class="">  271: 	}
 </span><span class="">  272: 
 </span><span class="">  273: 	# Bless and return the object
 </span><span class=""><span class="lcsaj-tip"><span class="lcsaj-dot-uncovered">●</span><span class="lcsaj-tip-text">[NOT COVERED] 274 → 274 → 0</span></span>  274: 	return bless {
@@ -667,72 +638,72 @@ is( func(VALUE_AT_BOUNDARY), EXPECTED, &#39;Test boundary behaviour&#39; );
 </span><span class="">  340: sub _log {
 </span><span class=""><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">341 → 343 → 347</span></span><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">341 → 343 → 0</span></span>  341: 	my ($self, $level, @messages) = @_;
 </span><span class="">  342: 
-</span><span class="">  343: 	if(!UNIVERSAL::isa((caller)[0], __PACKAGE__)) {
-</span><span class="">  344: 		Carp::croak(&#39;Illegal Operation: _log is a private method&#39;);
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  343: 	if(!UNIVERSAL::isa((caller)[0], __PACKAGE__)) {
+</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  344: 		Carp::croak(&#39;Illegal Operation: _log is a private method&#39;);
 </span><span class="">  345: 	}
 </span><span class="">  346: 
-</span><span class=""><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">347 → 347 → 351</span></span><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">347 → 347 → 0</span></span>  347: 	if(!defined($syslog_values{$level})) {
-</span><span class="">  348: 		Carp::croak(ref($self), &quot;: Invalid level &#39;$level&#39;&quot;);	# &quot;Can&#39;t happen&quot;
-</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  349: 	}
-</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  350: 
-</span><span class=""><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">351 → 351 → 356</span></span><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">351 → 351 → 0</span></span>  351: 	if($syslog_values{$level} &gt; $self-&gt;{&#39;level&#39;}) {
-</span><span class="">  352: 		# The level is too low to log
-</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  353: 		return;
-</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  354: 	}
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic."><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">347 → 347 → 351</span></span><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">347 → 347 → 0</span></span>  347: 	if(!defined($syslog_values{$level})) {
+</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  348: 		Carp::croak(ref($self), &quot;: Invalid level &#39;$level&#39;&quot;);	# &quot;Can&#39;t happen&quot;
+</span><span class="">  349: 	}
+</span><span class="">  350: 
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic."><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">351 → 351 → 356</span></span><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">351 → 351 → 0</span></span>  351: 	if($syslog_values{$level} &gt; $self-&gt;{&#39;level&#39;}) {
+</span><p> <b> Mutants (Total: 4, Killed: 4, Survived: 0)</b><p><span class="">  352: 		# The level is too low to log
+</span><span class="">  353: 		return;
+</span><span class="">  354: 	}
 </span><span class="">  355: 
-</span><span class=""><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">356 → 356 → 360</span></span><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">356 → 356 → 0</span></span>  356: 	if((scalar(@messages) == 1) &amp;&amp; (ref($messages[0]) eq &#39;ARRAY&#39;)) {
-</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  357: 		# Passed a reference to an array
-</span><p> <b> Mutants (Total: 4, Killed: 4, Survived: 0)</b><p><span class="">  358: 		@messages = @{$messages[0]};
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic."><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">356 → 356 → 360</span></span><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">356 → 356 → 0</span></span>  356: 	if((scalar(@messages) == 1) &amp;&amp; (ref($messages[0]) eq &#39;ARRAY&#39;)) {
+</span><p> <b> Mutants (Total: 2, Killed: 2, Survived: 0)</b><p><span class="">  357: 		# Passed a reference to an array
+</span><span class="">  358: 		@messages = @{$messages[0]};
 </span><span class="">  359: 	}
 </span><span class=""><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">360 → 369 → 373</span></span><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">360 → 369 → 0</span></span>  360: 	@messages = grep defined, @messages;
 </span><span class="">  361: 
-</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  362: 	my $str = join(&#39;&#39;, @messages);
-</span><p> <b> Mutants (Total: 2, Killed: 2, Survived: 0)</b><p><span class="">  363: 	chomp($str);
+</span><span class="">  362: 	my $str = join(&#39;&#39;, @messages);
+</span><span class="">  363: 	chomp($str);
 </span><span class="">  364: 
 </span><span class="">  365: 	# Push the message to the internal messages array
 </span><span class="">  366: 	push @{$self-&gt;{messages}}, { level =&gt; $level, message =&gt; $str };
 </span><span class="">  367: 
 </span><span class="">  368: 	my $class = blessed($self) || $self;
-</span><span class="">  369: 	if($class eq __PACKAGE__) {
-</span><span class="">  370: 		$class = &#39;&#39;;
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  369: 	if($class eq __PACKAGE__) {
+</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  370: 		$class = &#39;&#39;;
 </span><span class="">  371: 	}
 </span><span class="">  372: 
 </span><span class=""><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">373 → 375 → 543</span></span><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">373 → 375 → 0</span></span>  373: 	my $timestamp = strftime &#39;%Y-%m-%d %H:%M:%S&#39;, localtime;
 </span><span class="">  374: 
 </span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  375: 	if(my $logger = $self-&gt;{&#39;logger&#39;}) {
-</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  376: 		if(ref($logger) eq &#39;CODE&#39;) {
-</span><span class="">  377: 			# If logger is a code reference, call it with log details
+</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  376: 		if(ref($logger) eq &#39;CODE&#39;) {
+</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  377: 			# If logger is a code reference, call it with log details
 </span><span class="">  378: 			my $args = {
 </span><span class="">  379: 				class =&gt; blessed($self) || __PACKAGE__,
 </span><span class="">  380: 				file =&gt; (caller(1))[1],
-</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  381: 				# function =&gt; (caller(1))[3],
-</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  382: 				line =&gt; (caller(1))[2],
-</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  383: 				level =&gt; $level,
+</span><span class="">  381: 				# function =&gt; (caller(1))[3],
+</span><span class="">  382: 				line =&gt; (caller(1))[2],
+</span><span class="">  383: 				level =&gt; $level,
 </span><span class="">  384: 				message =&gt; \@messages
 </span><span class="">  385: 			};
-</span><span class="">  386: 			if(my $ctx = $self-&gt;{ctx}) {
-</span><span class="">  387: 				$args-&gt;{ctx} = $ctx;
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  386: 			if(my $ctx = $self-&gt;{ctx}) {
+</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  387: 				$args-&gt;{ctx} = $ctx;
 </span><span class="">  388: 			};
 </span><span class="">  389: 			$logger-&gt;($args);
 </span><span class="">  390: 		} elsif(ref($logger) eq &#39;ARRAY&#39;) {
 </span><span class="">  391: 			# If logger is an array reference, push the log message to the array
-</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  392: 			push @{$logger}, { level =&gt; $level, message =&gt; $str };
-</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  393: 		} elsif(ref($logger) eq &#39;HASH&#39;) {
-</span><span class="">  394: 			if(my $file = $logger-&gt;{&#39;file&#39;}) {
-</span><span class="">  395: 				# if($file =~ /^([-\@\w.\/\\]+)$/) {
-</span><span class="">  396: 				if($file =~ /^([^&lt;&gt;|*?;!`$&quot;\0-\037]+)$/) {
-</span><span class="">  397: 					$file = $1;	# Will untaint
+</span><span class="">  392: 			push @{$logger}, { level =&gt; $level, message =&gt; $str };
+</span><span class="">  393: 		} elsif(ref($logger) eq &#39;HASH&#39;) {
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  394: 			if(my $file = $logger-&gt;{&#39;file&#39;}) {
+</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  395: 				# if($file =~ /^([-\@\w.\/\\]+)$/) {
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  396: 				if($file =~ /^([^&lt;&gt;|*?;!`$&quot;\0-\037]+)$/) {
+</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  397: 					$file = $1;	# Will untaint
 </span><span class="">  398: 				} else {
 </span><span class="">  399: 					Carp::croak(ref($self), &quot;: Invalid file name: $file&quot;);
-</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  400: 				}
-</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  401: 				if(open(my $fout, &#39;&gt;&gt;&#39;, $logger-&gt;{&#39;file&#39;})) {
-</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  402: 					my $format = $self-&gt;{&#39;format&#39;} || &#39;%level%&gt; [%timestamp%] %class% %callstack% %message%&#39;;
-</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  403: 					my $ulevel = uc($level);
+</span><span class="">  400: 				}
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  401: 				if(open(my $fout, &#39;&gt;&gt;&#39;, $logger-&gt;{&#39;file&#39;})) {
+</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  402: 					my $format = $self-&gt;{&#39;format&#39;} || &#39;%level%&gt; [%timestamp%] %class% %callstack% %message%&#39;;
+</span><span class="">  403: 					my $ulevel = uc($level);
 </span><span class="">  404: 					my $callstack = (caller(1))[1] . &#39; &#39; . (caller(1))[2];
 </span><span class="">  405: 
 </span><span class="">  406: 					$format =~ s/%level%/$ulevel/g;
-</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  407: 					$format =~ s/%class%/$class/g;
-</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  408: 					$format =~ s/%message%/$str/g;
+</span><span class="">  407: 					$format =~ s/%class%/$class/g;
+</span><span class="">  408: 					$format =~ s/%message%/$str/g;
 </span><span class="">  409: 					$format =~ s/%callstack%/$callstack/g;
 </span><span class="">  410: 					$format =~ s/%timestamp%/$timestamp/g;
 </span><span class="">  411: 					$format =~ s/%env_(\w+)%/$ENV{$1}/g;
@@ -740,65 +711,65 @@ is( func(VALUE_AT_BOUNDARY), EXPECTED, &#39;Test boundary behaviour&#39; );
 </span><span class="">  413: 					close $fout;
 </span><span class="">  414: 				}
 </span><span class="">  415: 			}
-</span><span class="">  416: 			if(my $array = $logger-&gt;{&#39;array&#39;}) {
-</span><span class="">  417: 				push @{$array}, { level =&gt; $level, message =&gt; $str };
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  416: 			if(my $array = $logger-&gt;{&#39;array&#39;}) {
+</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  417: 				push @{$array}, { level =&gt; $level, message =&gt; $str };
 </span><span class="">  418: 			}
-</span><span class="">  419: 			if(exists($logger-&gt;{&#39;sendmail&#39;}) &amp;&amp; exists($logger-&gt;{&#39;sendmail&#39;}-&gt;{&#39;to&#39;})) {
-</span><span class="">  420: 				# Send an email
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  419: 			if(exists($logger-&gt;{&#39;sendmail&#39;}) &amp;&amp; exists($logger-&gt;{&#39;sendmail&#39;}-&gt;{&#39;to&#39;})) {
+</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  420: 				# Send an email
 </span><span class="">  421: 				# TODO: throttle the number of emails
 </span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  422: 				if((!defined($logger-&gt;{&#39;sendmail&#39;}-&gt;{&#39;level&#39;})) ||
-</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  423: 				   ($syslog_values{$level} &lt;= $syslog_values{$logger-&gt;{&#39;sendmail&#39;}-&gt;{&#39;level&#39;}})) {
-</span><span class="">  424: 					eval {
-</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  425: 						require Email::Simple;
-</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  426: 						require Email::Sender::Simple;
+</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  423: 				   ($syslog_values{$level} &lt;= $syslog_values{$logger-&gt;{&#39;sendmail&#39;}-&gt;{&#39;level&#39;}})) {
+</span><p> <b> Mutants (Total: 3, Killed: 3, Survived: 0)</b><p><span class="">  424: 					eval {
+</span><span class="">  425: 						require Email::Simple;
+</span><span class="">  426: 						require Email::Sender::Simple;
 </span><span class="">  427: 						require Email::Sender::Transport::SMTP;
-</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  428: 
-</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  429: 						Email::Simple-&gt;import();
-</span><p> <b> Mutants (Total: 3, Killed: 3, Survived: 0)</b><p><span class="">  430: 						Email::Sender::Simple-&gt;import(&#39;sendmail&#39;);
+</span><span class="">  428: 
+</span><span class="">  429: 						Email::Simple-&gt;import();
+</span><span class="">  430: 						Email::Sender::Simple-&gt;import(&#39;sendmail&#39;);
 </span><span class="">  431: 						Email::Sender::Transport::SMTP-&gt;import();
 </span><span class="">  432: 
 </span><span class="">  433: 						my $email = Email::Simple-&gt;new(&#39;&#39;);
 </span><span class="">  434: 						$email-&gt;header_set(&#39;to&#39;, _sanitize_email_header($logger-&gt;{&#39;sendmail&#39;}-&gt;{&#39;to&#39;}));
-</span><span class="">  435: 						if(my $from = $logger-&gt;{&#39;sendmail&#39;}-&gt;{&#39;from&#39;}) {
-</span><span class="">  436: 							$email-&gt;header_set(&#39;from&#39;, _sanitize_email_header($from));
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  435: 						if(my $from = $logger-&gt;{&#39;sendmail&#39;}-&gt;{&#39;from&#39;}) {
+</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  436: 							$email-&gt;header_set(&#39;from&#39;, _sanitize_email_header($from));
 </span><span class="">  437: 						} else {
 </span><span class="">  438: 							$email-&gt;header_set(&#39;from&#39;, &#39;noreply@localhost&#39;);
 </span><span class="">  439: 						}
-</span><span class="">  440: 						if(my $subject = $logger-&gt;{&#39;sendmail&#39;}-&gt;{&#39;subject&#39;}) {
-</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  441: 							$email-&gt;header_set(&#39;subject&#39;, _sanitize_email_header($subject));
-</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  442: 						}
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  440: 						if(my $subject = $logger-&gt;{&#39;sendmail&#39;}-&gt;{&#39;subject&#39;}) {
+</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  441: 							$email-&gt;header_set(&#39;subject&#39;, _sanitize_email_header($subject));
+</span><span class="">  442: 						}
 </span><span class="">  443: 						$email-&gt;body_set(join(&#39; &#39;, @messages));
 </span><span class="">  444: 
 </span><span class="">  445: 						# Configure SMTP transport (adjust for your SMTP server)
-</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  446: 						my $transport = Email::Sender::Transport::SMTP-&gt;new({
-</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  447: 							host =&gt; $logger-&gt;{&#39;sendmail&#39;}-&gt;{&#39;host&#39;} || &#39;localhost&#39;,
+</span><span class="">  446: 						my $transport = Email::Sender::Transport::SMTP-&gt;new({
+</span><span class="">  447: 							host =&gt; $logger-&gt;{&#39;sendmail&#39;}-&gt;{&#39;host&#39;} || &#39;localhost&#39;,
 </span><span class="">  448: 							port =&gt; $logger-&gt;{&#39;sendmail&#39;}-&gt;{&#39;port&#39;} || 25
 </span><span class="">  449: 						});
 </span><span class="">  450: 
 </span><span class="">  451: 						sendmail($email, { transport =&gt; $transport });
 </span><span class="">  452: 					};
 </span><span class="">  453: 
-</span><span class="">  454: 					if ($@) {
-</span><span class="">  455: 						Carp::carp(&quot;Failed to send email: $@&quot;);
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  454: 					if ($@) {
+</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  455: 						Carp::carp(&quot;Failed to send email: $@&quot;);
 </span><span class="">  456: 						return;
 </span><span class="">  457: 					}
 </span><span class="">  458: 				}
 </span><span class="">  459: 			}
 </span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  460: 			if(my $syslog = $logger-&gt;{&#39;syslog&#39;}) {
-</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  461: 				if((!defined($syslog-&gt;{&#39;level&#39;})) || ($syslog_values{$level} &lt;= $syslog-&gt;{&#39;level&#39;})) {
-</span><span class="">  462: 					if(!$self-&gt;{_syslog_opened}) {
-</span><span class="">  463: 						# Open persistent syslog connection
+</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  461: 				if((!defined($syslog-&gt;{&#39;level&#39;})) || ($syslog_values{$level} &lt;= $syslog-&gt;{&#39;level&#39;})) {
+</span><p> <b> Mutants (Total: 4, Killed: 4, Survived: 0)</b><p><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  462: 					if(!$self-&gt;{_syslog_opened}) {
+</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  463: 						# Open persistent syslog connection
 </span><span class="">  464: 						my $facility = delete $syslog-&gt;{&#39;facility&#39;} || &#39;local0&#39;;
 </span><span class="">  465: 						my $min_level = delete $syslog-&gt;{&#39;level&#39;};
-</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  466: 						# CHI uses server, Sys::Syslog uses host :-(
-</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  467: 						if($syslog-&gt;{&#39;server&#39;}) {
-</span><p> <b> Mutants (Total: 4, Killed: 4, Survived: 0)</b><p><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  468: 							$syslog-&gt;{&#39;host&#39;} = delete $syslog-&gt;{&#39;server&#39;};
-</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  469: 						}
+</span><span class="">  466: 						# CHI uses server, Sys::Syslog uses host :-(
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  467: 						if($syslog-&gt;{&#39;server&#39;}) {
+</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  468: 							$syslog-&gt;{&#39;host&#39;} = delete $syslog-&gt;{&#39;server&#39;};
+</span><span class="">  469: 						}
 </span><span class="">  470: 						Sys::Syslog::setlogsock($syslog) if(scalar keys %{$syslog});
 </span><span class="">  471: 						$syslog-&gt;{&#39;facility&#39;} = $facility;
 </span><span class="">  472: 						$syslog-&gt;{&#39;level&#39;} = $min_level;
-</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  473: 
-</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  474: 						openlog($self-&gt;{script_name}, &#39;cons,pid&#39;, &#39;user&#39;);
+</span><span class="">  473: 
+</span><span class="">  474: 						openlog($self-&gt;{script_name}, &#39;cons,pid&#39;, &#39;user&#39;);
 </span><span class="">  475: 						$self-&gt;{_syslog_opened} = 1;	# Flag to track active connection
 </span><span class="">  476: 					}
 </span><span class="">  477: 
@@ -808,22 +779,22 @@ is( func(VALUE_AT_BOUNDARY), EXPECTED, &#39;Test boundary behaviour&#39; );
 </span><span class="">  481: 						my $facility = $syslog-&gt;{&#39;facility&#39;};
 </span><span class="">  482: 						Sys::Syslog::syslog(&quot;$priority|$facility&quot;, join(&#39; &#39;, @messages));
 </span><span class="">  483: 					};
-</span><span class="">  484: 					if($@) {
-</span><span class="">  485: 						my $err = $@;
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  484: 					if($@) {
+</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  485: 						my $err = $@;
 </span><span class="">  486: 						$err .= &quot;:\n&quot; . Data::Dumper-&gt;new([$syslog])-&gt;Dump();
 </span><span class="">  487: 						Carp::carp($err);
 </span><span class="">  488: 					}
 </span><span class="">  489: 				}
-</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  490: 			}
-</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  491: 
-</span><span class="">  492: 			if(my $fout = $logger-&gt;{&#39;fd&#39;}) {
-</span><span class="">  493: 				my $format = $self-&gt;{&#39;format&#39;} || &#39;%level%&gt; [%timestamp%] %class% %callstack% %message%&#39;;
+</span><span class="">  490: 			}
+</span><span class="">  491: 
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  492: 			if(my $fout = $logger-&gt;{&#39;fd&#39;}) {
+</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  493: 				my $format = $self-&gt;{&#39;format&#39;} || &#39;%level%&gt; [%timestamp%] %class% %callstack% %message%&#39;;
 </span><span class="">  494: 				my $ulevel = uc($level);
 </span><span class="">  495: 				my $callstack = (caller(1))[1] . &#39; &#39; . (caller(1))[2];
 </span><span class="">  496: 
 </span><span class="">  497: 				$format =~ s/%level%/$ulevel/g;
-</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  498: 				$format =~ s/%class%/$class/g;
-</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  499: 				$format =~ s/%message%/$str/g;
+</span><span class="">  498: 				$format =~ s/%class%/$class/g;
+</span><span class="">  499: 				$format =~ s/%message%/$str/g;
 </span><span class="">  500: 				$format =~ s/%callstack%/$callstack/g;
 </span><span class="">  501: 				$format =~ s/%timestamp%/$timestamp/g;
 </span><span class="">  502: 				$format =~ s/%env_(\w+)%/$ENV{$1} \/\/ &#39;&#39;/ge;
@@ -834,14 +805,14 @@ is( func(VALUE_AT_BOUNDARY), EXPECTED, &#39;Test boundary behaviour&#39; );
 </span><span class="">  507: 			}
 </span><span class="">  508: 		} elsif(!ref($logger)) {
 </span><span class="">  509: 			# If logger is a file path, append the log message to the file
-</span><span class="">  510: 			if(open(my $fout, &#39;&gt;&gt;&#39;, $logger)) {
-</span><span class="">  511: 				my $format = $self-&gt;{&#39;format&#39;} || &#39;%level%&gt; [%timestamp%] %class% %callstack% %message%&#39;;
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  510: 			if(open(my $fout, &#39;&gt;&gt;&#39;, $logger)) {
+</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  511: 				my $format = $self-&gt;{&#39;format&#39;} || &#39;%level%&gt; [%timestamp%] %class% %callstack% %message%&#39;;
 </span><span class="">  512: 				my $ulevel = uc($level);
 </span><span class="">  513: 				my $callstack = (caller(1))[1] . &#39; &#39; . (caller(1))[2];
 </span><span class="">  514: 
 </span><span class="">  515: 				$format =~ s/%level%/$ulevel/g;
-</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  516: 				$format =~ s/%class%/$class/g;
-</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  517: 				$format =~ s/%message%/$str/g;
+</span><span class="">  516: 				$format =~ s/%class%/$class/g;
+</span><span class="">  517: 				$format =~ s/%message%/$str/g;
 </span><span class="">  518: 				$format =~ s/%callstack%/$callstack/g;
 </span><span class="">  519: 				$format =~ s/%timestamp%/$timestamp/g;
 </span><span class="">  520: 				$format =~ s/%env_(\w+)%/$ENV{$1} \/\/ &#39;&#39;/ge;
@@ -851,15 +822,15 @@ is( func(VALUE_AT_BOUNDARY), EXPECTED, &#39;Test boundary behaviour&#39; );
 </span><span class="">  524: 			}
 </span><span class="">  525: 		} elsif(Scalar::Util::blessed($logger)) {
 </span><span class="">  526: 			# If logger is an object, call the appropriate method on the object
-</span><span class="">  527: 			if(!$logger-&gt;can($level)) {
-</span><span class="">  528: 				if(($level eq &#39;notice&#39;) &amp;&amp; $logger-&gt;can(&#39;info&#39;)) {
-</span><span class="">  529: 					# Map notice to info for Log::Log4perl
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  527: 			if(!$logger-&gt;can($level)) {
+</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  528: 				if(($level eq &#39;notice&#39;) &amp;&amp; $logger-&gt;can(&#39;info&#39;)) {
+</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  529: 					# Map notice to info for Log::Log4perl
 </span><span class="">  530: 					$level = &#39;info&#39;;
 </span><span class="">  531: 				} else {
 </span><span class="">  532: 					croak(ref($self), &#39;: &#39;, ref($logger), &quot; doesn&#39;t know how to deal with the $level message&quot;);
-</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  533: 				}
-</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  534: 			}
-</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  535: 			$logger-&gt;$level(@messages);
+</span><span class="">  533: 				}
+</span><span class="">  534: 			}
+</span><span class="">  535: 			$logger-&gt;$level(@messages);
 </span><span class="">  536: 		} else {
 </span><span class="">  537: 			croak(ref($self), &quot;: configuration error, no handler written for the $level message&quot;);
 </span><span class="">  538: 		}
@@ -867,14 +838,14 @@ is( func(VALUE_AT_BOUNDARY), EXPECTED, &#39;Test boundary behaviour&#39; );
 </span><span class="">  540: 		push @{$self-&gt;{&#39;array&#39;}}, { level =&gt; $level, message =&gt; $str };
 </span><span class="">  541: 	}
 </span><span class="">  542: 
-</span><span class=""><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">543 → 543 → 576</span></span><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">543 → 543 → 0</span></span>  543: 	if($self-&gt;{&#39;file&#39;}) {
-</span><span class="">  544: 		my $file = $self-&gt;{&#39;file&#39;};
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic."><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">543 → 543 → 576</span></span><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">543 → 543 → 0</span></span>  543: 	if($self-&gt;{&#39;file&#39;}) {
+</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  544: 		my $file = $self-&gt;{&#39;file&#39;};
 </span><span class="">  545: 
 </span><span class="">  546: 		# Untaint the file name
 </span><span class="">  547: 		# if($file =~ /^([-\@\w.\/\\]+)$/) {
-</span><span class="">  548: 		if($file =~ /^([^&lt;&gt;|*?;!`$&quot;\0-\037]+)$/) {
-</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  549: 			$file = $1;	# untainted version
-</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  550: 		} else {
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  548: 		if($file =~ /^([^&lt;&gt;|*?;!`$&quot;\0-\037]+)$/) {
+</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  549: 			$file = $1;	# untainted version
+</span><span class="">  550: 		} else {
 </span><span class="">  551: 			croak(ref($self), &quot;: Tainted or unsafe filename: $file&quot;);
 </span><span class="">  552: 		}
 </span><span class="">  553: 
@@ -883,20 +854,14 @@ is( func(VALUE_AT_BOUNDARY), EXPECTED, &#39;Test boundary behaviour&#39; );
 </span><span class="">  556: 			my $callstack = (caller(1))[1] . &#39; &#39; . (caller(1))[2];
 </span><span class="">  557: 			my $format;
 </span><span class="">  558: 
-</span><span class="">  559: 			if(blessed($self) eq __PACKAGE__) {
-</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  560: 				$format = $self-&gt;{&#39;format&#39;} || &#39;%level%&gt; [%timestamp%] %callstack% %message%&#39;;
-</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  561: 			} else {
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  559: 			if(blessed($self) eq __PACKAGE__) {
+</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  560: 				$format = $self-&gt;{&#39;format&#39;} || &#39;%level%&gt; [%timestamp%] %callstack% %message%&#39;;
+</span><span class="">  561: 			} else {
 </span><span class="">  562: 				$format = $self-&gt;{&#39;format&#39;} || &#39;%level%&gt; [%timestamp%] %class% %callstack% %message%&#39;;
 </span><span class="">  563: 			}
 </span><span class="">  564: 
-</span><span class="survived-1 tooltip" data-tooltip="Mutation survived. Add targeted tests to validate this branch.">  565: 			$format =~ s/%level%/$ulevel/g;
-</span>
-					<details class="mutant-details">
-					<summary>Mutants (Total: 1, Killed: 0, Survived: 1)</summary>
-					<ul>
-				<li><b>COND_INV_565_4: Invert condition if to unless</b><br>MEDIUM: Add tests asserting both true and false outcomes
-</li></ul></details>
-<span class="">  566: 			$format =~ s/%class%/$class/g;
+</span><span class="">  565: 			$format =~ s/%level%/$ulevel/g;
+</span><span class="">  566: 			$format =~ s/%class%/$class/g;
 </span><span class="">  567: 			$format =~ s/%message%/$str/g;
 </span><span class="">  568: 			$format =~ s/%callstack%/$callstack/g;
 </span><span class="">  569: 			$format =~ s/%timestamp%/$timestamp/g;
@@ -906,25 +871,19 @@ is( func(VALUE_AT_BOUNDARY), EXPECTED, &#39;Test boundary behaviour&#39; );
 </span><span class="">  573: 			close $fout;
 </span><span class="">  574: 		}
 </span><span class="">  575: 	}
-</span><span class=""><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">576 → 576 → 0</span></span>  576: 	if(my $fout = $self-&gt;{&#39;fd&#39;}) {
-</span><span class="">  577: 		my $ulevel = uc($level);
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic."><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">576 → 576 → 0</span></span>  576: 	if(my $fout = $self-&gt;{&#39;fd&#39;}) {
+</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  577: 		my $ulevel = uc($level);
 </span><span class="">  578: 		my $callstack = (caller(1))[1] . &#39; &#39; . (caller(1))[2];
 </span><span class="">  579: 		my $format;
 </span><span class="">  580: 
-</span><span class="">  581: 		if(blessed($self) eq __PACKAGE__) {
-</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  582: 			$format = $self-&gt;{&#39;format&#39;} || &#39;%level%&gt; [%timestamp%] %callstack% %message%&#39;;
-</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  583: 		} else {
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  581: 		if(blessed($self) eq __PACKAGE__) {
+</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  582: 			$format = $self-&gt;{&#39;format&#39;} || &#39;%level%&gt; [%timestamp%] %callstack% %message%&#39;;
+</span><span class="">  583: 		} else {
 </span><span class="">  584: 			$format = $self-&gt;{&#39;format&#39;} || &#39;%level%&gt; [%timestamp%] %class% %callstack% %message%&#39;;
 </span><span class="">  585: 		}
 </span><span class="">  586: 
-</span><span class="survived-1 tooltip" data-tooltip="Mutation survived. Add targeted tests to validate this branch.">  587: 		$format =~ s/%level%/$ulevel/g;
-</span>
-					<details class="mutant-details">
-					<summary>Mutants (Total: 1, Killed: 0, Survived: 1)</summary>
-					<ul>
-				<li><b>COND_INV_587_3: Invert condition if to unless</b><br>MEDIUM: Add tests asserting both true and false outcomes
-</li></ul></details>
-<span class="">  588: 		$format =~ s/%class%/$class/g;
+</span><span class="">  587: 		$format =~ s/%level%/$ulevel/g;
+</span><span class="">  588: 		$format =~ s/%class%/$class/g;
 </span><span class="">  589: 		$format =~ s/%message%/$str/g;
 </span><span class="">  590: 		$format =~ s/%callstack%/$callstack/g;
 </span><span class="">  591: 		$format =~ s/%timestamp%/$timestamp/g;
@@ -945,15 +904,15 @@ is( func(VALUE_AT_BOUNDARY), EXPECTED, &#39;Test boundary behaviour&#39; );
 </span><span class="">  606: {
 </span><span class=""><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">607 → 609 → 616</span></span><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">607 → 609 → 0</span></span>  607: 	my ($self, $level) = @_;
 </span><span class="">  608: 
-</span><span class="">  609: 	if($level) {
-</span><span class="">  610: 		if(!defined($syslog_values{$level})) {
-</span><span class="">  611: 			Carp::carp(ref($self), &quot;: invalid syslog level &#39;$level&#39;&quot;);
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  609: 	if($level) {
+</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  610: 		if(!defined($syslog_values{$level})) {
+</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  611: 			Carp::carp(ref($self), &quot;: invalid syslog level &#39;$level&#39;&quot;);
 </span><span class="">  612: 			return;
 </span><span class="">  613: 		}
 </span><span class="">  614: 		$self-&gt;{&#39;level&#39;} = $syslog_values{$level};
-</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  615: 	}
-</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic."><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">616 → 616 → 0</span></span>  616: 	return Return::Set::set_return($self-&gt;{&#39;level&#39;}, { &#39;type&#39; =&gt; &#39;integer&#39;, &#39;min&#39; =&gt; 0, &#39;max&#39; =&gt; 7 });
-</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  617: }
+</span><span class="">  615: 	}
+</span><span class=""><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">616 → 616 → 0</span></span>  616: 	return Return::Set::set_return($self-&gt;{&#39;level&#39;}, { &#39;type&#39; =&gt; &#39;integer&#39;, &#39;min&#39; =&gt; 0, &#39;max&#39; =&gt; 7 });
+</span><span class="">  617: }
 </span><span class="">  618: 
 </span><span class="">  619: =head2	is_debug
 </span><span class="">  620: 
@@ -966,14 +925,14 @@ is( func(VALUE_AT_BOUNDARY), EXPECTED, &#39;Test boundary behaviour&#39; );
 </span><span class="">  627: {
 </span><span class="">  628: 	my $self = $_[0];
 </span><span class="">  629: 
-</span><span class="">  630: 	return ($self-&gt;{&#39;level&#39;} &amp;&amp; ($self-&gt;{&#39;level&#39;} &gt;= $DEBUG)) ? 1 : 0;
-</span><span class="">  631: }
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  630: 	return ($self-&gt;{&#39;level&#39;} &amp;&amp; ($self-&gt;{&#39;level&#39;} &gt;= $DEBUG)) ? 1 : 0;
+</span><p> <b> Mutants (Total: 3, Killed: 3, Survived: 0)</b><p><span class="">  631: }
 </span><span class="">  632: 
 </span><span class="">  633: =head2 messages
 </span><span class="">  634: 
 </span><span class="">  635: Return all the messages emitted so far
-</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  636: 
-</span><p> <b> Mutants (Total: 3, Killed: 3, Survived: 0)</b><p><span class="">  637: =cut
+</span><span class="">  636: 
+</span><span class="">  637: =cut
 </span><span class="">  638: 
 </span><span class="">  639: sub messages
 </span><span class="">  640: {
@@ -1079,14 +1038,14 @@ is( func(VALUE_AT_BOUNDARY), EXPECTED, &#39;Test boundary behaviour&#39; );
 </span><span class="">  740: sub warn {
 </span><span class="">  741: 	my $self = shift;
 </span><span class="">  742: 
-</span><span class="">  743: 	return if(scalar(@_) == 0);
-</span><span class="">  744: 	$self-&gt;_high_priority(&#39;warn&#39;, @_);
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  743: 	return if(scalar(@_) == 0);
+</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  744: 	$self-&gt;_high_priority(&#39;warn&#39;, @_);
 </span><span class="">  745: }
 </span><span class="">  746: 
 </span><span class="">  747: =head2 _high_priority
 </span><span class="">  748: 
-</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  749: Helper to handle important messages.
-</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  750: 
+</span><span class="">  749: Helper to handle important messages.
+</span><span class="">  750: 
 </span><span class="">  751: =cut
 </span><span class="">  752: 
 </span><span class="">  753: sub _high_priority
@@ -1094,79 +1053,79 @@ is( func(VALUE_AT_BOUNDARY), EXPECTED, &#39;Test boundary behaviour&#39; );
 </span><span class=""><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">755 → 768 → 780</span></span><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">755 → 768 → 0</span></span>  755: 	my $self = shift;
 </span><span class="">  756: 	my $level = shift;	# &#39;warn&#39; or &#39;error&#39;
 </span><span class="">  757: 
-</span><span class="">  758: 	return if(scalar(@_) == 0);	# No message - return quickly
-</span><span class="">  759: 
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  758: 	return if(scalar(@_) == 0);	# No message - return quickly
+</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  759: 
 </span><span class="">  760: 	# Only logging things at warning or higher
-</span><span class="">  761: 	return if($syslog_values{$level} &gt; $WARNING);
-</span><span class="">  762: 
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  761: 	return if($syslog_values{$level} &gt; $WARNING);
+</span><p> <b> Mutants (Total: 3, Killed: 3, Survived: 0)</b><p><span class="">  762: 
 </span><span class="">  763: 	my $warning;
-</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  764: 
-</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  765: 	# Check if called as warn(warning =&gt; ...) or warn(&#39;plain&#39;, &#39;args&#39;)
+</span><span class="">  764: 
+</span><span class="">  765: 	# Check if called as warn(warning =&gt; ...) or warn(&#39;plain&#39;, &#39;args&#39;)
 </span><span class="">  766: 	my $params;
-</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  767: 	eval { $params = Params::Get::get_params(&#39;warning&#39;, @_) };
-</span><p> <b> Mutants (Total: 3, Killed: 3, Survived: 0)</b><p><span class="">  768: 	if($@ || !$params || ref($params) ne &#39;HASH&#39; || !exists($params-&gt;{warning})) {
-</span><span class="">  769: 		# Plain list form &acirc;&#128;&#148; join directly
+</span><span class="">  767: 	eval { $params = Params::Get::get_params(&#39;warning&#39;, @_) };
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  768: 	if($@ || !$params || ref($params) ne &#39;HASH&#39; || !exists($params-&gt;{warning})) {
+</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  769: 		# Plain list form &acirc;&#128;&#148; join directly
 </span><span class="">  770: 		$warning = join(&#39;&#39;, grep { defined } @_);
 </span><span class="">  771: 		return unless length($warning);
 </span><span class="">  772: 	} else {
 </span><span class="">  773: 		$warning = $params-&gt;{warning};
-</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  774: 		return unless defined($warning);
-</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  775: 		if(ref($warning) eq &#39;ARRAY&#39;) {
-</span><span class="">  776: 			$warning = join(&#39;&#39;, grep { defined } @{$warning});
+</span><span class="">  774: 		return unless defined($warning);
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  775: 		if(ref($warning) eq &#39;ARRAY&#39;) {
+</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  776: 			$warning = join(&#39;&#39;, grep { defined } @{$warning});
 </span><span class="">  777: 		}
 </span><span class="">  778: 	}
 </span><span class="">  779: 
-</span><span class=""><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">780 → 780 → 794</span></span><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">780 → 780 → 0</span></span>  780: 	if($params &amp;&amp; ref($params) eq &#39;HASH&#39; &amp;&amp; exists($params-&gt;{warning})) {
-</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  781: 		$warning = $params-&gt;{warning};
-</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  782: 		return unless defined($warning);	# warn(warning =&gt; undef) &acirc;&#134;&#146; no-op
-</span><span class="">  783: 		if(ref($warning) eq &#39;ARRAY&#39;) {
-</span><span class="">  784: 			# Given &quot;warning =&gt; [ ref to array ]&quot;
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic."><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">780 → 780 → 794</span></span><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">780 → 780 → 0</span></span>  780: 	if($params &amp;&amp; ref($params) eq &#39;HASH&#39; &amp;&amp; exists($params-&gt;{warning})) {
+</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  781: 		$warning = $params-&gt;{warning};
+</span><span class="">  782: 		return unless defined($warning);	# warn(warning =&gt; undef) &acirc;&#134;&#146; no-op
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  783: 		if(ref($warning) eq &#39;ARRAY&#39;) {
+</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  784: 			# Given &quot;warning =&gt; [ ref to array ]&quot;
 </span><span class="">  785: 			$warning = join(&#39;&#39;, grep { defined } @{$warning});
-</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  786: 		}
-</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  787: 	} else {
+</span><span class="">  786: 		}
+</span><span class="">  787: 	} else {
 </span><span class="">  788: 		# Plain list: warn(&#39;This &#39;, &#39;is &#39;, &#39;a &#39;, &#39;list&#39;)
-</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  789: 		# Filter undefs and join
-</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  790: 		$warning = join(&#39;&#39;, grep { defined } @_);
+</span><span class="">  789: 		# Filter undefs and join
+</span><span class="">  790: 		$warning = join(&#39;&#39;, grep { defined } @_);
 </span><span class="">  791: 		return unless length($warning);		# all-undef list &acirc;&#134;&#146; no-op
 </span><span class="">  792: 	}
 </span><span class="">  793: 
-</span><span class=""><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">794 → 794 → 804</span></span><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">794 → 794 → 0</span></span>  794: 	if($self eq __PACKAGE__) {
-</span><span class="">  795: 		# If called from a class method, use croak/carp to warn
-</span><span class="">  796: 		if($syslog_values{$level} &lt;= $ERROR) {
-</span><span class="">  797: 			Carp::croak($warning);
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic."><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">794 → 794 → 804</span></span><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">794 → 794 → 0</span></span>  794: 	if($self eq __PACKAGE__) {
+</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  795: 		# If called from a class method, use croak/carp to warn
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  796: 		if($syslog_values{$level} &lt;= $ERROR) {
+</span><p> <b> Mutants (Total: 4, Killed: 4, Survived: 0)</b><p><span class="">  797: 			Carp::croak($warning);
 </span><span class="">  798: 		}
 </span><span class="">  799: 		Carp::carp($warning);
-</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  800: 		return;
-</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  801: 	}
-</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  802: 
-</span><p> <b> Mutants (Total: 4, Killed: 4, Survived: 0)</b><p><span class="">  803: 	# Log the warning message
+</span><span class="">  800: 		return;
+</span><span class="">  801: 	}
+</span><span class="">  802: 
+</span><span class="">  803: 	# Log the warning message
 </span><span class=""><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">804 → 806 → 813</span></span><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">804 → 806 → 0</span></span>  804: 	$self-&gt;_log($level, $warning);
 </span><span class="">  805: 
-</span><span class="">  806: 	if($syslog_values{$level} &lt;= $ERROR) {
-</span><span class="">  807: 		# Fall back to croak if no logger or syslog is defined
-</span><span class="">  808: 		if($self-&gt;{&#39;croak_on_error&#39;} || (!defined($self-&gt;{logger}) &amp;&amp; (!defined($self-&gt;{array})))) {
-</span><span class="">  809: 			Carp::croak($warning);
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  806: 	if($syslog_values{$level} &lt;= $ERROR) {
+</span><p> <b> Mutants (Total: 4, Killed: 4, Survived: 0)</b><p><span class="">  807: 		# Fall back to croak if no logger or syslog is defined
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  808: 		if($self-&gt;{&#39;croak_on_error&#39;} || (!defined($self-&gt;{logger}) &amp;&amp; (!defined($self-&gt;{array})))) {
+</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  809: 			Carp::croak($warning);
 </span><span class="">  810: 		}
 </span><span class="">  811: 	}
-</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  812: 
-</span><p> <b> Mutants (Total: 4, Killed: 4, Survived: 0)</b><p><span class=""><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">813 → 813 → 0</span></span>  813: 	if($self-&gt;{&#39;carp_on_warn&#39;} || (!defined($self-&gt;{logger}) &amp;&amp; (!defined($self-&gt;{array})))) {
-</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  814: 		# Fallback to Carp if no logger or syslog is defined
-</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  815: 		Carp::carp($warning);
+</span><span class="">  812: 
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic."><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">813 → 813 → 0</span></span>  813: 	if($self-&gt;{&#39;carp_on_warn&#39;} || (!defined($self-&gt;{logger}) &amp;&amp; (!defined($self-&gt;{array})))) {
+</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  814: 		# Fallback to Carp if no logger or syslog is defined
+</span><span class="">  815: 		Carp::carp($warning);
 </span><span class="">  816: 	}
 </span><span class="">  817: }
 </span><span class="">  818: 
-</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  819: # Destructor to close syslog connection
-</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  820: sub DESTROY {
+</span><span class="">  819: # Destructor to close syslog connection
+</span><span class="">  820: sub DESTROY {
 </span><span class=""><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">821 → 823 → 0</span></span>  821: 	my $self = $_[0];
 </span><span class="">  822: 
-</span><span class="">  823: 	if($self-&gt;{_syslog_opened}) {
-</span><span class="">  824: 		Sys::Syslog::closelog();
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  823: 	if($self-&gt;{_syslog_opened}) {
+</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  824: 		Sys::Syslog::closelog();
 </span><span class="">  825: 		delete $self-&gt;{_syslog_opened};
 </span><span class="">  826: 	}
 </span><span class="">  827: }
 </span><span class="">  828: 
-</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  829: =head1 AUTHOR
-</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  830: 
+</span><span class="">  829: =head1 AUTHOR
+</span><span class="">  830: 
 </span><span class="">  831: Nigel Horne C&lt;njh@nigelhorne.com&gt;
 </span><span class="">  832: 
 </span><span class="">  833: =head1 SEE ALSO
