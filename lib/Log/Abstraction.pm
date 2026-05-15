@@ -422,7 +422,7 @@ sub _log {
 			if(my $array = $logger->{'array'}) {
 				push @{$array}, { level => $level, message => $str };
 			}
-			if($logger->{'sendmail'}->{'to'}) {
+			if(exists($logger->{'sendmail'}) && exists($logger->{'sendmail'}->{'to'})) {
 				# Send an email
 				# TODO: throttle the number of emails
 				if((!defined($logger->{'sendmail'}->{'level'})) ||
@@ -508,7 +508,7 @@ sub _log {
 				$format =~ s/%env_(\w+)%/$ENV{$1} \/\/ ''/ge;
 
 				print $fout "$format\n" or Carp::croak(ref($self), ": Can't write to file descriptor: $!");
-			} elsif((!$logger->{'file'}) && (!$logger->{'syslog'}) && (!$logger->{'sendmail'})) {
+			} elsif(!$logger->{'file'} && !$logger->{'array'} && !$logger->{'syslog'} && !exists($logger->{'sendmail'}) && !$logger->{'fd'}) {
 				croak(ref($self), ": Don't know how to deal with the $level message");
 			}
 		} elsif(!ref($logger)) {
@@ -769,7 +769,19 @@ sub _high_priority
 	my $warning;
 
 	# Check if called as warn(warning => ...) or warn('plain', 'args')
-	my $params = Params::Get::get_params('warning', @_);
+	my $params;
+	eval { $params = Params::Get::get_params('warning', @_) };
+	if($@ || !$params || ref($params) ne 'HASH' || !exists($params->{warning})) {
+		# Plain list form — join directly
+		$warning = join('', grep { defined } @_);
+		return unless length($warning);
+	} else {
+		$warning = $params->{warning};
+		return unless defined($warning);
+		if(ref($warning) eq 'ARRAY') {
+			$warning = join('', grep { defined } @{$warning});
+		}
+	}
 
 	if($params && ref($params) eq 'HASH' && exists($params->{warning})) {
 		$warning = $params->{warning};
