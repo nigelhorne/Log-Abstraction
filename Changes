@@ -1,6 +1,7 @@
 Revision history for Log-Abstraction
 
-0.28
+0.28 Fri May 15 20:28:07 EDT 2026
+
 	[ Enhancements ]
 	- Added context (ctx) to code ref logger callbacks
 
