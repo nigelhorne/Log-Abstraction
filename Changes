@@ -1,6 +1,6 @@
 Revision history for Log-Abstraction
 
-0.29
+0.29	Tue May 26 20:36:13 EDT 2026
 
 	[ Enhancements ]
 	- Added min_interval throttle to sendmail backend: at most one email per
