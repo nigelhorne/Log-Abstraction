@@ -1140,65 +1140,152 @@ Approximate LCSAJ segments: 179<br>
 </span><span class="">  842: 	}
 </span><span class="">  843: }
 </span><span class="">  844: 
-</span><span class="">  845: =head1 AUTHOR
+</span><span class="">  845: =head1 EXAMPLES
 </span><span class="">  846: 
-</span><span class="">  847: Nigel Horne C&lt;njh@nigelhorne.com&gt;
+</span><span class="">  847: =head2 CSV file logging for BI import
 </span><span class="">  848: 
-</span><span class="">  849: =head1 SEE ALSO
-</span><span class="">  850: 
-</span><span class="">  851: =over 4
-</span><span class="">  852: 
-</span><span class="">  853: =item * L&lt;Test Dashboard|https://nigelhorne.github.io/Log-Abstraction/coverage/&gt;
+</span><span class="">  849: The code-reference backend gives you full control over the output format.
+</span><span class="">  850: The example below writes every message at C&lt;trace&gt; level and above as a
+</span><span class="">  851: CSV row to a file,
+</span><span class="">  852: producing output that can be loaded directly into a spreadsheet or BI tool
+</span><span class="">  853: (Tableau, Power BI, Metabase, etc.).
 </span><span class="">  854: 
-</span><span class="">  855: =back
+</span><span class="">  855: Each row contains: C&lt;timestamp&gt;, C&lt;level&gt;, C&lt;class&gt;, C&lt;file&gt;, C&lt;line&gt;, C&lt;message&gt;.
 </span><span class="">  856: 
-</span><span class="">  857: =head1 SUPPORT
+</span><span class="">  857:   use Log::Abstraction;
 </span><span class="">  858: 
-</span><span class="">  859: This module is provided as-is without any warranty.
+</span><span class="">  859:   my $csv_file = &#39;app_events.csv&#39;;
 </span><span class="">  860: 
-</span><span class="">  861: Please report any bugs or feature requests to C&lt;bug-log-abstraction at rt.cpan.org&gt;,
-</span><span class="">  862: or through the web interface at
-</span><span class="">  863: L&lt;http://rt.cpan.org/NoAuth/ReportBug.html?Queue=Log-Abstraction&gt;.
-</span><span class="">  864: I will be notified, and then you&#39;ll
-</span><span class="">  865: automatically be notified of progress on your bug as I make changes.
-</span><span class="">  866: 
-</span><span class="">  867: You can find documentation for this module with the perldoc command.
-</span><span class="">  868: 
-</span><span class="">  869:     perldoc Log::Abstraction
-</span><span class="">  870: 
-</span><span class="">  871: You can also look for information at:
-</span><span class="">  872: 
-</span><span class="">  873: =over 4
+</span><span class="">  861:   # Write the header row once (skip if the file already exists and has data).
+</span><span class="">  862:   unless (-s $csv_file) {
+</span><span class="">  863:       open my $fh, &#39;&gt;&#39;, $csv_file or die &quot;Cannot open $csv_file: $!&quot;;
+</span><span class="">  864:       print $fh qq{timestamp,level,class,file,line,message\n};
+</span><span class="">  865:       close $fh;
+</span><span class="">  866:   }
+</span><span class="">  867: 
+</span><span class="">  868:   # Helper: quote a single CSV field (escapes embedded double-quotes).
+</span><span class="">  869:   my $csv_field = sub {
+</span><span class="">  870:       my $v = defined $_[0] ? $_[0] : &#39;&#39;;
+</span><span class="">  871:       $v =~ s/&quot;/&quot;&quot;/g;
+</span><span class="">  872:       return qq{&quot;$v&quot;};
+</span><span class="">  873:   };
 </span><span class="">  874: 
-</span><span class="">  875: =item * MetaCPAN
-</span><span class="">  876: 
-</span><span class="">  877: L&lt;https://metacpan.org/dist/Log-Abstraction&gt;
-</span><span class="">  878: 
-</span><span class="">  879: =item * RT: CPAN&#39;s request tracker
-</span><span class="">  880: 
-</span><span class="">  881: L&lt;https://rt.cpan.org/NoAuth/Bugs.html?Dist=Log-Abstraction&gt;
+</span><span class="">  875:   my $logger = Log::Abstraction-&gt;new(
+</span><span class="">  876:       level  =&gt; &#39;trace&#39;,        # capture everything from trace upwards
+</span><span class="">  877:       logger =&gt; sub {
+</span><span class="">  878:           my ($args) = @_;
+</span><span class="">  879: 
+</span><span class="">  880:           my $timestamp = POSIX::strftime(&#39;%Y-%m-%dT%H:%M:%SZ&#39;, gmtime);
+</span><span class="">  881:           my $message   = join(&#39; &#39;, @{ $args-&gt;{message} // [] });
 </span><span class="">  882: 
-</span><span class="">  883: =item * CPAN Testers&#39; Matrix
-</span><span class="">  884: 
-</span><span class="">  885: L&lt;http://matrix.cpantesters.org/?dist=Log-Abstraction&gt;
-</span><span class="">  886: 
-</span><span class="">  887: =item * CPAN Testers Dependencies
-</span><span class="">  888: 
-</span><span class="">  889: L&lt;http://deps.cpantesters.org/?module=Log::Abstraction&gt;
-</span><span class="">  890: 
-</span><span class="">  891: =back
-</span><span class="">  892: 
-</span><span class="">  893: =head1 COPYRIGHT AND LICENSE
-</span><span class="">  894: 
-</span><span class="">  895: Copyright (C) 2025-2026 Nigel Horne
-</span><span class="">  896: 
-</span><span class="">  897: Usage is subject to the GPL2 licence terms.
-</span><span class="">  898: If you use it,
-</span><span class="">  899: please let me know.
-</span><span class="">  900: 
-</span><span class="">  901: =cut
-</span><span class="">  902: 
-</span><span class="">  903: 1;
+</span><span class="">  883:           open my $fh, &#39;&gt;&gt;&#39;, $csv_file or return;
+</span><span class="">  884:           print $fh join(&#39;,&#39;,
+</span><span class="">  885:               $csv_field-&gt;($timestamp),
+</span><span class="">  886:               $csv_field-&gt;($args-&gt;{level}),
+</span><span class="">  887:               $csv_field-&gt;($args-&gt;{class}),
+</span><span class="">  888:               $csv_field-&gt;($args-&gt;{file}),
+</span><span class="">  889:               $csv_field-&gt;($args-&gt;{line}),
+</span><span class="">  890:               $csv_field-&gt;($message),
+</span><span class="">  891:           ), &quot;\n&quot;;
+</span><span class="">  892:           close $fh;
+</span><span class="">  893:       },
+</span><span class="">  894:   );
+</span><span class="">  895: 
+</span><span class="">  896:   $logger-&gt;trace(&#39;application started&#39;);
+</span><span class="">  897:   $logger-&gt;info(&#39;user logged in&#39;, { user =&gt; &#39;alice&#39; });
+</span><span class="">  898:   $logger-&gt;warn({ warning =&gt; &#39;disk usage above 80%&#39; });
+</span><span class="">  899: 
+</span><span class="">  900: The resulting C&lt;app_events.csv&gt; looks like:
+</span><span class="">  901: 
+</span><span class="">  902:   timestamp,level,class,file,line,message
+</span><span class="">  903:   &quot;2026-05-27T14:00:00Z&quot;,&quot;trace&quot;,&quot;main&quot;,&quot;app.pl&quot;,&quot;42&quot;,&quot;application started&quot;
+</span><span class="">  904:   &quot;2026-05-27T14:00:01Z&quot;,&quot;info&quot;,&quot;main&quot;,&quot;app.pl&quot;,&quot;43&quot;,&quot;user logged in&quot;
+</span><span class="">  905:   &quot;2026-05-27T14:00:02Z&quot;,&quot;warning&quot;,&quot;main&quot;,&quot;app.pl&quot;,&quot;44&quot;,&quot;disk usage above 80%&quot;
+</span><span class="">  906: 
+</span><span class="">  907: For production use, consider replacing the manual C&lt;$csv_field&gt; quoting with
+</span><span class="">  908: L&lt;Text::CSV&gt; for correct handling of embedded newlines and other edge cases.
+</span><span class="">  909: 
+</span><span class="">  910: If you also want real-time alerting on critical events,
+</span><span class="">  911: combine the code-ref backend with the C&lt;sendmail&gt; backend:
+</span><span class="">  912: 
+</span><span class="">  913:   my $logger = Log::Abstraction-&gt;new(
+</span><span class="">  914:       level  =&gt; &#39;trace&#39;,
+</span><span class="">  915:       logger =&gt; {
+</span><span class="">  916:           file    =&gt; $csv_file,   # use the file backend for simple append
+</span><span class="">  917:           sendmail =&gt; {
+</span><span class="">  918:               host         =&gt; &#39;smtp.example.com&#39;,
+</span><span class="">  919:               to           =&gt; &#39;ops@example.com&#39;,
+</span><span class="">  920:               from         =&gt; &#39;logger@example.com&#39;,
+</span><span class="">  921:               subject      =&gt; &#39;Application alert&#39;,
+</span><span class="">  922:               min_interval =&gt; 300,   # at most one alert email per 5 minutes
+</span><span class="">  923:           },
+</span><span class="">  924:       },
+</span><span class="">  925:   );
+</span><span class="">  926: 
+</span><span class="">  927: In this configuration every message at C&lt;trace&gt; and above is appended to the
+</span><span class="">  928: file,
+</span><span class="">  929: while C&lt;warn&gt; / C&lt;error&gt; messages additionally trigger an email (throttled to
+</span><span class="">  930: one per five minutes).
+</span><span class="">  931: 
+</span><span class="">  932: =head1 AUTHOR
+</span><span class="">  933: 
+</span><span class="">  934: Nigel Horne C&lt;njh@nigelhorne.com&gt;
+</span><span class="">  935: 
+</span><span class="">  936: =head1 SEE ALSO
+</span><span class="">  937: 
+</span><span class="">  938: =over 4
+</span><span class="">  939: 
+</span><span class="">  940: =item * L&lt;Test Dashboard|https://nigelhorne.github.io/Log-Abstraction/coverage/&gt;
+</span><span class="">  941: 
+</span><span class="">  942: =back
+</span><span class="">  943: 
+</span><span class="">  944: =head1 SUPPORT
+</span><span class="">  945: 
+</span><span class="">  946: This module is provided as-is without any warranty.
+</span><span class="">  947: 
+</span><span class="">  948: Please report any bugs or feature requests to C&lt;bug-log-abstraction at rt.cpan.org&gt;,
+</span><span class="">  949: or through the web interface at
+</span><span class="">  950: L&lt;http://rt.cpan.org/NoAuth/ReportBug.html?Queue=Log-Abstraction&gt;.
+</span><span class="">  951: I will be notified, and then you&#39;ll
+</span><span class="">  952: automatically be notified of progress on your bug as I make changes.
+</span><span class="">  953: 
+</span><span class="">  954: You can find documentation for this module with the perldoc command.
+</span><span class="">  955: 
+</span><span class="">  956:     perldoc Log::Abstraction
+</span><span class="">  957: 
+</span><span class="">  958: You can also look for information at:
+</span><span class="">  959: 
+</span><span class="">  960: =over 4
+</span><span class="">  961: 
+</span><span class="">  962: =item * MetaCPAN
+</span><span class="">  963: 
+</span><span class="">  964: L&lt;https://metacpan.org/dist/Log-Abstraction&gt;
+</span><span class="">  965: 
+</span><span class="">  966: =item * RT: CPAN&#39;s request tracker
+</span><span class="">  967: 
+</span><span class="">  968: L&lt;https://rt.cpan.org/NoAuth/Bugs.html?Dist=Log-Abstraction&gt;
+</span><span class="">  969: 
+</span><span class="">  970: =item * CPAN Testers&#39; Matrix
+</span><span class="">  971: 
+</span><span class="">  972: L&lt;http://matrix.cpantesters.org/?dist=Log-Abstraction&gt;
+</span><span class="">  973: 
+</span><span class="">  974: =item * CPAN Testers Dependencies
+</span><span class="">  975: 
+</span><span class="">  976: L&lt;http://deps.cpantesters.org/?module=Log::Abstraction&gt;
+</span><span class="">  977: 
+</span><span class="">  978: =back
+</span><span class="">  979: 
+</span><span class="">  980: =head1 COPYRIGHT AND LICENSE
+</span><span class="">  981: 
+</span><span class="">  982: Copyright (C) 2025-2026 Nigel Horne
+</span><span class="">  983: 
+</span><span class="">  984: Usage is subject to the GPL2 licence terms.
+</span><span class="">  985: If you use it,
+</span><span class="">  986: please let me know.
+</span><span class="">  987: 
+</span><span class="">  988: =cut
+</span><span class="">  989: 
+</span><span class="">  990: 1;
 </span></pre>
 
 <script>
