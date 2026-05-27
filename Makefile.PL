@@ -25,7 +25,7 @@ WriteMakefile(
 		'Log::Log4perl' => 0,
 		'Params::Get' => 0.13,
 		'POSIX' => 0,
-		'Readonly::Values::Syslog' => 0.03,
+		'Readonly::Values::Syslog' => 0.04,
 		'Return::Set' => 0,
 		'Sys::Syslog' => 0.28,
 		'Scalar::Util'=> 0

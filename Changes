@@ -7,6 +7,11 @@ Revision history for Log-Abstraction
 	  backend writing timestamp/level/class/file/line/message rows, with a
 	  combined sendmail+min_interval variant for real-time alerting)
 
+	[ Bug Fixes]
+	- Bump minimum Readonly::Values::Syslog to 0.04 to fix is_debug() returning
+	  false at trace level on older installations
+	  Fixes https://www.cpantesters.org/cpan/report/32b653da-59c4-11f1-ba50-8ade6d8775ea
+
 0.29	Tue May 26 20:36:13 EDT 2026
 
 	[ Enhancements ]
@@ -14,7 +19,6 @@ Revision history for Log-Abstraction
 	  configured interval (seconds); cooldown state stored in _last_email_sent
 	  on the object and inherited by clones
 
-	[ Bug Fixes]
 	- Bump minimum Test::Mockingbird version to fix https://www.cpantesters.org/cpan/report/f148a3e6-50a2-11f1-8224-a122dd379578
 
 0.28 Fri May 15 20:28:07 EDT 2026

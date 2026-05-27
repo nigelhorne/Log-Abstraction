@@ -9,7 +9,7 @@ requires 'ExtUtils::MakeMaker', '6.64';
 requires 'Log::Log4perl';
 requires 'POSIX';
 requires 'Params::Get', '0.13';
-requires 'Readonly::Values::Syslog', '0.03';
+requires 'Readonly::Values::Syslog', '0.04';
 requires 'Return::Set';
 requires 'Scalar::Util';
 requires 'Sys::Syslog', '0.28';
