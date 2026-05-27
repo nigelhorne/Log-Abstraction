@@ -1173,10 +1173,10 @@ Approximate LCSAJ segments: 179<br>
 </span><span class="">  875:   my $logger = Log::Abstraction-&gt;new(
 </span><span class="">  876:       level  =&gt; &#39;trace&#39;,        # capture everything from trace upwards
 </span><span class="">  877:       logger =&gt; sub {
-</span><span class="">  878:           my ($args) = @_;
+</span><span class="">  878:           my $args = $_[0];
 </span><span class="">  879: 
 </span><span class="">  880:           my $timestamp = POSIX::strftime(&#39;%Y-%m-%dT%H:%M:%SZ&#39;, gmtime);
-</span><span class="">  881:           my $message   = join(&#39; &#39;, @{ $args-&gt;{message} // [] });
+</span><span class="">  881:           my $message  = join(&#39; &#39;, @{ $args-&gt;{message} // [] });
 </span><span class="">  882: 
 </span><span class="">  883:           open my $fh, &#39;&gt;&gt;&#39;, $csv_file or return;
 </span><span class="">  884:           print $fh join(&#39;,&#39;,
