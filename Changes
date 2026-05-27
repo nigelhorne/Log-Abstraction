@@ -1,6 +1,6 @@
 Revision history for Log-Abstraction
 
-0.30
+0.30	Wed May 27 13:09:35 EDT 2026
 
 	[ Enhancements ]
 	- Added EXAMPLES POD section: CSV file logging for BI import (code-ref

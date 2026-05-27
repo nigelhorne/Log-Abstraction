@@ -18,11 +18,11 @@ Log::Abstraction - Logging Abstraction Layer
 
 =head1 VERSION
 
-0.29
+0.30
 
 =cut
 
-our $VERSION = 0.29;
+our $VERSION = 0.30;
 
 =head1 SYNOPSIS
 
