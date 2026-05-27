@@ -842,6 +842,93 @@ sub DESTROY {
 	}
 }
 
+=head1 EXAMPLES
+
+=head2 CSV file logging for BI import
+
+The code-reference backend gives you full control over the output format.
+The example below writes every message at C<trace> level and above as a
+CSV row to a file,
+producing output that can be loaded directly into a spreadsheet or BI tool
+(Tableau, Power BI, Metabase, etc.).
+
+Each row contains: C<timestamp>, C<level>, C<class>, C<file>, C<line>, C<message>.
+
+  use Log::Abstraction;
+
+  my $csv_file = 'app_events.csv';
+
+  # Write the header row once (skip if the file already exists and has data).
+  unless (-s $csv_file) {
+      open my $fh, '>', $csv_file or die "Cannot open $csv_file: $!";
+      print $fh qq{timestamp,level,class,file,line,message\n};
+      close $fh;
+  }
+
+  # Helper: quote a single CSV field (escapes embedded double-quotes).
+  my $csv_field = sub {
+      my $v = defined $_[0] ? $_[0] : '';
+      $v =~ s/"/""/g;
+      return qq{"$v"};
+  };
+
+  my $logger = Log::Abstraction->new(
+      level  => 'trace',        # capture everything from trace upwards
+      logger => sub {
+          my ($args) = @_;
+
+          my $timestamp = POSIX::strftime('%Y-%m-%dT%H:%M:%SZ', gmtime);
+          my $message   = join(' ', @{ $args->{message} // [] });
+
+          open my $fh, '>>', $csv_file or return;
+          print $fh join(',',
+              $csv_field->($timestamp),
+              $csv_field->($args->{level}),
+              $csv_field->($args->{class}),
+              $csv_field->($args->{file}),
+              $csv_field->($args->{line}),
+              $csv_field->($message),
+          ), "\n";
+          close $fh;
+      },
+  );
+
+  $logger->trace('application started');
+  $logger->info('user logged in', { user => 'alice' });
+  $logger->warn({ warning => 'disk usage above 80%' });
+
+The resulting C<app_events.csv> looks like:
+
+  timestamp,level,class,file,line,message
+  "2026-05-27T14:00:00Z","trace","main","app.pl","42","application started"
+  "2026-05-27T14:00:01Z","info","main","app.pl","43","user logged in"
+  "2026-05-27T14:00:02Z","warning","main","app.pl","44","disk usage above 80%"
+
+For production use, consider replacing the manual C<$csv_field> quoting with
+L<Text::CSV> for correct handling of embedded newlines and other edge cases.
+
+If you also want real-time alerting on critical events,
+combine the code-ref backend with the C<sendmail> backend:
+
+  my $logger = Log::Abstraction->new(
+      level  => 'trace',
+      logger => {
+          file    => $csv_file,   # use the file backend for simple append
+          sendmail => {
+              host         => 'smtp.example.com',
+              to           => 'ops@example.com',
+              from         => 'logger@example.com',
+              subject      => 'Application alert',
+              min_interval => 300,   # at most one alert email per 5 minutes
+          },
+      },
+  );
+
+In this configuration every message at C<trace> and above is appended to the
+file,
+while C<warn> / C<error> messages additionally trigger an email (throttled to
+one per five minutes).
+
 =head1 AUTHOR
 
 Nigel Horne C<njh@nigelhorne.com>
