@@ -277,10 +277,10 @@ Each row contains: `timestamp`, `level`, `class`, `file`, `line`, `message`.
     my $logger = Log::Abstraction->new(
         level  => 'trace',        # capture everything from trace upwards
         logger => sub {
-            my ($args) = @_;
+            my $args = $_[0];
 
             my $timestamp = POSIX::strftime('%Y-%m-%dT%H:%M:%SZ', gmtime);
-            my $message   = join(' ', @{ $args->{message} // [] });
+            my $message  = join(' ', @{ $args->{message} // [] });
 
             open my $fh, '>>', $csv_file or return;
             print $fh join(',',

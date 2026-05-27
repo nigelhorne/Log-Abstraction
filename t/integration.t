@@ -963,7 +963,7 @@ subtest 'CSV file logger — creates correctly formatted file' => sub {
 	my $logger = Log::Abstraction->new(
 		level  => 'trace',
 		logger => sub {
-			my ($args) = @_;
+			my $args = $_[0];
 			my $timestamp = POSIX::strftime('%Y-%m-%dT%H:%M:%SZ', gmtime);
 			my $message   = join(' ', @{ $args->{message} // [] });
 			open my $out, '>>', $csv_path or return;
