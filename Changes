@@ -1,5 +1,27 @@
 Revision history for Log-Abstraction
 
+0.31	(not yet released)
+
+	[ Bug Fixes ]
+	- Fixed use Readonly::Values::Syslog version in source to 0.04, matching
+	  Makefile.PL and cpanfile (was still 0.03 after the 0.30 bump)
+
+	[ Documentation ]
+	- Fixed EXAMPLES POD: sample output class field was "main"; corrected to
+	  "Log::Abstraction" (blessed class of the logger object)
+	- Fixed EXAMPLES POD: sample output warn-row level field was "warning";
+	  corrected to "warn" to match what the module actually passes to callbacks
+	- Added note explaining that file/line resolve to the module's internal
+	  dispatch for warn/error calls due to the extra _high_priority stack frame
+	- Replaced broken combined file+sendmail example (file backend writes
+	  native text format, not CSV) with a correct sendmail-only example; added
+	  level => 'warn' key to restrict emails to warn-and-above; noted that
+	  combining CSV output with email requires both in a single code-ref
+
+	[ Tests ]
+	- Simplified $parse_line regex in integration.t: removed dead |"$ alternation
+	  subsumed by "(?:,|$)
+
 0.30	Wed May 27 13:09:35 EDT 2026
 
 	[ Enhancements ]

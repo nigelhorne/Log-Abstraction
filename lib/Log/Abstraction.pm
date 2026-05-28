@@ -7,7 +7,7 @@ use Config::Abstraction 0.36;
 use Data::Dumper;
 use Params::Get 0.13;	# Import Params::Get for parameter handling
 use POSIX qw(strftime);
-use Readonly::Values::Syslog 0.03;
+use Readonly::Values::Syslog 0.04;
 use Return::Set;
 use Scalar::Util 'blessed';	# Import Scalar::Util for object reference checking
 use Sys::Syslog 0.28;	# Import Sys::Syslog for syslog support
@@ -900,34 +900,45 @@ Each row contains: C<timestamp>, C<level>, C<class>, C<file>, C<line>, C<message
 The resulting C<app_events.csv> looks like:
 
   timestamp,level,class,file,line,message
-  "2026-05-27T14:00:00Z","trace","main","app.pl","42","application started"
-  "2026-05-27T14:00:01Z","info","main","app.pl","43","user logged in"
-  "2026-05-27T14:00:02Z","warning","main","app.pl","44","disk usage above 80%"
+  "2026-05-27T14:00:00Z","trace","Log::Abstraction","app.pl","42","application started"
+  "2026-05-27T14:00:01Z","info","Log::Abstraction","app.pl","43","user logged in"
+  "2026-05-27T14:00:02Z","warn","Log::Abstraction","Log/Abstraction.pm","820","disk usage above 80%"
+
+Note: C<class> is always C<Log::Abstraction> (or the subclass name if you subclass the
+module).  For C<trace>, C<debug>, C<info>, and C<notice> calls, C<file> and C<line>
+resolve to the caller's source location.  For C<warn> and C<error> calls the
+extra C<_high_priority> stack frame shifts the resolution one level inward, so
+C<file> and C<line> point into the module rather than the calling script.
 
 For production use, consider replacing the manual C<$csv_field> quoting with
 L<Text::CSV> for correct handling of embedded newlines and other edge cases.
 
-If you also want real-time alerting on critical events,
-combine the code-ref backend with the C<sendmail> backend:
+If you also want real-time alerting on critical events, add the email logic
+directly inside the code-ref callback — test C<$args-E<gt>{level}> and call
+your mailer for C<warn> / C<error> messages while still writing the CSV row
+for every message.
+
+Alternatively, use the C<sendmail> hash-ref backend on its own (without the
+code-ref) and add a C<level> key to restrict emails to warn-and-above:
 
   my $logger = Log::Abstraction->new(
-      level  => 'trace',
+      level  => 'warn',
       logger => {
-          file    => $csv_file,   # use the file backend for simple append
           sendmail => {
               host         => 'smtp.example.com',
               to           => 'ops@example.com',
               from         => 'logger@example.com',
               subject      => 'Application alert',
-              min_interval => 300,   # at most one alert email per 5 minutes
+              level        => 'warn',   # only email at warn level and above
+              min_interval => 300,      # at most one alert email per 5 minutes
           },
       },
   );
 
-In this configuration every message at C<trace> and above is appended to the
-file,
-while C<warn> / C<error> messages additionally trigger an email (throttled to
-one per five minutes).
+Note: the C<sendmail> backend writes the module's standard text format, not
+CSV.  To produce CSV rows I<and> send email alerts from the same logger,
+embed both the CSV-write and the mail-send logic inside a single code-ref
+callback as described above.
 
 =head1 AUTHOR
 

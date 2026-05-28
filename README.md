@@ -302,34 +302,45 @@ Each row contains: `timestamp`, `level`, `class`, `file`, `line`, `message`.
 The resulting `app_events.csv` looks like:
 
     timestamp,level,class,file,line,message
-    "2026-05-27T14:00:00Z","trace","main","app.pl","42","application started"
-    "2026-05-27T14:00:01Z","info","main","app.pl","43","user logged in"
-    "2026-05-27T14:00:02Z","warning","main","app.pl","44","disk usage above 80%"
+    "2026-05-27T14:00:00Z","trace","Log::Abstraction","app.pl","42","application started"
+    "2026-05-27T14:00:01Z","info","Log::Abstraction","app.pl","43","user logged in"
+    "2026-05-27T14:00:02Z","warn","Log::Abstraction","Log/Abstraction.pm","820","disk usage above 80%"
+
+Note: `class` is always `Log::Abstraction` (or the subclass name if you subclass the
+module).  For `trace`, `debug`, `info`, and `notice` calls, `file` and `line`
+resolve to the caller's source location.  For `warn` and `error` calls the
+extra `_high_priority` stack frame shifts the resolution one level inward, so
+`file` and `line` point into the module rather than the calling script.
 
 For production use, consider replacing the manual `$csv_field` quoting with
 [Text::CSV](https://metacpan.org/pod/Text%3A%3ACSV) for correct handling of embedded newlines and other edge cases.
 
-If you also want real-time alerting on critical events,
-combine the code-ref backend with the `sendmail` backend:
+If you also want real-time alerting on critical events, add the email logic
+directly inside the code-ref callback — test `$args->{level}` and call
+your mailer for `warn` / `error` messages while still writing the CSV row
+for every message.
+
+Alternatively, use the `sendmail` hash-ref backend on its own (without the
+code-ref) and add a `level` key to restrict emails to warn-and-above:
 
     my $logger = Log::Abstraction->new(
-        level  => 'trace',
+        level  => 'warn',
         logger => {
-            file    => $csv_file,   # use the file backend for simple append
             sendmail => {
                 host         => 'smtp.example.com',
                 to           => 'ops@example.com',
                 from         => 'logger@example.com',
                 subject      => 'Application alert',
-                min_interval => 300,   # at most one alert email per 5 minutes
+                level        => 'warn',   # only email at warn level and above
+                min_interval => 300,      # at most one alert email per 5 minutes
             },
         },
     );
 
-In this configuration every message at `trace` and above is appended to the
-file,
-while `warn` / `error` messages additionally trigger an email (throttled to
-one per five minutes).
+Note: the `sendmail` backend writes the module's standard text format, not
+CSV.  To produce CSV rows _and_ send email alerts from the same logger,
+embed both the CSV-write and the mail-send logic inside a single code-ref
+callback as described above.
 
 # AUTHOR
 

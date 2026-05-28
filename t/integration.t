@@ -997,7 +997,7 @@ subtest 'CSV file logger — creates correctly formatted file' => sub {
 		my ($line) = @_;
 		my @fields;
 		while (length $line) {
-			last unless $line =~ s/^"((?:[^"]|"")*)(?:"(?:,|$)|"$)//;
+			last unless $line =~ s/^"((?:[^"]|"")*)"(?:,|$)//;
 			my $f = $1;
 			$f =~ s/""/"/g;
 			push @fields, $f;
