@@ -2,6 +2,43 @@ Revision history for Log-Abstraction
 
 0.31	(not yet released)
 
+	[ Architecture ]
+	- Added use autodie qw(:all); file writes wrapped in eval{} to keep
+	  logging failures silent (app must not crash when log file is unavailable)
+	- Extracted _format_message($self, $level, $str, $use_class) helper,
+	  eliminating 4+ copies of the format-token substitution block
+	- Extracted _validate_file_path($self, $path) helper, unifying path
+	  validation for hash-backend file, scalar-path, and self->{'file'} under
+	  one implementation
+	- Added Readonly constants for all magic strings and numbers (SMTP defaults,
+	  port range, syslog defaults, format strings, validation regexes)
+	- Collapsed _high_priority duplicate if/else blocks into one
+	- All public void methods now return $self to allow method chaining;
+	  level() setter returns undef on invalid input to signal the error
+	- Fixed syslog priority mapping: all levels (trace→debug, debug→debug,
+	  info→info, notice→notice, warn→warning, error→err) now correctly mapped
+	  via %LEVEL_TO_SYSLOG_PRIORITY hash instead of a binary error/warning test
+	- Moved Readonly from test-only to runtime dependency (Makefile.PL, cpanfile)
+
+	[ Documentation ]
+	- Added Z-notation FORMAL SPECIFICATION to every public method POD
+	- Added API Specification (Params::Validate::Strict input and Return::Set
+	  output schemas) to every public method POD
+	- Added MESSAGES table to every public method POD
+	- Added internal-routine comment blocks (purpose, entry, exit, side
+	  effects, notes) for _log, _high_priority, _format_message,
+	  _validate_file_path, _sanitize_email_header, DESTROY
+	- Suppressed %class% for the base Log::Abstraction class (appears empty,
+	  as it added no useful information when not subclassed)
+
+	[ Tests ]
+	- Added t/locales.t: covers geographic (Locale::Country ISO-code sanity
+	  with BAIL_OUT on drift, case-insensitive codes, concurrent instances) and
+	  POSIX system-locale (LC_ALL en_US.UTF-8/de_DE.UTF-8/ja_JP.UTF-8 error
+	  paths using local $! = ENOENT; my $msg = "$!" pattern)
+	- Updated edge_cases.t and function.t to use unified "Invalid file name"
+	  error message (standardised via _validate_file_path)
+
 	[ Security ]
 	- Fixed path traversal in HASH-backend file logger: path regex now blocks
 	  '..' sequences, preventing writes outside the intended directory

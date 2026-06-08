@@ -9,6 +9,7 @@ requires 'ExtUtils::MakeMaker', '6.64';
 requires 'Log::Log4perl';
 requires 'POSIX';
 requires 'Params::Get', '0.13';
+requires 'Readonly';
 requires 'Readonly::Values::Syslog', '0.04';
 requires 'Return::Set';
 requires 'Scalar::Util';
@@ -23,7 +24,6 @@ on 'test' => sub {
 	requires 'IPC::System::Simple';
 	requires 'JSON::MaybeXS';
 	requires 'POSIX';
-	requires 'Readonly';
 	requires 'Test::DescribeMe';
 	requires 'Test::Mockingbird', '0.10';
 	requires 'Test::Most';
