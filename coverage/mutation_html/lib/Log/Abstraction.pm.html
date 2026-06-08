@@ -584,182 +584,182 @@ Approximate LCSAJ segments: 185<br>
 </span><span class="">  286: 	}, $class;
 </span><span class="">  287: }
 </span><span class="">  288: 
-</span><span class="">  289: =encoding utf-8
+</span><span class="">  289: =head2 _sanitize_email_header
 </span><span class="">  290: 
-</span><span class="">  291: =head2 _sanitize_email_header
+</span><span class="">  291:     my $clean_value = _sanitize_email_header($raw_value);
 </span><span class="">  292: 
-</span><span class="">  293:     my $clean_value = _sanitize_email_header($raw_value);
+</span><span class="">  293: Internal routine to remove carriage return and line feed characters from an email header value to prevent header injection or formatting issues.
 </span><span class="">  294: 
-</span><span class="">  295: Internal routine to remove carriage return and line feed characters from an email header value to prevent header injection or formatting issues.
+</span><span class="">  295: =over 4
 </span><span class="">  296: 
-</span><span class="">  297: =over 4
+</span><span class="">  297: =item * Input
 </span><span class="">  298: 
-</span><span class="">  299: =item * Input
+</span><span class="">  299: Takes a single scalar value, typically a string representing an email header field.
 </span><span class="">  300: 
-</span><span class="">  301: Takes a single scalar value, typically a string representing an email header field.
+</span><span class="">  301: =item * Behavior
 </span><span class="">  302: 
-</span><span class="">  303: =item * Behavior
+</span><span class="">  303: If the input is undefined, returns `undef`. Otherwise, removes all newline characters (`\n`), carriage returns (`\r`), and CRLF pairs from the string.
 </span><span class="">  304: 
-</span><span class="">  305: If the input is undefined, returns `undef`. Otherwise, removes all newline characters (`\n`), carriage returns (`\r`), and CRLF pairs from the string.
+</span><span class="">  305: =item * Output
 </span><span class="">  306: 
-</span><span class="">  307: =item * Output
+</span><span class="">  307: Returns the sanitized string with CR/LF characters removed.
 </span><span class="">  308: 
-</span><span class="">  309: Returns the sanitized string with CR/LF characters removed.
+</span><span class="">  309: =back
 </span><span class="">  310: 
-</span><span class="">  311: =back
+</span><span class="">  311: =cut
 </span><span class="">  312: 
-</span><span class="">  313: =head3 FORMAL SPECIFICATION
-</span><span class="">  314: 
-</span><span class="">  315: If the input is undefined (&acirc;&#136;&#133;), the output is also undefined (&acirc;&#136;&#133;).
-</span><span class="">  316: 
-</span><span class="">  317: If the input is defined, the result is a defined string with CR and LF characters removed.
+</span><span class="">  313: sub _sanitize_email_header {
+</span><span class="">  314: 	my $value = $_[0];
+</span><span class="">  315: 
+</span><span class="">  316: 	return unless defined $value;
+</span><span class="">  317: 	$value =~ s/\r\n?|\n//g;	# Remove CR/LF characters
 </span><span class="">  318: 
-</span><span class="">  319:     [CHAR]
-</span><span class="">  320: 
-</span><span class="">  321:     CR, LF : CHAR
-</span><span class="">  322:     CR == &#39;\r&#39;
-</span><span class="">  323:     LF == &#39;\n&#39;
-</span><span class="">  324: 
-</span><span class="">  325:     STRING == seq CHAR
-</span><span class="">  326: 
-</span><span class="">  327:     SanitizeEmailHeader
-</span><span class="">  328:         raw?: STRING
-</span><span class="">  329:         sanitized!: STRING
-</span><span class="">  330:         -------------------------------------------------
-</span><span class="">  331:         sanitized! = [ c : raw? | c &acirc;&#137;&nbsp; CR &acirc;&#136;&sect; c &acirc;&#137;&nbsp; LF ]
+</span><span class="">  319: 	return Return::Set::set_return($value, { type =&gt; &#39;string&#39;, &#39;matches&#39; =&gt; qr /^[^\r\n]*$/ });
+</span><span class="">  320: }
+</span><span class="">  321: 
+</span><span class="">  322: # Internal method to log messages. This method is called by other logging methods.
+</span><span class="">  323: # $logger-&gt;_log($level, @messages);
+</span><span class="">  324: # $logger-&gt;_log($level, \@messages);
+</span><span class="">  325: 
+</span><span class="">  326: sub _log {
+</span><span class=""><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">327 → 329 → 333</span></span><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">327 → 329 → 0</span></span>  327: 	my ($self, $level, @messages) = @_;
+</span><span class="">  328: 
+</span><span class="">  329: 	if(!UNIVERSAL::isa((caller)[0], __PACKAGE__)) {
+</span><span class="">  330: 		Carp::croak(&#39;Illegal Operation: _log is a private method&#39;);
+</span><span class="">  331: 	}
 </span><span class="">  332: 
-</span><span class="">  333: =cut
-</span><span class="">  334: 
-</span><span class="">  335: sub _sanitize_email_header {
-</span><span class="">  336: 	my $value = $_[0];
-</span><span class="">  337: 
-</span><span class="">  338: 	return unless defined $value;
-</span><span class="">  339: 	$value =~ s/\r\n?|\n//g;	# Remove CR/LF characters
-</span><span class="">  340: 
-</span><span class="">  341: 	return Return::Set::set_return($value, { type =&gt; &#39;string&#39;, &#39;matches&#39; =&gt; qr /^[^\r\n]*$/ });
-</span><span class="">  342: }
-</span><span class="">  343: 
-</span><span class="">  344: # Internal method to log messages. This method is called by other logging methods.
-</span><span class="">  345: # $logger-&gt;_log($level, @messages);
-</span><span class="">  346: # $logger-&gt;_log($level, \@messages);
+</span><span class=""><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">333 → 333 → 337</span></span><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">333 → 333 → 0</span></span>  333: 	if(!defined($syslog_values{$level})) {
+</span><span class="">  334: 		Carp::croak(ref($self), &quot;: Invalid level &#39;$level&#39;&quot;);	# &quot;Can&#39;t happen&quot;
+</span><span class="">  335: 	}
+</span><span class="">  336: 
+</span><span class=""><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">337 → 337 → 342</span></span><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">337 → 337 → 0</span></span>  337: 	if($syslog_values{$level} &gt; $self-&gt;{&#39;level&#39;}) {
+</span><span class="">  338: 		# The level is too low to log
+</span><span class="">  339: 		return;
+</span><span class="">  340: 	}
+</span><span class="">  341: 
+</span><span class=""><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">342 → 342 → 346</span></span><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">342 → 342 → 0</span></span>  342: 	if((scalar(@messages) == 1) &amp;&amp; (ref($messages[0]) eq &#39;ARRAY&#39;)) {
+</span><span class="">  343: 		# Passed a reference to an array
+</span><span class="">  344: 		@messages = @{$messages[0]};
+</span><span class="">  345: 	}
+</span><span class=""><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">346 → 355 → 359</span></span><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">346 → 355 → 0</span></span>  346: 	@messages = grep defined, @messages;
 </span><span class="">  347: 
-</span><span class="">  348: sub _log {
-</span><span class=""><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">349 → 351 → 355</span></span><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">349 → 351 → 0</span></span>  349: 	my ($self, $level, @messages) = @_;
+</span><span class="">  348: 	my $str = join(&#39;&#39;, @messages);
+</span><span class="">  349: 	chomp($str);
 </span><span class="">  350: 
-</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  351: 	if(!UNIVERSAL::isa((caller)[0], __PACKAGE__)) {
-</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  352: 		Carp::croak(&#39;Illegal Operation: _log is a private method&#39;);
-</span><span class="">  353: 	}
-</span><span class="">  354: 
-</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic."><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">355 → 355 → 359</span></span><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">355 → 355 → 0</span></span>  355: 	if(!defined($syslog_values{$level})) {
-</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  356: 		Carp::croak(ref($self), &quot;: Invalid level &#39;$level&#39;&quot;);	# &quot;Can&#39;t happen&quot;
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  351: 	# Push the message to the internal messages array
+</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  352: 	push @{$self-&gt;{messages}}, { level =&gt; $level, message =&gt; $str };
+</span><span class="">  353: 
+</span><span class="">  354: 	my $class = blessed($self) || $self;
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  355: 	if($class eq __PACKAGE__) {
+</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  356: 		$class = &#39;&#39;;
 </span><span class="">  357: 	}
 </span><span class="">  358: 
-</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic."><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">359 → 359 → 364</span></span><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">359 → 359 → 0</span></span>  359: 	if($syslog_values{$level} &gt; $self-&gt;{&#39;level&#39;}) {
-</span><p> <b> Mutants (Total: 4, Killed: 4, Survived: 0)</b><p><span class="">  360: 		# The level is too low to log
-</span><span class="">  361: 		return;
-</span><span class="">  362: 	}
-</span><span class="">  363: 
-</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic."><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">364 → 364 → 368</span></span><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">364 → 364 → 0</span></span>  364: 	if((scalar(@messages) == 1) &amp;&amp; (ref($messages[0]) eq &#39;ARRAY&#39;)) {
-</span><p> <b> Mutants (Total: 2, Killed: 2, Survived: 0)</b><p><span class="">  365: 		# Passed a reference to an array
-</span><span class="">  366: 		@messages = @{$messages[0]};
-</span><span class="">  367: 	}
-</span><span class=""><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">368 → 377 → 381</span></span><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">368 → 377 → 0</span></span>  368: 	@messages = grep defined, @messages;
-</span><span class="">  369: 
-</span><span class="">  370: 	my $str = join(&#39;&#39;, @messages);
-</span><span class="">  371: 	chomp($str);
-</span><span class="">  372: 
-</span><span class="">  373: 	# Push the message to the internal messages array
-</span><span class="">  374: 	push @{$self-&gt;{messages}}, { level =&gt; $level, message =&gt; $str };
-</span><span class="">  375: 
-</span><span class="">  376: 	my $class = blessed($self) || $self;
-</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  377: 	if($class eq __PACKAGE__) {
-</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  378: 		$class = &#39;&#39;;
-</span><span class="">  379: 	}
-</span><span class="">  380: 
-</span><span class=""><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">381 → 383 → 570</span></span><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">381 → 383 → 0</span></span>  381: 	my $timestamp = strftime &#39;%Y-%m-%d %H:%M:%S&#39;, localtime;
-</span><span class="">  382: 
-</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  383: 	if(my $logger = $self-&gt;{&#39;logger&#39;}) {
-</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  384: 		if(ref($logger) eq &#39;CODE&#39;) {
-</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  385: 			# If logger is a code reference, call it with log details
-</span><span class="">  386: 			my $args = {
-</span><span class="">  387: 				class =&gt; blessed($self) || __PACKAGE__,
-</span><span class="">  388: 				file =&gt; (caller(1))[1],
-</span><span class="">  389: 				# function =&gt; (caller(1))[3],
-</span><span class="">  390: 				line =&gt; (caller(1))[2],
-</span><span class="">  391: 				level =&gt; $level,
-</span><span class="">  392: 				message =&gt; \@messages
-</span><span class="">  393: 			};
-</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  394: 			if(my $ctx = $self-&gt;{ctx}) {
-</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  395: 				$args-&gt;{ctx} = $ctx;
-</span><span class="">  396: 			};
-</span><span class="">  397: 			$logger-&gt;($args);
-</span><span class="">  398: 		} elsif(ref($logger) eq &#39;ARRAY&#39;) {
-</span><span class="">  399: 			# If logger is an array reference, push the log message to the array
-</span><span class="">  400: 			push @{$logger}, { level =&gt; $level, message =&gt; $str };
-</span><span class="">  401: 		} elsif(ref($logger) eq &#39;HASH&#39;) {
-</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  402: 			if(my $file = $logger-&gt;{&#39;file&#39;}) {
-</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  403: 				if($file =~ /^([^&lt;&gt;|*?;!`$&quot;\0-\037]+)$/ &amp;&amp; $file !~ /\.\./) {
-</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  404: 					$file = $1;	# Will untaint
-</span><span class="">  405: 				} else {
-</span><span class="">  406: 					Carp::croak(ref($self), &quot;: Invalid file name: $file&quot;);
-</span><span class="">  407: 				}
-</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  408: 				if(open(my $fout, &#39;&gt;&gt;&#39;, $file)) {
-</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  409: 					my $format = $self-&gt;{&#39;format&#39;} || &#39;%level%&gt; [%timestamp%] %class% %callstack% %message%&#39;;
-</span><span class="">  410: 					my $ulevel = uc($level);
-</span><span class="">  411: 					my $callstack = (caller(1))[1] . &#39; &#39; . (caller(1))[2];
-</span><span class="">  412: 
-</span><span class="">  413: 					$format =~ s/%level%/$ulevel/g;
-</span><span class="">  414: 					$format =~ s/%class%/$class/g;
-</span><span class="">  415: 					$format =~ s/%message%/$str/g;
-</span><span class="">  416: 					$format =~ s/%callstack%/$callstack/g;
-</span><span class="">  417: 					$format =~ s/%timestamp%/$timestamp/g;
-</span><span class="">  418: 					$format =~ s/%env_(\w+)%/$ENV{$1} \/\/ &#39;&#39;/ge;
-</span><span class="">  419: 					print $fout &quot;$format\n&quot; or Carp::croak(ref($self), &quot;: Can&#39;t write to $file: $!&quot;);
-</span><span class="">  420: 					close $fout;
-</span><span class="">  421: 				}
-</span><span class="">  422: 			}
-</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  423: 			if(my $array = $logger-&gt;{&#39;array&#39;}) {
-</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  424: 				push @{$array}, { level =&gt; $level, message =&gt; $str };
-</span><span class="">  425: 			}
-</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  426: 			if(exists($logger-&gt;{&#39;sendmail&#39;}) &amp;&amp; exists($logger-&gt;{&#39;sendmail&#39;}-&gt;{&#39;to&#39;})) {
-</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  427: 				# Send an email
-</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  428: 				if((!defined($logger-&gt;{&#39;sendmail&#39;}-&gt;{&#39;level&#39;})) ||
-</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  429: 				   ($syslog_values{$level} &lt;= $syslog_values{$logger-&gt;{&#39;sendmail&#39;}-&gt;{&#39;level&#39;}})) {
-</span><p> <b> Mutants (Total: 3, Killed: 3, Survived: 0)</b><p><span class="">  430: 					my $throttled = 0;
-</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  431: 					if(my $min_interval = $logger-&gt;{&#39;sendmail&#39;}-&gt;{&#39;min_interval&#39;}) {
-</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  432: 						my $now = time();
-</span><span class="">  433: 						# _last_email_sent: epoch time of the most recent successfully sent email
-</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  434: 						$throttled = defined($self-&gt;{_last_email_sent}) &amp;&amp; ($now - $self-&gt;{_last_email_sent}) &lt; $min_interval;
-</span><p> <b> Mutants (Total: 3, Killed: 3, Survived: 0)</b><p><span class="">  435: 					}
-</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  436: 					if(!$throttled) {
-</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  437: 						eval {
-</span><span class="">  438: 							require Email::Simple;
-</span><span class="">  439: 							require Email::Sender::Simple;
-</span><span class="">  440: 							require Email::Sender::Transport::SMTP;
-</span><span class="">  441: 
-</span><span class="">  442: 							Email::Simple-&gt;import();
-</span><span class="">  443: 							Email::Sender::Simple-&gt;import(&#39;sendmail&#39;);
-</span><span class="">  444: 							Email::Sender::Transport::SMTP-&gt;import();
-</span><span class="">  445: 
-</span><span class="">  446: 							my $email = Email::Simple-&gt;new(&#39;&#39;);
-</span><span class="">  447: 							$email-&gt;header_set(&#39;to&#39;, _sanitize_email_header($logger-&gt;{&#39;sendmail&#39;}-&gt;{&#39;to&#39;}));
-</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  448: 							if(my $from = $logger-&gt;{&#39;sendmail&#39;}-&gt;{&#39;from&#39;}) {
-</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  449: 								$email-&gt;header_set(&#39;from&#39;, _sanitize_email_header($from));
-</span><span class="">  450: 							} else {
-</span><span class="">  451: 								$email-&gt;header_set(&#39;from&#39;, &#39;noreply@localhost&#39;);
-</span><span class="">  452: 							}
-</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  453: 							if(my $subject = $logger-&gt;{&#39;sendmail&#39;}-&gt;{&#39;subject&#39;}) {
-</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  454: 								$email-&gt;header_set(&#39;subject&#39;, _sanitize_email_header($subject));
-</span><span class="">  455: 							}
-</span><span class="">  456: 							$email-&gt;body_set(join(&#39; &#39;, @messages));
-</span><span class="">  457: 
-</span><span class="">  458: 							# Configure SMTP transport (adjust for your SMTP server)
-</span><span class="">  459: 							my $host = $logger-&gt;{&#39;sendmail&#39;}-&gt;{&#39;host&#39;} || &#39;localhost&#39;;
-</span><span class="">  460: 							Carp::croak(ref($self), &quot;: Invalid SMTP host: $host&quot;)
-</span><span class="">  461: 								if $host =~ /[^a-zA-Z0-9.\-]/;
-</span><span class="">  462: 							my $port = $logger-&gt;{&#39;sendmail&#39;}-&gt;{&#39;port&#39;} || 25;
-</span><span class="">  463: 							Carp::croak(ref($self), &quot;: Invalid SMTP port: $port&quot;)
-</span><span class="survived-3 tooltip" data-tooltip="Boundary mutation survived. Add tests around edge values (e.g. min, max, off-by-one).">  464: 								unless $port =~ /^\d+$/ &amp;&amp; $port &gt;= 1 &amp;&amp; $port &lt;= 65535;
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic."><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">359 → 361 → 548</span></span><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">359 → 361 → 0</span></span>  359: 	my $timestamp = strftime &#39;%Y-%m-%d %H:%M:%S&#39;, localtime;
+</span><p> <b> Mutants (Total: 4, Killed: 4, Survived: 0)</b><p><span class="">  360: 
+</span><span class="">  361: 	if(my $logger = $self-&gt;{&#39;logger&#39;}) {
+</span><span class="">  362: 		if(ref($logger) eq &#39;CODE&#39;) {
+</span><span class="">  363: 			# If logger is a code reference, call it with log details
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  364: 			my $args = {
+</span><p> <b> Mutants (Total: 2, Killed: 2, Survived: 0)</b><p><span class="">  365: 				class =&gt; blessed($self) || __PACKAGE__,
+</span><span class="">  366: 				file =&gt; (caller(1))[1],
+</span><span class="">  367: 				# function =&gt; (caller(1))[3],
+</span><span class="">  368: 				line =&gt; (caller(1))[2],
+</span><span class="">  369: 				level =&gt; $level,
+</span><span class="">  370: 				message =&gt; \@messages
+</span><span class="">  371: 			};
+</span><span class="">  372: 			if(my $ctx = $self-&gt;{ctx}) {
+</span><span class="">  373: 				$args-&gt;{ctx} = $ctx;
+</span><span class="">  374: 			};
+</span><span class="">  375: 			$logger-&gt;($args);
+</span><span class="">  376: 		} elsif(ref($logger) eq &#39;ARRAY&#39;) {
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  377: 			# If logger is an array reference, push the log message to the array
+</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  378: 			push @{$logger}, { level =&gt; $level, message =&gt; $str };
+</span><span class="">  379: 		} elsif(ref($logger) eq &#39;HASH&#39;) {
+</span><span class="">  380: 			if(my $file = $logger-&gt;{&#39;file&#39;}) {
+</span><span class="">  381: 				if($file =~ /^([^&lt;&gt;|*?;!`$&quot;\0-\037]+)$/ &amp;&amp; $file !~ /\.\./) {
+</span><span class="">  382: 					$file = $1;	# Will untaint
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  383: 				} else {
+</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  384: 					Carp::croak(ref($self), &quot;: Invalid file name: $file&quot;);
+</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  385: 				}
+</span><span class="">  386: 				if(open(my $fout, &#39;&gt;&gt;&#39;, $file)) {
+</span><span class="">  387: 					my $format = $self-&gt;{&#39;format&#39;} || &#39;%level%&gt; [%timestamp%] %class% %callstack% %message%&#39;;
+</span><span class="">  388: 					my $ulevel = uc($level);
+</span><span class="">  389: 					my $callstack = (caller(1))[1] . &#39; &#39; . (caller(1))[2];
+</span><span class="">  390: 
+</span><span class="">  391: 					$format =~ s/%level%/$ulevel/g;
+</span><span class="">  392: 					$format =~ s/%class%/$class/g;
+</span><span class="">  393: 					$format =~ s/%message%/$str/g;
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  394: 					$format =~ s/%callstack%/$callstack/g;
+</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  395: 					$format =~ s/%timestamp%/$timestamp/g;
+</span><span class="">  396: 					$format =~ s/%env_(\w+)%/$ENV{$1} \/\/ &#39;&#39;/ge;
+</span><span class="">  397: 					print $fout &quot;$format\n&quot; or Carp::croak(ref($self), &quot;: Can&#39;t write to $file: $!&quot;);
+</span><span class="">  398: 					close $fout;
+</span><span class="">  399: 				}
+</span><span class="">  400: 			}
+</span><span class="">  401: 			if(my $array = $logger-&gt;{&#39;array&#39;}) {
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  402: 				push @{$array}, { level =&gt; $level, message =&gt; $str };
+</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  403: 			}
+</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  404: 			if(exists($logger-&gt;{&#39;sendmail&#39;}) &amp;&amp; exists($logger-&gt;{&#39;sendmail&#39;}-&gt;{&#39;to&#39;})) {
+</span><span class="">  405: 				# Send an email
+</span><span class="">  406: 				if((!defined($logger-&gt;{&#39;sendmail&#39;}-&gt;{&#39;level&#39;})) ||
+</span><span class="">  407: 				   ($syslog_values{$level} &lt;= $syslog_values{$logger-&gt;{&#39;sendmail&#39;}-&gt;{&#39;level&#39;}})) {
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  408: 					my $throttled = 0;
+</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  409: 					if(my $min_interval = $logger-&gt;{&#39;sendmail&#39;}-&gt;{&#39;min_interval&#39;}) {
+</span><span class="">  410: 						my $now = time();
+</span><span class="">  411: 						# _last_email_sent: epoch time of the most recent successfully sent email
+</span><span class="">  412: 						$throttled = defined($self-&gt;{_last_email_sent}) &amp;&amp; ($now - $self-&gt;{_last_email_sent}) &lt; $min_interval;
+</span><span class="">  413: 					}
+</span><span class="">  414: 					if(!$throttled) {
+</span><span class="">  415: 						eval {
+</span><span class="">  416: 							require Email::Simple;
+</span><span class="">  417: 							require Email::Sender::Simple;
+</span><span class="">  418: 							require Email::Sender::Transport::SMTP;
+</span><span class="">  419: 
+</span><span class="">  420: 							Email::Simple-&gt;import();
+</span><span class="">  421: 							Email::Sender::Simple-&gt;import(&#39;sendmail&#39;);
+</span><span class="">  422: 							Email::Sender::Transport::SMTP-&gt;import();
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  423: 
+</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  424: 							my $email = Email::Simple-&gt;new(&#39;&#39;);
+</span><span class="">  425: 							$email-&gt;header_set(&#39;to&#39;, _sanitize_email_header($logger-&gt;{&#39;sendmail&#39;}-&gt;{&#39;to&#39;}));
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  426: 							if(my $from = $logger-&gt;{&#39;sendmail&#39;}-&gt;{&#39;from&#39;}) {
+</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  427: 								$email-&gt;header_set(&#39;from&#39;, _sanitize_email_header($from));
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  428: 							} else {
+</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  429: 								$email-&gt;header_set(&#39;from&#39;, &#39;noreply@localhost&#39;);
+</span><p> <b> Mutants (Total: 3, Killed: 3, Survived: 0)</b><p><span class="">  430: 							}
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  431: 							if(my $subject = $logger-&gt;{&#39;sendmail&#39;}-&gt;{&#39;subject&#39;}) {
+</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  432: 								$email-&gt;header_set(&#39;subject&#39;, _sanitize_email_header($subject));
+</span><span class="">  433: 							}
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  434: 							$email-&gt;body_set(join(&#39; &#39;, @messages));
+</span><p> <b> Mutants (Total: 3, Killed: 3, Survived: 0)</b><p><span class="">  435: 
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  436: 							# Configure SMTP transport (adjust for your SMTP server)
+</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  437: 							my $host = $logger-&gt;{&#39;sendmail&#39;}-&gt;{&#39;host&#39;} || &#39;localhost&#39;;
+</span><span class="">  438: 							Carp::croak(ref($self), &quot;: Invalid SMTP host: $host&quot;)
+</span><span class="">  439: 								if $host =~ /[^a-zA-Z0-9.\-]/;
+</span><span class="">  440: 							my $port = $logger-&gt;{&#39;sendmail&#39;}-&gt;{&#39;port&#39;} || 25;
+</span><span class="">  441: 							Carp::croak(ref($self), &quot;: Invalid SMTP port: $port&quot;)
+</span><span class="">  442: 								unless $port =~ /^\d+$/ &amp;&amp; $port &gt;= 1 &amp;&amp; $port &lt;= 65535;
+</span><span class="">  443: 							my $transport = Email::Sender::Transport::SMTP-&gt;new({
+</span><span class="">  444: 								host =&gt; $host,
+</span><span class="">  445: 								port =&gt; $port
+</span><span class="">  446: 							});
+</span><span class="">  447: 
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  448: 							sendmail($email, { transport =&gt; $transport });
+</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  449: 						};
+</span><span class="">  450: 
+</span><span class="">  451: 						if ($@) {
+</span><span class="">  452: 							Carp::carp(&quot;Failed to send email: $@&quot;);
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  453: 							return;
+</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  454: 						}
+</span><span class="">  455: 						$self-&gt;{_last_email_sent} = time();	# record send time for throttle
+</span><span class="">  456: 					}
+</span><span class="">  457: 				}
+</span><span class="">  458: 			}
+</span><span class="">  459: 			if(my $syslog = $logger-&gt;{&#39;syslog&#39;}) {
+</span><span class="">  460: 				if((!defined($syslog-&gt;{&#39;level&#39;})) || ($syslog_values{$level} &lt;= $syslog-&gt;{&#39;level&#39;})) {
+</span><span class="">  461: 					if(!$self-&gt;{_syslog_opened}) {
+</span><span class="">  462: 						# Open persistent syslog connection
+</span><span class="">  463: 						my $facility = delete $syslog-&gt;{&#39;facility&#39;} || &#39;local0&#39;;
+</span><span class="survived-3 tooltip" data-tooltip="Boundary mutation survived. Add tests around edge values (e.g. min, max, off-by-one).">  464: 						my $min_level = delete $syslog-&gt;{&#39;level&#39;};
 </span>
 					<details class="mutant-details">
 					<summary>Mutants (Total: 6, Killed: 0, Survived: 6)</summary>
@@ -813,554 +813,532 @@ is( func(VALUE_AT_BOUNDARY), EXPECTED, &#39;Test boundary behaviour&#39; );
 </pre>
 								</div>
 							</li></ul></details>
-<span class="">  465: 							my $transport = Email::Sender::Transport::SMTP-&gt;new({
-</span><span class="">  466: 								host =&gt; $host,
-</span><span class="">  467: 								port =&gt; $port
-</span><span class="">  468: 							});
-</span><span class="">  469: 
-</span><span class="">  470: 							sendmail($email, { transport =&gt; $transport });
-</span><span class="">  471: 						};
+<span class="">  465: 						# CHI uses server, Sys::Syslog uses host :-(
+</span><span class="">  466: 						if($syslog-&gt;{&#39;server&#39;}) {
+</span><span class="">  467: 							$syslog-&gt;{&#39;host&#39;} = delete $syslog-&gt;{&#39;server&#39;};
+</span><span class="">  468: 						}
+</span><span class="">  469: 						Sys::Syslog::setlogsock($syslog) if(scalar keys %{$syslog});
+</span><span class="">  470: 						$syslog-&gt;{&#39;facility&#39;} = $facility;
+</span><span class="">  471: 						$syslog-&gt;{&#39;level&#39;} = $min_level;
 </span><span class="">  472: 
-</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  473: 						if ($@) {
-</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  474: 							Carp::carp(&quot;Failed to send email: $@&quot;);
-</span><span class="">  475: 							return;
-</span><span class="">  476: 						}
-</span><span class="">  477: 						$self-&gt;{_last_email_sent} = time();	# record send time for throttle
-</span><span class="">  478: 					}
-</span><span class="">  479: 				}
-</span><span class="">  480: 			}
-</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  481: 			if(my $syslog = $logger-&gt;{&#39;syslog&#39;}) {
-</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  482: 				if((!defined($syslog-&gt;{&#39;level&#39;})) || ($syslog_values{$level} &lt;= $syslog-&gt;{&#39;level&#39;})) {
-</span><p> <b> Mutants (Total: 4, Killed: 4, Survived: 0)</b><p><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  483: 					if(!$self-&gt;{_syslog_opened}) {
-</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  484: 						# Open persistent syslog connection
-</span><span class="">  485: 						my $facility = delete $syslog-&gt;{&#39;facility&#39;} || &#39;local0&#39;;
-</span><span class="">  486: 						my $min_level = delete $syslog-&gt;{&#39;level&#39;};
-</span><span class="">  487: 						# CHI uses server, Sys::Syslog uses host :-(
-</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  488: 						if($syslog-&gt;{&#39;server&#39;}) {
-</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  489: 							$syslog-&gt;{&#39;host&#39;} = delete $syslog-&gt;{&#39;server&#39;};
-</span><span class="">  490: 						}
-</span><span class="">  491: 						Sys::Syslog::setlogsock($syslog) if(scalar keys %{$syslog});
-</span><span class="">  492: 						$syslog-&gt;{&#39;facility&#39;} = $facility;
-</span><span class="">  493: 						$syslog-&gt;{&#39;level&#39;} = $min_level;
-</span><span class="">  494: 
-</span><span class="">  495: 						openlog($self-&gt;{script_name}, &#39;cons,pid&#39;, &#39;user&#39;);
-</span><span class="">  496: 						$self-&gt;{_syslog_opened} = 1;	# Flag to track active connection
-</span><span class="">  497: 					}
-</span><span class="">  498: 
-</span><span class="">  499: 					# Handle syslog-based logging
-</span><span class="">  500: 					eval {
-</span><span class="">  501: 						my $priority = ($level eq &#39;error&#39;) ? &#39;err&#39; : &#39;warning&#39;;
-</span><span class="">  502: 						my $facility = $syslog-&gt;{&#39;facility&#39;};
-</span><span class="">  503: 						Sys::Syslog::syslog(&quot;$priority|$facility&quot;, join(&#39; &#39;, @messages));
-</span><span class="">  504: 					};
-</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  505: 					if($@) {
-</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  506: 						my $err = $@;
-</span><span class="">  507: 						$err .= &quot;:\n&quot; . Data::Dumper-&gt;new([$syslog])-&gt;Dump();
-</span><span class="">  508: 						Carp::carp($err);
-</span><span class="">  509: 					}
-</span><span class="">  510: 				}
-</span><span class="">  511: 			}
-</span><span class="">  512: 
-</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  513: 			if(my $fout = $logger-&gt;{&#39;fd&#39;}) {
-</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  514: 				my $format = $self-&gt;{&#39;format&#39;} || &#39;%level%&gt; [%timestamp%] %class% %callstack% %message%&#39;;
-</span><span class="">  515: 				my $ulevel = uc($level);
-</span><span class="">  516: 				my $callstack = (caller(1))[1] . &#39; &#39; . (caller(1))[2];
-</span><span class="">  517: 
-</span><span class="">  518: 				$format =~ s/%level%/$ulevel/g;
-</span><span class="">  519: 				$format =~ s/%class%/$class/g;
-</span><span class="">  520: 				$format =~ s/%message%/$str/g;
-</span><span class="">  521: 				$format =~ s/%callstack%/$callstack/g;
-</span><span class="">  522: 				$format =~ s/%timestamp%/$timestamp/g;
-</span><span class="">  523: 				$format =~ s/%env_(\w+)%/$ENV{$1} \/\/ &#39;&#39;/ge;
-</span><span class="">  524: 
-</span><span class="">  525: 				print $fout &quot;$format\n&quot; or Carp::croak(ref($self), &quot;: Can&#39;t write to file descriptor: $!&quot;);
-</span><span class="">  526: 			} elsif(!$logger-&gt;{&#39;file&#39;} &amp;&amp; !$logger-&gt;{&#39;array&#39;} &amp;&amp; !$logger-&gt;{&#39;syslog&#39;} &amp;&amp; !exists($logger-&gt;{&#39;sendmail&#39;}) &amp;&amp; !$logger-&gt;{&#39;fd&#39;}) {
-</span><span class="">  527: 				croak(ref($self), &quot;: Don&#39;t know how to deal with the $level message&quot;);
-</span><span class="">  528: 			}
-</span><span class="">  529: 		} elsif(!ref($logger)) {
-</span><span class="">  530: 			# If logger is a file path, append the log message to the file
-</span><span class="">  531: 			my $safe_path = $logger;
-</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  532: 			if($safe_path =~ /^([^&lt;&gt;|*?;!`$&quot;\0-\037]+)$/ &amp;&amp; $safe_path !~ /\.\./) {
-</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  533: 				$safe_path = $1;	# Will untaint
-</span><span class="">  534: 			} else {
-</span><span class="">  535: 				Carp::croak(ref($self), &quot;: Invalid file name: $safe_path&quot;);
-</span><span class="">  536: 			}
-</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  537: 			if(open(my $fout, &#39;&gt;&gt;&#39;, $safe_path)) {
-</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  538: 				my $format = $self-&gt;{&#39;format&#39;} || &#39;%level%&gt; [%timestamp%] %class% %callstack% %message%&#39;;
-</span><span class="">  539: 				my $ulevel = uc($level);
-</span><span class="">  540: 				my $callstack = (caller(1))[1] . &#39; &#39; . (caller(1))[2];
-</span><span class="">  541: 
-</span><span class="">  542: 				$format =~ s/%level%/$ulevel/g;
-</span><span class="">  543: 				$format =~ s/%class%/$class/g;
-</span><span class="">  544: 				$format =~ s/%message%/$str/g;
-</span><span class="">  545: 				$format =~ s/%callstack%/$callstack/g;
-</span><span class="">  546: 				$format =~ s/%timestamp%/$timestamp/g;
-</span><span class="">  547: 				$format =~ s/%env_(\w+)%/$ENV{$1} \/\/ &#39;&#39;/ge;
-</span><span class="">  548: 
-</span><span class="">  549: 				print $fout &quot;$format\n&quot; or Carp::croak(ref($self), &quot;: Can&#39;t write to $logger: $!&quot;);
-</span><span class="">  550: 				close $fout;
-</span><span class="">  551: 			}
-</span><span class="">  552: 		} elsif(Scalar::Util::blessed($logger)) {
-</span><span class="">  553: 			# If logger is an object, call the appropriate method on the object
-</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  554: 			if(!$logger-&gt;can($level)) {
-</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  555: 				if(($level eq &#39;notice&#39;) &amp;&amp; $logger-&gt;can(&#39;info&#39;)) {
-</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  556: 					# Map notice to info for Log::Log4perl
-</span><span class="">  557: 					$level = &#39;info&#39;;
-</span><span class="">  558: 				} else {
-</span><span class="">  559: 					croak(ref($self), &#39;: &#39;, ref($logger), &quot; doesn&#39;t know how to deal with the $level message&quot;);
-</span><span class="">  560: 				}
-</span><span class="">  561: 			}
-</span><span class="">  562: 			$logger-&gt;$level(@messages);
-</span><span class="">  563: 		} else {
-</span><span class="">  564: 			croak(ref($self), &quot;: configuration error, no handler written for the $level message&quot;);
-</span><span class="">  565: 		}
-</span><span class="">  566: 	} elsif($self-&gt;{&#39;array&#39;}) {
-</span><span class="">  567: 		push @{$self-&gt;{&#39;array&#39;}}, { level =&gt; $level, message =&gt; $str };
-</span><span class="">  568: 	}
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  473: 						openlog($self-&gt;{script_name}, &#39;cons,pid&#39;, &#39;user&#39;);
+</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  474: 						$self-&gt;{_syslog_opened} = 1;	# Flag to track active connection
+</span><span class="">  475: 					}
+</span><span class="">  476: 
+</span><span class="">  477: 					# Handle syslog-based logging
+</span><span class="">  478: 					eval {
+</span><span class="">  479: 						my $priority = ($level eq &#39;error&#39;) ? &#39;err&#39; : &#39;warning&#39;;
+</span><span class="">  480: 						my $facility = $syslog-&gt;{&#39;facility&#39;};
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  481: 						Sys::Syslog::syslog(&quot;$priority|$facility&quot;, join(&#39; &#39;, @messages));
+</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  482: 					};
+</span><p> <b> Mutants (Total: 4, Killed: 4, Survived: 0)</b><p><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  483: 					if($@) {
+</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  484: 						my $err = $@;
+</span><span class="">  485: 						$err .= &quot;:\n&quot; . Data::Dumper-&gt;new([$syslog])-&gt;Dump();
+</span><span class="">  486: 						Carp::carp($err);
+</span><span class="">  487: 					}
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  488: 				}
+</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  489: 			}
+</span><span class="">  490: 
+</span><span class="">  491: 			if(my $fout = $logger-&gt;{&#39;fd&#39;}) {
+</span><span class="">  492: 				my $format = $self-&gt;{&#39;format&#39;} || &#39;%level%&gt; [%timestamp%] %class% %callstack% %message%&#39;;
+</span><span class="">  493: 				my $ulevel = uc($level);
+</span><span class="">  494: 				my $callstack = (caller(1))[1] . &#39; &#39; . (caller(1))[2];
+</span><span class="">  495: 
+</span><span class="">  496: 				$format =~ s/%level%/$ulevel/g;
+</span><span class="">  497: 				$format =~ s/%class%/$class/g;
+</span><span class="">  498: 				$format =~ s/%message%/$str/g;
+</span><span class="">  499: 				$format =~ s/%callstack%/$callstack/g;
+</span><span class="">  500: 				$format =~ s/%timestamp%/$timestamp/g;
+</span><span class="">  501: 				$format =~ s/%env_(\w+)%/$ENV{$1} \/\/ &#39;&#39;/ge;
+</span><span class="">  502: 
+</span><span class="">  503: 				print $fout &quot;$format\n&quot; or Carp::croak(ref($self), &quot;: Can&#39;t write to file descriptor: $!&quot;);
+</span><span class="">  504: 			} elsif(!$logger-&gt;{&#39;file&#39;} &amp;&amp; !$logger-&gt;{&#39;array&#39;} &amp;&amp; !$logger-&gt;{&#39;syslog&#39;} &amp;&amp; !exists($logger-&gt;{&#39;sendmail&#39;}) &amp;&amp; !$logger-&gt;{&#39;fd&#39;}) {
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  505: 				croak(ref($self), &quot;: Don&#39;t know how to deal with the $level message&quot;);
+</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  506: 			}
+</span><span class="">  507: 		} elsif(!ref($logger)) {
+</span><span class="">  508: 			# If logger is a file path, append the log message to the file
+</span><span class="">  509: 			my $safe_path = $logger;
+</span><span class="">  510: 			if($safe_path =~ /^([^&lt;&gt;|*?;!`$&quot;\0-\037]+)$/ &amp;&amp; $safe_path !~ /\.\./) {
+</span><span class="">  511: 				$safe_path = $1;	# Will untaint
+</span><span class="">  512: 			} else {
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  513: 				Carp::croak(ref($self), &quot;: Invalid file name: $safe_path&quot;);
+</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  514: 			}
+</span><span class="">  515: 			if(open(my $fout, &#39;&gt;&gt;&#39;, $safe_path)) {
+</span><span class="">  516: 				my $format = $self-&gt;{&#39;format&#39;} || &#39;%level%&gt; [%timestamp%] %class% %callstack% %message%&#39;;
+</span><span class="">  517: 				my $ulevel = uc($level);
+</span><span class="">  518: 				my $callstack = (caller(1))[1] . &#39; &#39; . (caller(1))[2];
+</span><span class="">  519: 
+</span><span class="">  520: 				$format =~ s/%level%/$ulevel/g;
+</span><span class="">  521: 				$format =~ s/%class%/$class/g;
+</span><span class="">  522: 				$format =~ s/%message%/$str/g;
+</span><span class="">  523: 				$format =~ s/%callstack%/$callstack/g;
+</span><span class="">  524: 				$format =~ s/%timestamp%/$timestamp/g;
+</span><span class="">  525: 				$format =~ s/%env_(\w+)%/$ENV{$1} \/\/ &#39;&#39;/ge;
+</span><span class="">  526: 
+</span><span class="">  527: 				print $fout &quot;$format\n&quot; or Carp::croak(ref($self), &quot;: Can&#39;t write to $logger: $!&quot;);
+</span><span class="">  528: 				close $fout;
+</span><span class="">  529: 			}
+</span><span class="">  530: 		} elsif(Scalar::Util::blessed($logger)) {
+</span><span class="">  531: 			# If logger is an object, call the appropriate method on the object
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  532: 			if(!$logger-&gt;can($level)) {
+</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  533: 				if(($level eq &#39;notice&#39;) &amp;&amp; $logger-&gt;can(&#39;info&#39;)) {
+</span><span class="">  534: 					# Map notice to info for Log::Log4perl
+</span><span class="">  535: 					$level = &#39;info&#39;;
+</span><span class="">  536: 				} else {
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  537: 					croak(ref($self), &#39;: &#39;, ref($logger), &quot; doesn&#39;t know how to deal with the $level message&quot;);
+</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  538: 				}
+</span><span class="">  539: 			}
+</span><span class="">  540: 			$logger-&gt;$level(@messages);
+</span><span class="">  541: 		} else {
+</span><span class="">  542: 			croak(ref($self), &quot;: configuration error, no handler written for the $level message&quot;);
+</span><span class="">  543: 		}
+</span><span class="">  544: 	} elsif($self-&gt;{&#39;array&#39;}) {
+</span><span class="">  545: 		push @{$self-&gt;{&#39;array&#39;}}, { level =&gt; $level, message =&gt; $str };
+</span><span class="">  546: 	}
+</span><span class="">  547: 
+</span><span class=""><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">548 → 548 → 581</span></span><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">548 → 548 → 0</span></span>  548: 	if($self-&gt;{&#39;file&#39;}) {
+</span><span class="">  549: 		my $file = $self-&gt;{&#39;file&#39;};
+</span><span class="">  550: 
+</span><span class="">  551: 		# Untaint the file name
+</span><span class="">  552: 		# if($file =~ /^([-\@\w.\/\\]+)$/) {
+</span><span class="">  553: 		if($file =~ /^([^&lt;&gt;|*?;!`$&quot;\0-\037]+)$/) {
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  554: 			$file = $1;	# untainted version
+</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  555: 		} else {
+</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  556: 			croak(ref($self), &quot;: Tainted or unsafe filename: $file&quot;);
+</span><span class="">  557: 		}
+</span><span class="">  558: 
+</span><span class="">  559: 		if(open(my $fout, &#39;&gt;&gt;&#39;, $file)) {
+</span><span class="">  560: 			my $ulevel = uc($level);
+</span><span class="">  561: 			my $callstack = (caller(1))[1] . &#39; &#39; . (caller(1))[2];
+</span><span class="">  562: 			my $format;
+</span><span class="">  563: 
+</span><span class="">  564: 			if(blessed($self) eq __PACKAGE__) {
+</span><span class="">  565: 				$format = $self-&gt;{&#39;format&#39;} || &#39;%level%&gt; [%timestamp%] %callstack% %message%&#39;;
+</span><span class="">  566: 			} else {
+</span><span class="">  567: 				$format = $self-&gt;{&#39;format&#39;} || &#39;%level%&gt; [%timestamp%] %class% %callstack% %message%&#39;;
+</span><span class="">  568: 			}
 </span><span class="">  569: 
-</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic."><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">570 → 570 → 603</span></span><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">570 → 570 → 0</span></span>  570: 	if($self-&gt;{&#39;file&#39;}) {
-</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  571: 		my $file = $self-&gt;{&#39;file&#39;};
-</span><span class="">  572: 
-</span><span class="">  573: 		# Untaint the file name
-</span><span class="">  574: 		# if($file =~ /^([-\@\w.\/\\]+)$/) {
-</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  575: 		if($file =~ /^([^&lt;&gt;|*?;!`$&quot;\0-\037]+)$/) {
-</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  576: 			$file = $1;	# untainted version
-</span><span class="">  577: 		} else {
-</span><span class="">  578: 			croak(ref($self), &quot;: Tainted or unsafe filename: $file&quot;);
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  570: 			$format =~ s/%level%/$ulevel/g;
+</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  571: 			$format =~ s/%class%/$class/g;
+</span><span class="">  572: 			$format =~ s/%message%/$str/g;
+</span><span class="">  573: 			$format =~ s/%callstack%/$callstack/g;
+</span><span class="">  574: 			$format =~ s/%timestamp%/$timestamp/g;
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  575: 			$format =~ s/%env_(\w+)%/$ENV{$1} \/\/ &#39;&#39;/ge;
+</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  576: 
+</span><span class="">  577: 			print $fout &quot;$format\n&quot; or Carp::croak(&quot;ref($self): Can&#39;t write to &quot;, $self-&gt;{&#39;file&#39;}, &quot;: $!&quot;);
+</span><span class="">  578: 			close $fout;
 </span><span class="">  579: 		}
-</span><span class="">  580: 
-</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  581: 		if(open(my $fout, &#39;&gt;&gt;&#39;, $file)) {
-</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  582: 			my $ulevel = uc($level);
-</span><span class="">  583: 			my $callstack = (caller(1))[1] . &#39; &#39; . (caller(1))[2];
-</span><span class="">  584: 			my $format;
+</span><span class="">  580: 	}
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic."><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">581 → 581 → 0</span></span>  581: 	if(my $fout = $self-&gt;{&#39;fd&#39;}) {
+</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  582: 		my $ulevel = uc($level);
+</span><span class="">  583: 		my $callstack = (caller(1))[1] . &#39; &#39; . (caller(1))[2];
+</span><span class="">  584: 		my $format;
 </span><span class="">  585: 
-</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  586: 			if(blessed($self) eq __PACKAGE__) {
-</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  587: 				$format = $self-&gt;{&#39;format&#39;} || &#39;%level%&gt; [%timestamp%] %callstack% %message%&#39;;
-</span><span class="">  588: 			} else {
-</span><span class="">  589: 				$format = $self-&gt;{&#39;format&#39;} || &#39;%level%&gt; [%timestamp%] %class% %callstack% %message%&#39;;
-</span><span class="">  590: 			}
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  586: 		if(blessed($self) eq __PACKAGE__) {
+</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  587: 			$format = $self-&gt;{&#39;format&#39;} || &#39;%level%&gt; [%timestamp%] %callstack% %message%&#39;;
+</span><span class="">  588: 		} else {
+</span><span class="">  589: 			$format = $self-&gt;{&#39;format&#39;} || &#39;%level%&gt; [%timestamp%] %class% %callstack% %message%&#39;;
+</span><span class="">  590: 		}
 </span><span class="">  591: 
-</span><span class="">  592: 			$format =~ s/%level%/$ulevel/g;
-</span><span class="">  593: 			$format =~ s/%class%/$class/g;
-</span><span class="">  594: 			$format =~ s/%message%/$str/g;
-</span><span class="">  595: 			$format =~ s/%callstack%/$callstack/g;
-</span><span class="">  596: 			$format =~ s/%timestamp%/$timestamp/g;
-</span><span class="">  597: 			$format =~ s/%env_(\w+)%/$ENV{$1} \/\/ &#39;&#39;/ge;
+</span><span class="">  592: 		$format =~ s/%level%/$ulevel/g;
+</span><span class="">  593: 		$format =~ s/%class%/$class/g;
+</span><span class="">  594: 		$format =~ s/%message%/$str/g;
+</span><span class="">  595: 		$format =~ s/%callstack%/$callstack/g;
+</span><span class="">  596: 		$format =~ s/%timestamp%/$timestamp/g;
+</span><span class="">  597: 		$format =~ s/%env_(\w+)%/$ENV{$1} \/\/ &#39;&#39;/ge;
 </span><span class="">  598: 
-</span><span class="">  599: 			print $fout &quot;$format\n&quot; or Carp::croak(&quot;ref($self): Can&#39;t write to &quot;, $self-&gt;{&#39;file&#39;}, &quot;: $!&quot;);
-</span><span class="">  600: 			close $fout;
-</span><span class="">  601: 		}
-</span><span class="">  602: 	}
-</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic."><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">603 → 603 → 0</span></span>  603: 	if(my $fout = $self-&gt;{&#39;fd&#39;}) {
-</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  604: 		my $ulevel = uc($level);
-</span><span class="">  605: 		my $callstack = (caller(1))[1] . &#39; &#39; . (caller(1))[2];
-</span><span class="">  606: 		my $format;
+</span><span class="">  599: 		print $fout &quot;$format\n&quot; or Carp::croak(ref($self), &quot;: Can&#39;t write to file descriptor: $!&quot;);
+</span><span class="">  600: 	}
+</span><span class="">  601: }
+</span><span class="">  602: 
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  603: =head2 level($self, $level)
+</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  604: 
+</span><span class="">  605: Get/set the minimum level to log at.
+</span><span class="">  606: Returns the current level, as an integer.
 </span><span class="">  607: 
-</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  608: 		if(blessed($self) eq __PACKAGE__) {
-</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  609: 			$format = $self-&gt;{&#39;format&#39;} || &#39;%level%&gt; [%timestamp%] %callstack% %message%&#39;;
-</span><span class="">  610: 		} else {
-</span><span class="">  611: 			$format = $self-&gt;{&#39;format&#39;} || &#39;%level%&gt; [%timestamp%] %class% %callstack% %message%&#39;;
-</span><span class="">  612: 		}
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  608: =cut
+</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  609: 
+</span><span class="">  610: sub level()
+</span><span class="">  611: {
+</span><span class=""><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">612 → 614 → 621</span></span><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">612 → 614 → 0</span></span>  612: 	my ($self, $level) = @_;
 </span><span class="">  613: 
-</span><span class="">  614: 		$format =~ s/%level%/$ulevel/g;
-</span><span class="">  615: 		$format =~ s/%class%/$class/g;
-</span><span class="">  616: 		$format =~ s/%message%/$str/g;
-</span><span class="">  617: 		$format =~ s/%callstack%/$callstack/g;
-</span><span class="">  618: 		$format =~ s/%timestamp%/$timestamp/g;
-</span><span class="">  619: 		$format =~ s/%env_(\w+)%/$ENV{$1} \/\/ &#39;&#39;/ge;
-</span><span class="">  620: 
-</span><span class="">  621: 		print $fout &quot;$format\n&quot; or Carp::croak(ref($self), &quot;: Can&#39;t write to file descriptor: $!&quot;);
-</span><span class="">  622: 	}
-</span><span class="">  623: }
-</span><span class="">  624: 
-</span><span class="">  625: =head2 level($self, $level)
-</span><span class="">  626: 
-</span><span class="">  627: Get/set the minimum level to log at.
-</span><span class="">  628: Returns the current level, as an integer.
-</span><span class="">  629: 
-</span><span class="">  630: =cut
-</span><span class="">  631: 
-</span><span class="">  632: sub level()
-</span><span class="">  633: {
-</span><span class=""><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">634 → 636 → 643</span></span><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">634 → 636 → 0</span></span>  634: 	my ($self, $level) = @_;
-</span><span class="">  635: 
-</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  636: 	if($level) {
-</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  637: 		if(!defined($syslog_values{$level})) {
-</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  638: 			Carp::carp(ref($self), &quot;: invalid syslog level &#39;$level&#39;&quot;);
-</span><span class="">  639: 			return;
-</span><span class="">  640: 		}
-</span><span class="">  641: 		$self-&gt;{&#39;level&#39;} = $syslog_values{$level};
-</span><span class="">  642: 	}
-</span><span class=""><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">643 → 643 → 0</span></span>  643: 	return Return::Set::set_return($self-&gt;{&#39;level&#39;}, { &#39;type&#39; =&gt; &#39;integer&#39;, &#39;min&#39; =&gt; 0, &#39;max&#39; =&gt; 7 });
-</span><span class="">  644: }
-</span><span class="">  645: 
-</span><span class="">  646: =head2	is_debug
+</span><span class="">  614: 	if($level) {
+</span><span class="">  615: 		if(!defined($syslog_values{$level})) {
+</span><span class="">  616: 			Carp::carp(ref($self), &quot;: invalid syslog level &#39;$level&#39;&quot;);
+</span><span class="">  617: 			return;
+</span><span class="">  618: 		}
+</span><span class="">  619: 		$self-&gt;{&#39;level&#39;} = $syslog_values{$level};
+</span><span class="">  620: 	}
+</span><span class=""><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">621 → 621 → 0</span></span>  621: 	return Return::Set::set_return($self-&gt;{&#39;level&#39;}, { &#39;type&#39; =&gt; &#39;integer&#39;, &#39;min&#39; =&gt; 0, &#39;max&#39; =&gt; 7 });
+</span><span class="">  622: }
+</span><span class="">  623: 
+</span><span class="">  624: =head2	is_debug
+</span><span class="">  625: 
+</span><span class="">  626: Are we at a debug level that will emit debug messages?
+</span><span class="">  627: For compatibility with L&lt;Log::Any&gt;.
+</span><span class="">  628: 
+</span><span class="">  629: =cut
+</span><span class="">  630: 
+</span><span class="">  631: sub is_debug
+</span><span class="">  632: {
+</span><span class="">  633: 	my $self = $_[0];
+</span><span class="">  634: 
+</span><span class="">  635: 	return ($self-&gt;{&#39;level&#39;} &amp;&amp; ($self-&gt;{&#39;level&#39;} &gt;= $DEBUG)) ? 1 : 0;
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  636: }
+</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  637: 
+</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  638: =head2 messages
+</span><span class="">  639: 
+</span><span class="">  640: Return all the messages emitted so far
+</span><span class="">  641: 
+</span><span class="">  642: =cut
+</span><span class="">  643: 
+</span><span class="">  644: sub messages
+</span><span class="">  645: {
+</span><span class="">  646: 	my $self = $_[0];
 </span><span class="">  647: 
-</span><span class="">  648: Are we at a debug level that will emit debug messages?
-</span><span class="">  649: For compatibility with L&lt;Log::Any&gt;.
+</span><span class="">  648: 	return [ @{$self-&gt;{messages}} ];	# Return a shallow copy
+</span><span class="">  649: }
 </span><span class="">  650: 
-</span><span class="">  651: =cut
+</span><span class="">  651: =head2 debug
 </span><span class="">  652: 
-</span><span class="">  653: sub is_debug
-</span><span class="">  654: {
-</span><span class="">  655: 	my $self = $_[0];
+</span><span class="">  653:   $logger-&gt;debug(@messages);
+</span><span class="">  654: 
+</span><span class="">  655: Logs a debug message.
 </span><span class="">  656: 
-</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  657: 	return ($self-&gt;{&#39;level&#39;} &amp;&amp; ($self-&gt;{&#39;level&#39;} &gt;= $DEBUG)) ? 1 : 0;
-</span><p> <b> Mutants (Total: 3, Killed: 3, Survived: 0)</b><p><span class="">  658: }
-</span><span class="">  659: 
-</span><span class="">  660: =head2 messages
-</span><span class="">  661: 
-</span><span class="">  662: Return all the messages emitted so far
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  657: =cut
+</span><p> <b> Mutants (Total: 3, Killed: 3, Survived: 0)</b><p><span class="">  658: 
+</span><span class="">  659: sub debug {
+</span><span class="">  660: 	my $self = shift;
+</span><span class="">  661: 	$self-&gt;_log(&#39;debug&#39;, @_);
+</span><span class="">  662: }
 </span><span class="">  663: 
-</span><span class="">  664: =cut
+</span><span class="">  664: =head2 info
 </span><span class="">  665: 
-</span><span class="">  666: sub messages
-</span><span class="">  667: {
-</span><span class="">  668: 	my $self = $_[0];
+</span><span class="">  666:   $logger-&gt;info(@messages);
+</span><span class="">  667: 
+</span><span class="">  668: Logs an info message.
 </span><span class="">  669: 
-</span><span class="">  670: 	return [ @{$self-&gt;{messages}} ];	# Return a shallow copy
-</span><span class="">  671: }
-</span><span class="">  672: 
-</span><span class="">  673: =head2 debug
-</span><span class="">  674: 
-</span><span class="">  675:   $logger-&gt;debug(@messages);
+</span><span class="">  670: =cut
+</span><span class="">  671: 
+</span><span class="">  672: sub info {
+</span><span class="">  673: 	my $self = shift;
+</span><span class="">  674: 	$self-&gt;_log(&#39;info&#39;, @_);
+</span><span class="">  675: }
 </span><span class="">  676: 
-</span><span class="">  677: Logs a debug message.
+</span><span class="">  677: =head2 notice
 </span><span class="">  678: 
-</span><span class="">  679: =cut
+</span><span class="">  679:   $logger-&gt;notice(@messages);
 </span><span class="">  680: 
-</span><span class="">  681: sub debug {
-</span><span class="">  682: 	my $self = shift;
-</span><span class="">  683: 	$self-&gt;_log(&#39;debug&#39;, @_);
-</span><span class="">  684: }
-</span><span class="">  685: 
-</span><span class="">  686: =head2 info
-</span><span class="">  687: 
-</span><span class="">  688:   $logger-&gt;info(@messages);
+</span><span class="">  681: Logs a notice message.
+</span><span class="">  682: 
+</span><span class="">  683: =cut
+</span><span class="">  684: 
+</span><span class="">  685: sub notice {
+</span><span class="">  686: 	my $self = shift;
+</span><span class="">  687: 	$self-&gt;_log(&#39;notice&#39;, @_);
+</span><span class="">  688: }
 </span><span class="">  689: 
-</span><span class="">  690: Logs an info message.
+</span><span class="">  690: =head2 error
 </span><span class="">  691: 
-</span><span class="">  692: =cut
+</span><span class="">  692:     $logger-&gt;error(@messages);
 </span><span class="">  693: 
-</span><span class="">  694: sub info {
-</span><span class="">  695: 	my $self = shift;
-</span><span class="">  696: 	$self-&gt;_log(&#39;info&#39;, @_);
-</span><span class="">  697: }
-</span><span class="">  698: 
-</span><span class="">  699: =head2 notice
-</span><span class="">  700: 
-</span><span class="">  701:   $logger-&gt;notice(@messages);
+</span><span class="">  694: Logs an error message. This method also supports logging to syslog if configured.
+</span><span class="">  695: If not logging mechanism is set,
+</span><span class="">  696: falls back to C&lt;croak&gt;.
+</span><span class="">  697: 
+</span><span class="">  698: =cut
+</span><span class="">  699: 
+</span><span class="">  700: sub error {
+</span><span class="">  701: 	my $self = shift;
 </span><span class="">  702: 
-</span><span class="">  703: Logs a notice message.
-</span><span class="">  704: 
-</span><span class="">  705: =cut
-</span><span class="">  706: 
-</span><span class="">  707: sub notice {
-</span><span class="">  708: 	my $self = shift;
-</span><span class="">  709: 	$self-&gt;_log(&#39;notice&#39;, @_);
-</span><span class="">  710: }
+</span><span class="">  703: 	$self-&gt;_high_priority(&#39;error&#39;, @_);
+</span><span class="">  704: }
+</span><span class="">  705: 
+</span><span class="">  706: =head2 fatal
+</span><span class="">  707: 
+</span><span class="">  708:     $logger-&gt;fatal(@messages);
+</span><span class="">  709: 
+</span><span class="">  710: Synonym of error.
 </span><span class="">  711: 
-</span><span class="">  712: =head2 error
+</span><span class="">  712: =cut
 </span><span class="">  713: 
-</span><span class="">  714:     $logger-&gt;error(@messages);
-</span><span class="">  715: 
-</span><span class="">  716: Logs an error message. This method also supports logging to syslog if configured.
-</span><span class="">  717: If not logging mechanism is set,
-</span><span class="">  718: falls back to C&lt;croak&gt;.
+</span><span class="">  714: sub fatal {
+</span><span class="">  715: 	my $self = shift;
+</span><span class="">  716: 
+</span><span class="">  717: 	$self-&gt;_high_priority(&#39;error&#39;, @_);
+</span><span class="">  718: }
 </span><span class="">  719: 
-</span><span class="">  720: =cut
+</span><span class="">  720: =head2 trace
 </span><span class="">  721: 
-</span><span class="">  722: sub error {
-</span><span class="">  723: 	my $self = shift;
-</span><span class="">  724: 
-</span><span class="">  725: 	$self-&gt;_high_priority(&#39;error&#39;, @_);
-</span><span class="">  726: }
+</span><span class="">  722:   $logger-&gt;trace(@messages);
+</span><span class="">  723: 
+</span><span class="">  724: Logs a trace message.
+</span><span class="">  725: 
+</span><span class="">  726: =cut
 </span><span class="">  727: 
-</span><span class="">  728: =head2 fatal
-</span><span class="">  729: 
-</span><span class="">  730:     $logger-&gt;fatal(@messages);
-</span><span class="">  731: 
-</span><span class="">  732: Synonym of error.
-</span><span class="">  733: 
-</span><span class="">  734: =cut
-</span><span class="">  735: 
-</span><span class="">  736: sub fatal {
-</span><span class="">  737: 	my $self = shift;
+</span><span class="">  728: sub trace {
+</span><span class="">  729: 	my $self = shift;
+</span><span class="">  730: 	$self-&gt;_log(&#39;trace&#39;, @_);
+</span><span class="">  731: }
+</span><span class="">  732: 
+</span><span class="">  733: =head2 warn
+</span><span class="">  734: 
+</span><span class="">  735:   $logger-&gt;warn(@messages);
+</span><span class="">  736:   $logger-&gt;warn(\@messages);
+</span><span class="">  737:   $logger-&gt;warn(warning =&gt; \@messages);
 </span><span class="">  738: 
-</span><span class="">  739: 	$self-&gt;_high_priority(&#39;error&#39;, @_);
-</span><span class="">  740: }
-</span><span class="">  741: 
-</span><span class="">  742: =head2 trace
-</span><span class="">  743: 
-</span><span class="">  744:   $logger-&gt;trace(@messages);
-</span><span class="">  745: 
-</span><span class="">  746: Logs a trace message.
+</span><span class="">  739: Logs a warning message. This method also supports logging to syslog if configured.
+</span><span class="">  740: If not logging mechanism is set,
+</span><span class="">  741: falls back to C&lt;Carp&gt;.
+</span><span class="">  742: 
+</span><span class="">  743: =cut
+</span><span class="">  744: 
+</span><span class="">  745: sub warn {
+</span><span class="">  746: 	my $self = shift;
 </span><span class="">  747: 
-</span><span class="">  748: =cut
-</span><span class="">  749: 
-</span><span class="">  750: sub trace {
-</span><span class="">  751: 	my $self = shift;
-</span><span class="">  752: 	$self-&gt;_log(&#39;trace&#39;, @_);
-</span><span class="">  753: }
-</span><span class="">  754: 
-</span><span class="">  755: =head2 warn
-</span><span class="">  756: 
-</span><span class="">  757:   $logger-&gt;warn(@messages);
-</span><span class="">  758:   $logger-&gt;warn(\@messages);
-</span><span class="">  759:   $logger-&gt;warn(warning =&gt; \@messages);
-</span><span class="">  760: 
-</span><span class="">  761: Logs a warning message. This method also supports logging to syslog if configured.
-</span><span class="">  762: If not logging mechanism is set,
-</span><span class="">  763: falls back to C&lt;Carp&gt;.
+</span><span class="">  748: 	return if(scalar(@_) == 0);
+</span><span class="">  749: 	$self-&gt;_high_priority(&#39;warn&#39;, @_);
+</span><span class="">  750: }
+</span><span class="">  751: 
+</span><span class="">  752: =head2 _high_priority
+</span><span class="">  753: 
+</span><span class="">  754: Helper to handle important messages.
+</span><span class="">  755: 
+</span><span class="">  756: =cut
+</span><span class="">  757: 
+</span><span class="">  758: sub _high_priority
+</span><span class="">  759: {
+</span><span class=""><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">760 → 773 → 785</span></span><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">760 → 773 → 0</span></span>  760: 	my $self = shift;
+</span><span class="">  761: 	my $level = shift;	# &#39;warn&#39; or &#39;error&#39;
+</span><span class="">  762: 
+</span><span class="">  763: 	return if(scalar(@_) == 0);	# No message - return quickly
 </span><span class="">  764: 
-</span><span class="">  765: =cut
-</span><span class="">  766: 
-</span><span class="">  767: sub warn {
-</span><span class="">  768: 	my $self = shift;
+</span><span class="">  765: 	# Only logging things at warning or higher
+</span><span class="">  766: 	return if($syslog_values{$level} &gt; $WARNING);
+</span><span class="">  767: 
+</span><span class="">  768: 	my $warning;
 </span><span class="">  769: 
-</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  770: 	return if(scalar(@_) == 0);
-</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  771: 	$self-&gt;_high_priority(&#39;warn&#39;, @_);
-</span><span class="">  772: }
-</span><span class="">  773: 
-</span><span class="">  774: =head2 _high_priority
-</span><span class="">  775: 
-</span><span class="">  776: Helper to handle important messages.
-</span><span class="">  777: 
-</span><span class="">  778: =cut
-</span><span class="">  779: 
-</span><span class="">  780: sub _high_priority
-</span><span class="">  781: {
-</span><span class=""><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">782 → 795 → 807</span></span><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">782 → 795 → 0</span></span>  782: 	my $self = shift;
-</span><span class="">  783: 	my $level = shift;	# &#39;warn&#39; or &#39;error&#39;
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  770: 	# Check if called as warn(warning =&gt; ...) or warn(&#39;plain&#39;, &#39;args&#39;)
+</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  771: 	my $params;
+</span><span class="">  772: 	eval { $params = Params::Get::get_params(&#39;warning&#39;, @_) };
+</span><span class="">  773: 	if($@ || !$params || ref($params) ne &#39;HASH&#39; || !exists($params-&gt;{warning})) {
+</span><span class="">  774: 		# Plain list form &acirc;&#128;&#148; join directly
+</span><span class="">  775: 		$warning = join(&#39;&#39;, grep { defined } @_);
+</span><span class="">  776: 		return unless length($warning);
+</span><span class="">  777: 	} else {
+</span><span class="">  778: 		$warning = $params-&gt;{warning};
+</span><span class="">  779: 		return unless defined($warning);
+</span><span class="">  780: 		if(ref($warning) eq &#39;ARRAY&#39;) {
+</span><span class="">  781: 			$warning = join(&#39;&#39;, grep { defined } @{$warning});
+</span><span class="">  782: 		}
+</span><span class="">  783: 	}
 </span><span class="">  784: 
-</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  785: 	return if(scalar(@_) == 0);	# No message - return quickly
-</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  786: 
-</span><span class="">  787: 	# Only logging things at warning or higher
-</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  788: 	return if($syslog_values{$level} &gt; $WARNING);
-</span><p> <b> Mutants (Total: 3, Killed: 3, Survived: 0)</b><p><span class="">  789: 
-</span><span class="">  790: 	my $warning;
-</span><span class="">  791: 
-</span><span class="">  792: 	# Check if called as warn(warning =&gt; ...) or warn(&#39;plain&#39;, &#39;args&#39;)
-</span><span class="">  793: 	my $params;
-</span><span class="">  794: 	eval { $params = Params::Get::get_params(&#39;warning&#39;, @_) };
-</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  795: 	if($@ || !$params || ref($params) ne &#39;HASH&#39; || !exists($params-&gt;{warning})) {
-</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  796: 		# Plain list form &acirc;&#128;&#148; join directly
-</span><span class="">  797: 		$warning = join(&#39;&#39;, grep { defined } @_);
-</span><span class="">  798: 		return unless length($warning);
-</span><span class="">  799: 	} else {
-</span><span class="">  800: 		$warning = $params-&gt;{warning};
-</span><span class="">  801: 		return unless defined($warning);
-</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  802: 		if(ref($warning) eq &#39;ARRAY&#39;) {
-</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  803: 			$warning = join(&#39;&#39;, grep { defined } @{$warning});
-</span><span class="">  804: 		}
-</span><span class="">  805: 	}
-</span><span class="">  806: 
-</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic."><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">807 → 807 → 821</span></span><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">807 → 807 → 0</span></span>  807: 	if($params &amp;&amp; ref($params) eq &#39;HASH&#39; &amp;&amp; exists($params-&gt;{warning})) {
-</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  808: 		$warning = $params-&gt;{warning};
-</span><span class="">  809: 		return unless defined($warning);	# warn(warning =&gt; undef) &acirc;&#134;&#146; no-op
-</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  810: 		if(ref($warning) eq &#39;ARRAY&#39;) {
-</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  811: 			# Given &quot;warning =&gt; [ ref to array ]&quot;
-</span><span class="">  812: 			$warning = join(&#39;&#39;, grep { defined } @{$warning});
-</span><span class="">  813: 		}
-</span><span class="">  814: 	} else {
-</span><span class="">  815: 		# Plain list: warn(&#39;This &#39;, &#39;is &#39;, &#39;a &#39;, &#39;list&#39;)
-</span><span class="">  816: 		# Filter undefs and join
-</span><span class="">  817: 		$warning = join(&#39;&#39;, grep { defined } @_);
-</span><span class="">  818: 		return unless length($warning);		# all-undef list &acirc;&#134;&#146; no-op
-</span><span class="">  819: 	}
-</span><span class="">  820: 
-</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic."><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">821 → 821 → 831</span></span><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">821 → 821 → 0</span></span>  821: 	if($self eq __PACKAGE__) {
-</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  822: 		# If called from a class method, use croak/carp to warn
-</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  823: 		if($syslog_values{$level} &lt;= $ERROR) {
-</span><p> <b> Mutants (Total: 4, Killed: 4, Survived: 0)</b><p><span class="">  824: 			Carp::croak($warning);
-</span><span class="">  825: 		}
-</span><span class="">  826: 		Carp::carp($warning);
-</span><span class="">  827: 		return;
-</span><span class="">  828: 	}
-</span><span class="">  829: 
-</span><span class="">  830: 	# Log the warning message
-</span><span class=""><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">831 → 833 → 840</span></span><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">831 → 833 → 0</span></span>  831: 	$self-&gt;_log($level, $warning);
-</span><span class="">  832: 
-</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  833: 	if($syslog_values{$level} &lt;= $ERROR) {
-</span><p> <b> Mutants (Total: 4, Killed: 4, Survived: 0)</b><p><span class="">  834: 		# Fall back to croak if no logger or syslog is defined
-</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  835: 		if($self-&gt;{&#39;croak_on_error&#39;} || (!defined($self-&gt;{logger}) &amp;&amp; (!defined($self-&gt;{array})))) {
-</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  836: 			Carp::croak($warning);
-</span><span class="">  837: 		}
-</span><span class="">  838: 	}
-</span><span class="">  839: 
-</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic."><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">840 → 840 → 0</span></span>  840: 	if($self-&gt;{&#39;carp_on_warn&#39;} || (!defined($self-&gt;{logger}) &amp;&amp; (!defined($self-&gt;{array})))) {
-</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  841: 		# Fallback to Carp if no logger or syslog is defined
-</span><span class="">  842: 		Carp::carp($warning);
-</span><span class="">  843: 	}
-</span><span class="">  844: }
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic."><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">785 → 785 → 799</span></span><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">785 → 785 → 0</span></span>  785: 	if($params &amp;&amp; ref($params) eq &#39;HASH&#39; &amp;&amp; exists($params-&gt;{warning})) {
+</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  786: 		$warning = $params-&gt;{warning};
+</span><span class="">  787: 		return unless defined($warning);	# warn(warning =&gt; undef) &acirc;&#134;&#146; no-op
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  788: 		if(ref($warning) eq &#39;ARRAY&#39;) {
+</span><p> <b> Mutants (Total: 3, Killed: 3, Survived: 0)</b><p><span class="">  789: 			# Given &quot;warning =&gt; [ ref to array ]&quot;
+</span><span class="">  790: 			$warning = join(&#39;&#39;, grep { defined } @{$warning});
+</span><span class="">  791: 		}
+</span><span class="">  792: 	} else {
+</span><span class="">  793: 		# Plain list: warn(&#39;This &#39;, &#39;is &#39;, &#39;a &#39;, &#39;list&#39;)
+</span><span class="">  794: 		# Filter undefs and join
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  795: 		$warning = join(&#39;&#39;, grep { defined } @_);
+</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  796: 		return unless length($warning);		# all-undef list &acirc;&#134;&#146; no-op
+</span><span class="">  797: 	}
+</span><span class="">  798: 
+</span><span class=""><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">799 → 799 → 809</span></span><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">799 → 799 → 0</span></span>  799: 	if($self eq __PACKAGE__) {
+</span><span class="">  800: 		# If called from a class method, use croak/carp to warn
+</span><span class="">  801: 		if($syslog_values{$level} &lt;= $ERROR) {
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  802: 			Carp::croak($warning);
+</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  803: 		}
+</span><span class="">  804: 		Carp::carp($warning);
+</span><span class="">  805: 		return;
+</span><span class="">  806: 	}
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  807: 
+</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  808: 	# Log the warning message
+</span><span class=""><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">809 → 811 → 818</span></span><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">809 → 811 → 0</span></span>  809: 	$self-&gt;_log($level, $warning);
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  810: 
+</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  811: 	if($syslog_values{$level} &lt;= $ERROR) {
+</span><span class="">  812: 		# Fall back to croak if no logger or syslog is defined
+</span><span class="">  813: 		if($self-&gt;{&#39;croak_on_error&#39;} || (!defined($self-&gt;{logger}) &amp;&amp; (!defined($self-&gt;{array})))) {
+</span><span class="">  814: 			Carp::croak($warning);
+</span><span class="">  815: 		}
+</span><span class="">  816: 	}
+</span><span class="">  817: 
+</span><span class=""><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">818 → 818 → 0</span></span>  818: 	if($self-&gt;{&#39;carp_on_warn&#39;} || (!defined($self-&gt;{logger}) &amp;&amp; (!defined($self-&gt;{array})))) {
+</span><span class="">  819: 		# Fallback to Carp if no logger or syslog is defined
+</span><span class="">  820: 		Carp::carp($warning);
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  821: 	}
+</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  822: }
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  823: 
+</span><p> <b> Mutants (Total: 4, Killed: 4, Survived: 0)</b><p><span class="">  824: # Destructor to close syslog connection
+</span><span class="">  825: sub DESTROY {
+</span><span class=""><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">826 → 828 → 0</span></span>  826: 	my $self = $_[0];
+</span><span class="">  827: 
+</span><span class="">  828: 	if($self-&gt;{_syslog_opened}) {
+</span><span class="">  829: 		Sys::Syslog::closelog();
+</span><span class="">  830: 		delete $self-&gt;{_syslog_opened};
+</span><span class="">  831: 	}
+</span><span class="">  832: }
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  833: 
+</span><p> <b> Mutants (Total: 4, Killed: 4, Survived: 0)</b><p><span class="">  834: =head1 EXAMPLES
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  835: 
+</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  836: =head2 CSV file logging for BI import
+</span><span class="">  837: 
+</span><span class="">  838: The code-reference backend gives you full control over the output format.
+</span><span class="">  839: The example below writes every message at C&lt;trace&gt; level and above as a
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  840: CSV row to a file,
+</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  841: producing output that can be loaded directly into a spreadsheet or BI tool
+</span><span class="">  842: (Tableau, Power BI, Metabase, etc.).
+</span><span class="">  843: 
+</span><span class="">  844: Each row contains: C&lt;timestamp&gt;, C&lt;level&gt;, C&lt;class&gt;, C&lt;file&gt;, C&lt;line&gt;, C&lt;message&gt;.
 </span><span class="">  845: 
-</span><span class="">  846: # Destructor to close syslog connection
-</span><span class="">  847: sub DESTROY {
-</span><span class=""><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">848 → 850 → 0</span></span>  848: 	my $self = $_[0];
+</span><span class="">  846:   use Log::Abstraction;
+</span><span class="">  847: 
+</span><span class="">  848:   my $csv_file = &#39;app_events.csv&#39;;
 </span><span class="">  849: 
-</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  850: 	if($self-&gt;{_syslog_opened}) {
-</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  851: 		Sys::Syslog::closelog();
-</span><span class="">  852: 		delete $self-&gt;{_syslog_opened};
-</span><span class="">  853: 	}
-</span><span class="">  854: }
-</span><span class="">  855: 
-</span><span class="">  856: =head1 EXAMPLES
-</span><span class="">  857: 
-</span><span class="">  858: =head2 CSV file logging for BI import
-</span><span class="">  859: 
-</span><span class="">  860: The code-reference backend gives you full control over the output format.
-</span><span class="">  861: The example below writes every message at C&lt;trace&gt; level and above as a
-</span><span class="">  862: CSV row to a file,
-</span><span class="">  863: producing output that can be loaded directly into a spreadsheet or BI tool
-</span><span class="">  864: (Tableau, Power BI, Metabase, etc.).
-</span><span class="">  865: 
-</span><span class="">  866: Each row contains: C&lt;timestamp&gt;, C&lt;level&gt;, C&lt;class&gt;, C&lt;file&gt;, C&lt;line&gt;, C&lt;message&gt;.
-</span><span class="">  867: 
-</span><span class="">  868:   use Log::Abstraction;
-</span><span class="">  869: 
-</span><span class="">  870:   my $csv_file = &#39;app_events.csv&#39;;
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  850:   # Write the header row once (skip if the file already exists and has data).
+</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  851:   unless (-s $csv_file) {
+</span><span class="">  852:       open my $fh, &#39;&gt;&#39;, $csv_file or die &quot;Cannot open $csv_file: $!&quot;;
+</span><span class="">  853:       print $fh qq{timestamp,level,class,file,line,message\n};
+</span><span class="">  854:       close $fh;
+</span><span class="">  855:   }
+</span><span class="">  856: 
+</span><span class="">  857:   # Helper: quote a single CSV field (escapes embedded double-quotes).
+</span><span class="">  858:   my $csv_field = sub {
+</span><span class="">  859:       my $v = defined $_[0] ? $_[0] : &#39;&#39;;
+</span><span class="">  860:       $v =~ s/&quot;/&quot;&quot;/g;
+</span><span class="">  861:       return qq{&quot;$v&quot;};
+</span><span class="">  862:   };
+</span><span class="">  863: 
+</span><span class="">  864:   my $logger = Log::Abstraction-&gt;new(
+</span><span class="">  865:       level  =&gt; &#39;trace&#39;,        # capture everything from trace upwards
+</span><span class="">  866:       logger =&gt; sub {
+</span><span class="">  867:           my $args = $_[0];
+</span><span class="">  868: 
+</span><span class="">  869:           my $timestamp = POSIX::strftime(&#39;%Y-%m-%dT%H:%M:%SZ&#39;, gmtime);
+</span><span class="">  870:           my $message  = join(&#39; &#39;, @{ $args-&gt;{message} // [] });
 </span><span class="">  871: 
-</span><span class="">  872:   # Write the header row once (skip if the file already exists and has data).
-</span><span class="">  873:   unless (-s $csv_file) {
-</span><span class="">  874:       open my $fh, &#39;&gt;&#39;, $csv_file or die &quot;Cannot open $csv_file: $!&quot;;
-</span><span class="">  875:       print $fh qq{timestamp,level,class,file,line,message\n};
-</span><span class="">  876:       close $fh;
-</span><span class="">  877:   }
-</span><span class="">  878: 
-</span><span class="">  879:   # Helper: quote a single CSV field (escapes embedded double-quotes).
-</span><span class="">  880:   my $csv_field = sub {
-</span><span class="">  881:       my $v = defined $_[0] ? $_[0] : &#39;&#39;;
-</span><span class="">  882:       $v =~ s/&quot;/&quot;&quot;/g;
-</span><span class="">  883:       return qq{&quot;$v&quot;};
-</span><span class="">  884:   };
-</span><span class="">  885: 
-</span><span class="">  886:   my $logger = Log::Abstraction-&gt;new(
-</span><span class="">  887:       level  =&gt; &#39;trace&#39;,        # capture everything from trace upwards
-</span><span class="">  888:       logger =&gt; sub {
-</span><span class="">  889:           my $args = $_[0];
+</span><span class="">  872:           open my $fh, &#39;&gt;&gt;&#39;, $csv_file or return;
+</span><span class="">  873:           print $fh join(&#39;,&#39;,
+</span><span class="">  874:               $csv_field-&gt;($timestamp),
+</span><span class="">  875:               $csv_field-&gt;($args-&gt;{level}),
+</span><span class="">  876:               $csv_field-&gt;($args-&gt;{class}),
+</span><span class="">  877:               $csv_field-&gt;($args-&gt;{file}),
+</span><span class="">  878:               $csv_field-&gt;($args-&gt;{line}),
+</span><span class="">  879:               $csv_field-&gt;($message),
+</span><span class="">  880:           ), &quot;\n&quot;;
+</span><span class="">  881:           close $fh;
+</span><span class="">  882:       },
+</span><span class="">  883:   );
+</span><span class="">  884: 
+</span><span class="">  885:   $logger-&gt;trace(&#39;application started&#39;);
+</span><span class="">  886:   $logger-&gt;info(&#39;user logged in&#39;, { user =&gt; &#39;alice&#39; });
+</span><span class="">  887:   $logger-&gt;warn({ warning =&gt; &#39;disk usage above 80%&#39; });
+</span><span class="">  888: 
+</span><span class="">  889: The resulting C&lt;app_events.csv&gt; looks like:
 </span><span class="">  890: 
-</span><span class="">  891:           my $timestamp = POSIX::strftime(&#39;%Y-%m-%dT%H:%M:%SZ&#39;, gmtime);
-</span><span class="">  892:           my $message  = join(&#39; &#39;, @{ $args-&gt;{message} // [] });
-</span><span class="">  893: 
-</span><span class="">  894:           open my $fh, &#39;&gt;&gt;&#39;, $csv_file or return;
-</span><span class="">  895:           print $fh join(&#39;,&#39;,
-</span><span class="">  896:               $csv_field-&gt;($timestamp),
-</span><span class="">  897:               $csv_field-&gt;($args-&gt;{level}),
-</span><span class="">  898:               $csv_field-&gt;($args-&gt;{class}),
-</span><span class="">  899:               $csv_field-&gt;($args-&gt;{file}),
-</span><span class="">  900:               $csv_field-&gt;($args-&gt;{line}),
-</span><span class="">  901:               $csv_field-&gt;($message),
-</span><span class="">  902:           ), &quot;\n&quot;;
-</span><span class="">  903:           close $fh;
-</span><span class="">  904:       },
-</span><span class="">  905:   );
-</span><span class="">  906: 
-</span><span class="">  907:   $logger-&gt;trace(&#39;application started&#39;);
-</span><span class="">  908:   $logger-&gt;info(&#39;user logged in&#39;, { user =&gt; &#39;alice&#39; });
-</span><span class="">  909:   $logger-&gt;warn({ warning =&gt; &#39;disk usage above 80%&#39; });
-</span><span class="">  910: 
-</span><span class="">  911: The resulting C&lt;app_events.csv&gt; looks like:
+</span><span class="">  891:   timestamp,level,class,file,line,message
+</span><span class="">  892:   &quot;2026-05-27T14:00:00Z&quot;,&quot;trace&quot;,&quot;Log::Abstraction&quot;,&quot;app.pl&quot;,&quot;42&quot;,&quot;application started&quot;
+</span><span class="">  893:   &quot;2026-05-27T14:00:01Z&quot;,&quot;info&quot;,&quot;Log::Abstraction&quot;,&quot;app.pl&quot;,&quot;43&quot;,&quot;user logged in&quot;
+</span><span class="">  894:   &quot;2026-05-27T14:00:02Z&quot;,&quot;warn&quot;,&quot;Log::Abstraction&quot;,&quot;Log/Abstraction.pm&quot;,&quot;820&quot;,&quot;disk usage above 80%&quot;
+</span><span class="">  895: 
+</span><span class="">  896: Note: C&lt;class&gt; is always C&lt;Log::Abstraction&gt; (or the subclass name if you subclass the
+</span><span class="">  897: module).  For C&lt;trace&gt;, C&lt;debug&gt;, C&lt;info&gt;, and C&lt;notice&gt; calls, C&lt;file&gt; and C&lt;line&gt;
+</span><span class="">  898: resolve to the caller&#39;s source location.  For C&lt;warn&gt; and C&lt;error&gt; calls the
+</span><span class="">  899: extra C&lt;_high_priority&gt; stack frame shifts the resolution one level inward, so
+</span><span class="">  900: C&lt;file&gt; and C&lt;line&gt; point into the module rather than the calling script.
+</span><span class="">  901: 
+</span><span class="">  902: For production use, consider replacing the manual C&lt;$csv_field&gt; quoting with
+</span><span class="">  903: L&lt;Text::CSV&gt; for correct handling of embedded newlines and other edge cases.
+</span><span class="">  904: 
+</span><span class="">  905: If you also want real-time alerting on critical events, add the email logic
+</span><span class="">  906: directly inside the code-ref callback - test C&lt;$args-E&lt;gt&gt;{level}&gt; and call
+</span><span class="">  907: your mailer for C&lt;warn&gt; / C&lt;error&gt; messages while still writing the CSV row
+</span><span class="">  908: for every message.
+</span><span class="">  909: 
+</span><span class="">  910: Alternatively, use the C&lt;sendmail&gt; hash-ref backend on its own (without the
+</span><span class="">  911: code-ref) and add a C&lt;level&gt; key to restrict emails to warn-and-above:
 </span><span class="">  912: 
-</span><span class="">  913:   timestamp,level,class,file,line,message
-</span><span class="">  914:   &quot;2026-05-27T14:00:00Z&quot;,&quot;trace&quot;,&quot;Log::Abstraction&quot;,&quot;app.pl&quot;,&quot;42&quot;,&quot;application started&quot;
-</span><span class="">  915:   &quot;2026-05-27T14:00:01Z&quot;,&quot;info&quot;,&quot;Log::Abstraction&quot;,&quot;app.pl&quot;,&quot;43&quot;,&quot;user logged in&quot;
-</span><span class="">  916:   &quot;2026-05-27T14:00:02Z&quot;,&quot;warn&quot;,&quot;Log::Abstraction&quot;,&quot;Log/Abstraction.pm&quot;,&quot;820&quot;,&quot;disk usage above 80%&quot;
-</span><span class="">  917: 
-</span><span class="">  918: Note: C&lt;class&gt; is always C&lt;Log::Abstraction&gt; (or the subclass name if you subclass the
-</span><span class="">  919: module).  For C&lt;trace&gt;, C&lt;debug&gt;, C&lt;info&gt;, and C&lt;notice&gt; calls, C&lt;file&gt; and C&lt;line&gt;
-</span><span class="">  920: resolve to the caller&#39;s source location.  For C&lt;warn&gt; and C&lt;error&gt; calls the
-</span><span class="">  921: extra C&lt;_high_priority&gt; stack frame shifts the resolution one level inward, so
-</span><span class="">  922: C&lt;file&gt; and C&lt;line&gt; point into the module rather than the calling script.
-</span><span class="">  923: 
-</span><span class="">  924: For production use, consider replacing the manual C&lt;$csv_field&gt; quoting with
-</span><span class="">  925: L&lt;Text::CSV&gt; for correct handling of embedded newlines and other edge cases.
+</span><span class="">  913:   my $logger = Log::Abstraction-&gt;new(
+</span><span class="">  914:       level  =&gt; &#39;warn&#39;,
+</span><span class="">  915:       logger =&gt; {
+</span><span class="">  916:           sendmail =&gt; {
+</span><span class="">  917:               host         =&gt; &#39;smtp.example.com&#39;,
+</span><span class="">  918:               to           =&gt; &#39;ops@example.com&#39;,
+</span><span class="">  919:               from         =&gt; &#39;logger@example.com&#39;,
+</span><span class="">  920:               subject      =&gt; &#39;Application alert&#39;,
+</span><span class="">  921:               level        =&gt; &#39;warn&#39;,   # only email at warn level and above
+</span><span class="">  922:               min_interval =&gt; 300,      # at most one alert email per 5 minutes
+</span><span class="">  923:           },
+</span><span class="">  924:       },
+</span><span class="">  925:   );
 </span><span class="">  926: 
-</span><span class="">  927: If you also want real-time alerting on critical events, add the email logic
-</span><span class="">  928: directly inside the code-ref callback &acirc;&#128;&#148; test C&lt;$args-E&lt;gt&gt;{level}&gt; and call
-</span><span class="">  929: your mailer for C&lt;warn&gt; / C&lt;error&gt; messages while still writing the CSV row
-</span><span class="">  930: for every message.
+</span><span class="">  927: Note: the C&lt;sendmail&gt; backend writes the module&#39;s standard text format, not
+</span><span class="">  928: CSV.  To produce CSV rows I&lt;and&gt; send email alerts from the same logger,
+</span><span class="">  929: embed both the CSV-write and the mail-send logic inside a single code-ref
+</span><span class="">  930: callback as described above.
 </span><span class="">  931: 
-</span><span class="">  932: Alternatively, use the C&lt;sendmail&gt; hash-ref backend on its own (without the
-</span><span class="">  933: code-ref) and add a C&lt;level&gt; key to restrict emails to warn-and-above:
-</span><span class="">  934: 
-</span><span class="">  935:   my $logger = Log::Abstraction-&gt;new(
-</span><span class="">  936:       level  =&gt; &#39;warn&#39;,
-</span><span class="">  937:       logger =&gt; {
-</span><span class="">  938:           sendmail =&gt; {
-</span><span class="">  939:               host         =&gt; &#39;smtp.example.com&#39;,
-</span><span class="">  940:               to           =&gt; &#39;ops@example.com&#39;,
-</span><span class="">  941:               from         =&gt; &#39;logger@example.com&#39;,
-</span><span class="">  942:               subject      =&gt; &#39;Application alert&#39;,
-</span><span class="">  943:               level        =&gt; &#39;warn&#39;,   # only email at warn level and above
-</span><span class="">  944:               min_interval =&gt; 300,      # at most one alert email per 5 minutes
-</span><span class="">  945:           },
-</span><span class="">  946:       },
-</span><span class="">  947:   );
-</span><span class="">  948: 
-</span><span class="">  949: Note: the C&lt;sendmail&gt; backend writes the module&#39;s standard text format, not
-</span><span class="">  950: CSV.  To produce CSV rows I&lt;and&gt; send email alerts from the same logger,
-</span><span class="">  951: embed both the CSV-write and the mail-send logic inside a single code-ref
-</span><span class="">  952: callback as described above.
+</span><span class="">  932: =head1 AUTHOR
+</span><span class="">  933: 
+</span><span class="">  934: Nigel Horne C&lt;njh@nigelhorne.com&gt;
+</span><span class="">  935: 
+</span><span class="">  936: =head1 SEE ALSO
+</span><span class="">  937: 
+</span><span class="">  938: =over 4
+</span><span class="">  939: 
+</span><span class="">  940: =item * L&lt;Test Dashboard|https://nigelhorne.github.io/Log-Abstraction/coverage/&gt;
+</span><span class="">  941: 
+</span><span class="">  942: =back
+</span><span class="">  943: 
+</span><span class="">  944: =head1 SUPPORT
+</span><span class="">  945: 
+</span><span class="">  946: This module is provided as-is without any warranty.
+</span><span class="">  947: 
+</span><span class="">  948: Please report any bugs or feature requests to C&lt;bug-log-abstraction at rt.cpan.org&gt;,
+</span><span class="">  949: or through the web interface at
+</span><span class="">  950: L&lt;http://rt.cpan.org/NoAuth/ReportBug.html?Queue=Log-Abstraction&gt;.
+</span><span class="">  951: I will be notified, and then you&#39;ll
+</span><span class="">  952: automatically be notified of progress on your bug as I make changes.
 </span><span class="">  953: 
-</span><span class="">  954: =head1 AUTHOR
+</span><span class="">  954: You can find documentation for this module with the perldoc command.
 </span><span class="">  955: 
-</span><span class="">  956: Nigel Horne C&lt;njh@nigelhorne.com&gt;
+</span><span class="">  956:     perldoc Log::Abstraction
 </span><span class="">  957: 
-</span><span class="">  958: =head1 SEE ALSO
+</span><span class="">  958: You can also look for information at:
 </span><span class="">  959: 
 </span><span class="">  960: =over 4
 </span><span class="">  961: 
-</span><span class="">  962: =item * L&lt;Test Dashboard|https://nigelhorne.github.io/Log-Abstraction/coverage/&gt;
+</span><span class="">  962: =item * MetaCPAN
 </span><span class="">  963: 
-</span><span class="">  964: =back
+</span><span class="">  964: L&lt;https://metacpan.org/dist/Log-Abstraction&gt;
 </span><span class="">  965: 
-</span><span class="">  966: =head1 SUPPORT
+</span><span class="">  966: =item * RT: CPAN&#39;s request tracker
 </span><span class="">  967: 
-</span><span class="">  968: This module is provided as-is without any warranty.
+</span><span class="">  968: L&lt;https://rt.cpan.org/NoAuth/Bugs.html?Dist=Log-Abstraction&gt;
 </span><span class="">  969: 
-</span><span class="">  970: Please report any bugs or feature requests to C&lt;bug-log-abstraction at rt.cpan.org&gt;,
-</span><span class="">  971: or through the web interface at
-</span><span class="">  972: L&lt;http://rt.cpan.org/NoAuth/ReportBug.html?Queue=Log-Abstraction&gt;.
-</span><span class="">  973: I will be notified, and then you&#39;ll
-</span><span class="">  974: automatically be notified of progress on your bug as I make changes.
+</span><span class="">  970: =item * CPAN Testers&#39; Matrix
+</span><span class="">  971: 
+</span><span class="">  972: L&lt;http://matrix.cpantesters.org/?dist=Log-Abstraction&gt;
+</span><span class="">  973: 
+</span><span class="">  974: =item * CPAN Testers Dependencies
 </span><span class="">  975: 
-</span><span class="">  976: You can find documentation for this module with the perldoc command.
+</span><span class="">  976: L&lt;http://deps.cpantesters.org/?module=Log::Abstraction&gt;
 </span><span class="">  977: 
-</span><span class="">  978:     perldoc Log::Abstraction
+</span><span class="">  978: =back
 </span><span class="">  979: 
-</span><span class="">  980: You can also look for information at:
+</span><span class="">  980: =head1 COPYRIGHT AND LICENSE
 </span><span class="">  981: 
-</span><span class="">  982: =over 4
+</span><span class="">  982: Copyright (C) 2025-2026 Nigel Horne
 </span><span class="">  983: 
-</span><span class="">  984: =item * MetaCPAN
-</span><span class="">  985: 
-</span><span class="">  986: L&lt;https://metacpan.org/dist/Log-Abstraction&gt;
+</span><span class="">  984: Usage is subject to the GPL2 licence terms.
+</span><span class="">  985: If you use it,
+</span><span class="">  986: please let me know.
 </span><span class="">  987: 
-</span><span class="">  988: =item * RT: CPAN&#39;s request tracker
+</span><span class="">  988: =cut
 </span><span class="">  989: 
-</span><span class="">  990: L&lt;https://rt.cpan.org/NoAuth/Bugs.html?Dist=Log-Abstraction&gt;
-</span><span class="">  991: 
-</span><span class="">  992: =item * CPAN Testers&#39; Matrix
-</span><span class="">  993: 
-</span><span class="">  994: L&lt;http://matrix.cpantesters.org/?dist=Log-Abstraction&gt;
-</span><span class="">  995: 
-</span><span class="">  996: =item * CPAN Testers Dependencies
-</span><span class="">  997: 
-</span><span class="">  998: L&lt;http://deps.cpantesters.org/?module=Log::Abstraction&gt;
-</span><span class="">  999: 
-</span><span class=""> 1000: =back
-</span><span class=""> 1001: 
-</span><span class=""> 1002: =head1 COPYRIGHT AND LICENSE
-</span><span class=""> 1003: 
-</span><span class=""> 1004: Copyright (C) 2025-2026 Nigel Horne
-</span><span class=""> 1005: 
-</span><span class=""> 1006: Usage is subject to the GPL2 licence terms.
-</span><span class=""> 1007: If you use it,
-</span><span class=""> 1008: please let me know.
-</span><span class=""> 1009: 
-</span><span class=""> 1010: =cut
-</span><span class=""> 1011: 
-</span><span class=""> 1012: 1;
+</span><span class="">  990: 1;
 </span></pre>
 
 <script>
