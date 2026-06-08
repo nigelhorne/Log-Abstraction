@@ -1,0 +1,59 @@
+#!/usr/bin/env perl
+# Auto-generated mutant test stubs
+# Generated: 2026-06-08 12:51:19
+# Generator: scripts/test-generator-index
+#
+# DO NOT COMMIT without completing the TODO sections.
+#
+# HIGH/MEDIUM difficulty survivors have TODO stubs — these need real tests.
+# LOW difficulty survivors appear as comment hints — worth improving.
+#
+# Stubs call new() for modules with a constructor, or show a class method
+# placeholder for modules without one. Add arguments as needed.
+
+use strict;
+use warnings;
+use Test::More;
+
+use_ok('Log::Abstraction');
+
+################################################################
+# FILE: lib/Log/Abstraction.pm
+################################################################
+# --- SURVIVORS (TODO stubs) ---
+
+# --- SURVIVOR: COND_INV_217_4 (MEDIUM) line 217 in new() ---
+# Source:  if($array) {
+# Hint:    Add tests asserting both true and false outcomes
+# Mutations on this line (1 variant):
+#   Invert condition if to unless
+TODO: {
+    local $TODO = 'Complete: COND_INV_217_4 line 217 in new()';
+    # NOTE: new is a class method — call directly.
+    my $result = Log::Abstraction->new(...);
+    # ok($result, 'COND_INV_217_4: add assertion here');
+    # TODO: exercise line 217 in new() to detect the mutant
+    fail('COND_INV_217_4: replace with real assertion');
+}
+
+# --- SURVIVOR: NUM_BOUNDARY_464_42_> (HIGH) line 464 in _log() ---
+# Source:  unless $port =~ /^\d+$/ && $port >= 1 && $port <= 65535;
+# Hint:    Likely missing edge-case test (boundary value)
+# Mutations on this line (6 variants — one test should kill all):
+#   Numeric boundary flip >= to >
+#   Numeric boundary flip >= to <
+#   Numeric boundary flip >= to <=
+#   Numeric boundary flip <= to <
+#   Numeric boundary flip <= to >
+#   Numeric boundary flip <= to >=
+TODO: {
+    local $TODO = 'Complete: NUM_BOUNDARY_464_42_> line 464 in _log()';
+    # Suggested boundary values to test: 0, 1, 2
+    # NOTE: new() called with no arguments as a starting point.
+    # If Log::Abstraction requires constructor arguments, add them here.
+    my $obj = new_ok('Log::Abstraction');
+    # TODO: exercise line 464 in _log() to detect the mutant
+    fail('NUM_BOUNDARY_464_42_>: replace with real assertion');
+}
+
+done_testing();
