@@ -400,13 +400,12 @@ sub _log {
 			push @{$logger}, { level => $level, message => $str };
 		} elsif(ref($logger) eq 'HASH') {
 			if(my $file = $logger->{'file'}) {
-				# if($file =~ /^([-\@\w.\/\\]+)$/) {
-				if($file =~ /^([^<>|*?;!`$"\0-\037]+)$/) {
+				if($file =~ /^([^<>|*?;!`$"\0-\037]+)$/ && $file !~ /\.\./) {
 					$file = $1;	# Will untaint
 				} else {
 					Carp::croak(ref($self), ": Invalid file name: $file");
 				}
-				if(open(my $fout, '>>', $logger->{'file'})) {
+				if(open(my $fout, '>>', $file)) {
 					my $format = $self->{'format'} || '%level%> [%timestamp%] %class% %callstack% %message%';
 					my $ulevel = uc($level);
 					my $callstack = (caller(1))[1] . ' ' . (caller(1))[2];
@@ -416,7 +415,7 @@ sub _log {
 					$format =~ s/%message%/$str/g;
 					$format =~ s/%callstack%/$callstack/g;
 					$format =~ s/%timestamp%/$timestamp/g;
-					$format =~ s/%env_(\w+)%/$ENV{$1}/g;
+					$format =~ s/%env_(\w+)%/$ENV{$1} \/\/ ''/ge;
 					print $fout "$format\n" or Carp::croak(ref($self), ": Can't write to $file: $!");
 					close $fout;
 				}
@@ -457,9 +456,15 @@ sub _log {
 							$email->body_set(join(' ', @messages));
 
 							# Configure SMTP transport (adjust for your SMTP server)
+							my $host = $logger->{'sendmail'}->{'host'} || 'localhost';
+							Carp::croak(ref($self), ": Invalid SMTP host: $host")
+								if $host =~ /[^a-zA-Z0-9.\-]/;
+							my $port = $logger->{'sendmail'}->{'port'} || 25;
+							Carp::croak(ref($self), ": Invalid SMTP port: $port")
+								unless $port =~ /^\d+$/ && $port >= 1 && $port <= 65535;
 							my $transport = Email::Sender::Transport::SMTP->new({
-								host => $logger->{'sendmail'}->{'host'} || 'localhost',
-								port => $logger->{'sendmail'}->{'port'} || 25
+								host => $host,
+								port => $port
 							});
 
 							sendmail($email, { transport => $transport });
@@ -523,7 +528,13 @@ sub _log {
 			}
 		} elsif(!ref($logger)) {
 			# If logger is a file path, append the log message to the file
-			if(open(my $fout, '>>', $logger)) {
+			my $safe_path = $logger;
+			if($safe_path =~ /^([^<>|*?;!`$"\0-\037]+)$/ && $safe_path !~ /\.\./) {
+				$safe_path = $1;	# Will untaint
+			} else {
+				Carp::croak(ref($self), ": Invalid file name: $safe_path");
+			}
+			if(open(my $fout, '>>', $safe_path)) {
 				my $format = $self->{'format'} || '%level%> [%timestamp%] %class% %callstack% %message%';
 				my $ulevel = uc($level);
 				my $callstack = (caller(1))[1] . ' ' . (caller(1))[2];

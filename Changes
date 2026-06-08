@@ -2,6 +2,20 @@ Revision history for Log-Abstraction
 
 0.31	(not yet released)
 
+	[ Security ]
+	- Fixed path traversal in HASH-backend file logger: path regex now blocks
+	  '..' sequences, preventing writes outside the intended directory
+	- Fixed open() in HASH-backend file logger to use the untainted $file
+	  variable rather than the original $logger->{'file'} value
+	- Added path validation (same allowlist + '..' check) to the scalar-string
+	  logger path, which previously called open() with no validation at all
+	- Validated SMTP host in sendmail backend: only [a-zA-Z0-9.-] characters
+	  accepted, preventing header/protocol injection via a crafted hostname
+	- Validated SMTP port in sendmail backend: must be an integer 1-65535,
+	  preventing SSRF port-scanning via an attacker-controlled config file
+	- Fixed %env_*% format expansion in HASH file backend to use /ge with
+	  defined-or fallback, consistent with the fd and scalar-path backends
+
 	[ Bug Fixes ]
 	- Fixed use Readonly::Values::Syslog version in source to 0.04, matching
 	  Makefile.PL and cpanfile (was still 0.03 after the 0.30 bump)
