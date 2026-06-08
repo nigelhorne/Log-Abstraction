@@ -158,26 +158,6 @@ Internal routine to remove carriage return and line feed characters from an emai
 
     Returns the sanitized string with CR/LF characters removed.
 
-### FORMAL SPECIFICATION
-
-If the input is undefined (∅), the output is also undefined (∅).
-
-If the input is defined, the result is a defined string with CR and LF characters removed.
-
-    [CHAR]
-
-    CR, LF : CHAR
-    CR == '\r'
-    LF == '\n'
-
-    STRING == seq CHAR
-
-    SanitizeEmailHeader
-        raw?: STRING
-        sanitized!: STRING
-        -------------------------------------------------
-        sanitized! = [ c : raw? | c ≠ CR ∧ c ≠ LF ]
-
 ## level($self, $level)
 
 Get/set the minimum level to log at.
@@ -316,7 +296,7 @@ For production use, consider replacing the manual `$csv_field` quoting with
 [Text::CSV](https://metacpan.org/pod/Text%3A%3ACSV) for correct handling of embedded newlines and other edge cases.
 
 If you also want real-time alerting on critical events, add the email logic
-directly inside the code-ref callback — test `$args->{level}` and call
+directly inside the code-ref callback - test `$args->{level}` and call
 your mailer for `warn` / `error` messages while still writing the CSV row
 for every message.
 

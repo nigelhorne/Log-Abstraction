@@ -286,8 +286,6 @@ sub new {
 	}, $class;
 }
 
-=encoding utf-8
-
 =head2 _sanitize_email_header
 
     my $clean_value = _sanitize_email_header($raw_value);
@@ -309,26 +307,6 @@ If the input is undefined, returns `undef`. Otherwise, removes all newline chara
 Returns the sanitized string with CR/LF characters removed.
 
 =back
-
-=head3 FORMAL SPECIFICATION
-
-If the input is undefined (∅), the output is also undefined (∅).
-
-If the input is defined, the result is a defined string with CR and LF characters removed.
-
-    [CHAR]
-
-    CR, LF : CHAR
-    CR == '\r'
-    LF == '\n'
-
-    STRING == seq CHAR
-
-    SanitizeEmailHeader
-        raw?: STRING
-        sanitized!: STRING
-        -------------------------------------------------
-        sanitized! = [ c : raw? | c ≠ CR ∧ c ≠ LF ]
 
 =cut
 
@@ -925,7 +903,7 @@ For production use, consider replacing the manual C<$csv_field> quoting with
 L<Text::CSV> for correct handling of embedded newlines and other edge cases.
 
 If you also want real-time alerting on critical events, add the email logic
-directly inside the code-ref callback — test C<$args-E<gt>{level}> and call
+directly inside the code-ref callback - test C<$args-E<gt>{level}> and call
 your mailer for C<warn> / C<error> messages while still writing the CSV row
 for every message.
 
