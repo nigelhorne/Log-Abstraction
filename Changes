@@ -1,7 +1,6 @@
 Revision history for Log-Abstraction
 
-0.31	(not yet released)
-
+0.31	Jun  8 20:55:28 EDT 2026
 	[ Architecture ]
 	- Added use autodie qw(:all); file writes wrapped in eval{} to keep
 	  logging failures silent (app must not crash when log file is unavailable)
