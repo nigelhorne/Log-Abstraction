@@ -856,43 +856,43 @@ Approximate LCSAJ segments: 163<br>
 </span><p> <b> Mutants (Total: 3, Killed: 3, Survived: 0)</b><p><span class="">  558: 					}
 </span><span class="">  559: 
 </span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  560: 					if(!$throttled) {
-</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  561: 						# Load mail modules lazily; wrap in eval to handle failures
-</span><span class="">  562: 						eval {
-</span><span class="">  563: 							require Email::Simple;
-</span><span class="">  564: 							require Email::Sender::Simple;
-</span><span class="">  565: 							require Email::Sender::Transport::SMTP;
-</span><span class="">  566: 
-</span><span class="">  567: 							Email::Simple-&gt;import();
-</span><span class="">  568: 							Email::Sender::Simple-&gt;import(&#39;sendmail&#39;);
-</span><span class="">  569: 							Email::Sender::Transport::SMTP-&gt;import();
+</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  561: 						# Validate host and port before any eval so bad config croaks immediately
+</span><span class="">  562: 						my $host = $sm-&gt;{&#39;host&#39;} || $DEFAULT_SMTP_HOST;
+</span><span class="">  563: 						Carp::croak(ref($self), &quot;: Invalid SMTP host: $host&quot;)
+</span><span class="">  564: 							if $host =~ $RE_SAFE_HOST;
+</span><span class="">  565: 						my $port = $sm-&gt;{&#39;port&#39;} || $DEFAULT_SMTP_PORT;
+</span><span class="">  566: 						Carp::croak(ref($self), &quot;: Invalid SMTP port: $port&quot;)
+</span><span class="">  567: 							unless $port =~ $RE_PORT
+</span><span class="">  568: 								&amp;&amp; $port &gt;= $MIN_PORT
+</span><span class="">  569: 								&amp;&amp; $port &lt;= $MAX_PORT;
 </span><span class="">  570: 
-</span><span class="">  571: 							# Build the email object with sanitised headers
-</span><span class="">  572: 							my $email = Email::Simple-&gt;new(&#39;&#39;);
-</span><span class="">  573: 							$email-&gt;header_set(
-</span><span class="">  574: 								&#39;to&#39;,
-</span><span class="">  575: 								_sanitize_email_header($sm-&gt;{&#39;to&#39;}),
-</span><span class="">  576: 							);
-</span><span class="">  577: 							my $from = $sm-&gt;{&#39;from&#39;} || $DEFAULT_FROM_ADDR;
-</span><span class="">  578: 							$email-&gt;header_set(
-</span><span class="">  579: 								&#39;from&#39;,
-</span><span class="">  580: 								_sanitize_email_header($from),
-</span><span class="">  581: 							);
-</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  582: 							if(my $subject = $sm-&gt;{&#39;subject&#39;}) {
-</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  583: 								$email-&gt;header_set(
-</span><span class="">  584: 									&#39;subject&#39;,
-</span><span class="">  585: 									_sanitize_email_header($subject),
-</span><span class="">  586: 								);
-</span><span class="">  587: 							}
-</span><span class="">  588: 							$email-&gt;body_set(join(&#39; &#39;, @messages));
-</span><span class="">  589: 
-</span><span class="">  590: 							# Validate host and port before constructing transport
-</span><span class="">  591: 							my $host = $sm-&gt;{&#39;host&#39;} || $DEFAULT_SMTP_HOST;
-</span><span class="">  592: 							Carp::croak(ref($self), &quot;: Invalid SMTP host: $host&quot;)
-</span><span class="">  593: 								if $host =~ $RE_SAFE_HOST;
-</span><span class="">  594: 							my $port = $sm-&gt;{&#39;port&#39;} || $DEFAULT_SMTP_PORT;
-</span><span class="">  595: 							Carp::croak(ref($self), &quot;: Invalid SMTP port: $port&quot;)
-</span><span class="">  596: 								unless $port =~ $RE_PORT
-</span><span class="survived-3 tooltip" data-tooltip="Boundary mutation survived. Add tests around edge values (e.g. min, max, off-by-one).">  597: 									&amp;&amp; $port &gt;= $MIN_PORT
+</span><span class="">  571: 						# Load mail modules lazily; wrap only I/O in eval to handle delivery failures
+</span><span class="">  572: 						eval {
+</span><span class="">  573: 							require Email::Simple;
+</span><span class="">  574: 							require Email::Sender::Simple;
+</span><span class="">  575: 							require Email::Sender::Transport::SMTP;
+</span><span class="">  576: 
+</span><span class="">  577: 							Email::Simple-&gt;import();
+</span><span class="">  578: 							Email::Sender::Simple-&gt;import(&#39;sendmail&#39;);
+</span><span class="">  579: 							Email::Sender::Transport::SMTP-&gt;import();
+</span><span class="">  580: 
+</span><span class="">  581: 							# Build the email object with sanitised headers
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  582: 							my $email = Email::Simple-&gt;new(&#39;&#39;);
+</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  583: 							$email-&gt;header_set(
+</span><span class="">  584: 								&#39;to&#39;,
+</span><span class="">  585: 								_sanitize_email_header($sm-&gt;{&#39;to&#39;}),
+</span><span class="">  586: 							);
+</span><span class="">  587: 							my $from = $sm-&gt;{&#39;from&#39;} || $DEFAULT_FROM_ADDR;
+</span><span class="">  588: 							$email-&gt;header_set(
+</span><span class="">  589: 								&#39;from&#39;,
+</span><span class="">  590: 								_sanitize_email_header($from),
+</span><span class="">  591: 							);
+</span><span class="">  592: 							if(my $subject = $sm-&gt;{&#39;subject&#39;}) {
+</span><span class="">  593: 								$email-&gt;header_set(
+</span><span class="">  594: 									&#39;subject&#39;,
+</span><span class="">  595: 									_sanitize_email_header($subject),
+</span><span class="">  596: 								);
+</span><span class="survived-3 tooltip" data-tooltip="Boundary mutation survived. Add tests around edge values (e.g. min, max, off-by-one).">  597: 							}
 </span>
 					<details class="mutant-details">
 					<summary>Mutants (Total: 3, Killed: 0, Survived: 3)</summary>
@@ -922,7 +922,7 @@ is( func(VALUE_AT_BOUNDARY), EXPECTED, &#39;Test boundary behaviour&#39; );
 </pre>
 								</div>
 							</li></ul></details>
-<span class="survived-3 tooltip" data-tooltip="Boundary mutation survived. Add tests around edge values (e.g. min, max, off-by-one).">  598: 									&amp;&amp; $port &lt;= $MAX_PORT;
+<span class="survived-3 tooltip" data-tooltip="Boundary mutation survived. Add tests around edge values (e.g. min, max, off-by-one).">  598: 							$email-&gt;body_set(join(&#39; &#39;, @messages));
 </span>
 					<details class="mutant-details">
 					<summary>Mutants (Total: 3, Killed: 0, Survived: 3)</summary>
@@ -1389,7 +1389,7 @@ is( func(INPUT), EXPECTED, &#39;Verify correct return value&#39; );
 </span><span class=""> 1012: sub trace {
 </span><span class=""> 1013: 	my $self = shift;
 </span><span class=""> 1014: 	$self-&gt;_log(&#39;trace&#39;, @_);
-</span><span class="survived-2 tooltip" data-tooltip="Return value mutation survived. Add tests asserting exact return values. Boolean logic mutation survived. Add tests covering both true and false paths."> 1015: 	return $self;
+</span><span class="survived-2 tooltip" data-tooltip="Boolean logic mutation survived. Add tests covering both true and false paths. Return value mutation survived. Add tests asserting exact return values."> 1015: 	return $self;
 </span>
 					<details class="mutant-details">
 					<summary>Mutants (Total: 2, Killed: 0, Survived: 2)</summary>
@@ -1525,7 +1525,7 @@ is( func(INPUT), EXPECTED, &#39;Verify correct return value&#39; );
 </span><span class=""> 1106: sub info {
 </span><span class=""> 1107: 	my $self = shift;
 </span><span class=""> 1108: 	$self-&gt;_log(&#39;info&#39;, @_);
-</span><span class="survived-2 tooltip" data-tooltip="Boolean logic mutation survived. Add tests covering both true and false paths. Return value mutation survived. Add tests asserting exact return values."> 1109: 	return $self;
+</span><span class="survived-2 tooltip" data-tooltip="Return value mutation survived. Add tests asserting exact return values. Boolean logic mutation survived. Add tests covering both true and false paths."> 1109: 	return $self;
 </span>
 					<details class="mutant-details">
 					<summary>Mutants (Total: 2, Killed: 0, Survived: 2)</summary>
@@ -1756,7 +1756,7 @@ is( func(INPUT), EXPECTED, &#39;Verify correct return value&#39; );
 </span><span class=""> 1274: sub error {
 </span><span class=""> 1275: 	my $self = shift;
 </span><span class=""> 1276: 	$self-&gt;_high_priority(&#39;error&#39;, @_);
-</span><span class="survived-2 tooltip" data-tooltip="Boolean logic mutation survived. Add tests covering both true and false paths. Return value mutation survived. Add tests asserting exact return values."> 1277: 	return $self;
+</span><span class="survived-2 tooltip" data-tooltip="Return value mutation survived. Add tests asserting exact return values. Boolean logic mutation survived. Add tests covering both true and false paths."> 1277: 	return $self;
 </span>
 					<details class="mutant-details">
 					<summary>Mutants (Total: 2, Killed: 0, Survived: 2)</summary>

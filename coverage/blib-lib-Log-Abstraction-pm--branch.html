@@ -70,9 +70,9 @@ https://pjcj.net
 <tr><td class="h"><a id="L549">549</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if (not defined $sm-&gt;{&#39;level&#39;} or $Log::Abstraction::syslog_values{$level} &lt;= $Log::Abstraction::syslog_values{$sm-&gt;{&#39;level&#39;}})</td></tr>
 <tr><td class="h"><a id="L554">554</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if (my $interval = $sm-&gt;{&#39;min_interval&#39;})</td></tr>
 <tr><td class="h"><a id="L560">560</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">unless ($throttled)</td></tr>
-<tr><td class="h"><a id="L582">582</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if (my $subject = $sm-&gt;{&#39;subject&#39;})</td></tr>
-<tr><td class="h"><a id="L592">592</a></td><td class="c0">50</td><td class="c0">T</td><td class="c3">F</td><td class="s">if $host =~ /$RE_SAFE_HOST/</td></tr>
-<tr><td class="h"><a id="L595">595</a></td><td class="c0">50</td><td class="c0">T</td><td class="c3">F</td><td class="s">unless $port =~ /$RE_PORT/ and $port &gt;= $MIN_PORT and $port &lt;= $MAX_PORT</td></tr>
+<tr><td class="h"><a id="L563">563</a></td><td class="c0">50</td><td class="c0">T</td><td class="c3">F</td><td class="s">if $host =~ /$RE_SAFE_HOST/</td></tr>
+<tr><td class="h"><a id="L566">566</a></td><td class="c0">50</td><td class="c0">T</td><td class="c3">F</td><td class="s">unless $port =~ /$RE_PORT/ and $port &gt;= $MIN_PORT and $port &lt;= $MAX_PORT</td></tr>
+<tr><td class="h"><a id="L592">592</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if (my $subject = $sm-&gt;{&#39;subject&#39;})</td></tr>
 <tr><td class="h"><a id="L607">607</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if ($@)</td></tr>
 <tr><td class="h"><a id="L619">619</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if (my $syslog = $logger-&gt;{&#39;syslog&#39;})</td></tr>
 <tr><td class="h"><a id="L620">620</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if (not defined $syslog-&gt;{&#39;level&#39;} or $Log::Abstraction::syslog_values{$level} &lt;= $syslog-&gt;{&#39;level&#39;})</td></tr>
