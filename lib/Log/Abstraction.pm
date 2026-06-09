@@ -558,7 +558,17 @@ sub _log {
 					}
 
 					if(!$throttled) {
-						# Load mail modules lazily; wrap in eval to handle failures
+						# Validate host and port before any eval so bad config croaks immediately
+						my $host = $sm->{'host'} || $DEFAULT_SMTP_HOST;
+						Carp::croak(ref($self), ": Invalid SMTP host: $host")
+							if $host =~ $RE_SAFE_HOST;
+						my $port = $sm->{'port'} || $DEFAULT_SMTP_PORT;
+						Carp::croak(ref($self), ": Invalid SMTP port: $port")
+							unless $port =~ $RE_PORT
+								&& $port >= $MIN_PORT
+								&& $port <= $MAX_PORT;
+
+						# Load mail modules lazily; wrap only I/O in eval to handle delivery failures
 						eval {
 							require Email::Simple;
 							require Email::Sender::Simple;
@@ -586,16 +596,6 @@ sub _log {
 								);
 							}
 							$email->body_set(join(' ', @messages));
-
-							# Validate host and port before constructing transport
-							my $host = $sm->{'host'} || $DEFAULT_SMTP_HOST;
-							Carp::croak(ref($self), ": Invalid SMTP host: $host")
-								if $host =~ $RE_SAFE_HOST;
-							my $port = $sm->{'port'} || $DEFAULT_SMTP_PORT;
-							Carp::croak(ref($self), ": Invalid SMTP port: $port")
-								unless $port =~ $RE_PORT
-									&& $port >= $MIN_PORT
-									&& $port <= $MAX_PORT;
 
 							my $transport = Email::Sender::Transport::SMTP->new({
 								host => $host,
