@@ -13,6 +13,18 @@ use File::Temp qw(tempdir);
 
 use Log::Abstraction;
 
+# Unix-domain datagram sockets are not available on all platforms (notably
+# Windows without the AF_UNIX feature enabled).  Skip the whole file rather
+# than failing with a hard socket error inside a subtest.
+{
+	my $ok = eval {
+		socket(my $probe, AF_UNIX, SOCK_DGRAM, 0) or die $!;
+		close $probe;
+		1;
+	};
+	plan skip_all => "Unix domain sockets not available: $@" unless $ok;
+}
+
 my $tmpdir   = tempdir(CLEANUP => 1);
 my $SOCKPATH = "$tmpdir/journal.socket";
 
