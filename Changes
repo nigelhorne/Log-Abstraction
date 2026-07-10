@@ -1,6 +1,6 @@
 Revision history for Log-Abstraction
 
-0.33
+0.33	Fri Jul 10 11:03:49 EDT 2026
 
 	[ Architecture ]
 	- Added Sub::Private (enforce mode) to mark _log, _high_priority,

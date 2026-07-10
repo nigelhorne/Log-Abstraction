@@ -10,7 +10,7 @@ use Log::Abstraction;
 use Readonly::Values::Syslog 0.04;
 use Scalar::Util 'blessed';
 
-our $VERSION = '0.32';
+our $VERSION = '0.33';
 
 =head1 NAME
 
@@ -18,7 +18,7 @@ Log::Any::Adapter::Abstraction - Log::Any adapter backed by Log::Abstraction
 
 =head1 VERSION
 
-0.32
+0.33
 
 =head1 SYNOPSIS
 
@@ -122,22 +122,6 @@ instance when C<instance> is not supplied.
   ----------------------------------------  -----------------------------------------
   (any Log::Abstraction croak)              The supplied constructor args are invalid.
                                             See Log::Abstraction for detail.
-
-=head3 FORMAL SPECIFICATION
-
-  ┌─ AdapterState ──────────────────────────────────────────────
-  │ _logger : Log::Abstraction
-  └─────────────────────────────────────────────────────────────
-
-  ┌─ Init ──────────────────────────────────────────────────────
-  │ args? : { instance? : Log::Abstraction | logger_args }
-  │ result! : AdapterState
-  ├─────────────────────────────────────────────────────────────
-  │ args?.instance ≠ ∅ ∧ isa(args?.instance, Log::Abstraction)
-  │   ⟹ result!._logger = args?.instance
-  │ args?.instance = ∅
-  │   ⟹ result!._logger = Log::Abstraction::new(logger_args)
-  └─────────────────────────────────────────────────────────────
 
 =cut
 
@@ -265,11 +249,32 @@ Nigel Horne C<njh@nigelhorne.com>
 
 L<Log::Abstraction>, L<Log::Any>, L<Log::Any::Adapter>
 
+=encoding utf-8
+
+=head1 FORMAL SPECIFICATION
+
+=head2 init
+  ┌─ AdapterState ──────────────────────────────────────────────
+  │ _logger : Log::Abstraction
+  └─────────────────────────────────────────────────────────────
+
+  ┌─ Init ──────────────────────────────────────────────────────
+  │ args? : { instance? : Log::Abstraction | logger_args }
+  │ result! : AdapterState
+  ├─────────────────────────────────────────────────────────────
+  │ args?.instance ≠ ∅ ∧ isa(args?.instance, Log::Abstraction)
+  │   ⟹ result!._logger = args?.instance
+  │ args?.instance = ∅
+  │   ⟹ result!._logger = Log::Abstraction::new(logger_args)
+  └─────────────────────────────────────────────────────────────
+
 =head1 COPYRIGHT AND LICENSE
 
 Copyright (C) 2026 Nigel Horne
 
 Usage is subject to the GPL2 licence terms.
+If you use it,
+please let me know.
 
 =cut
 
