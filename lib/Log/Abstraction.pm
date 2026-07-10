@@ -67,6 +67,9 @@ Readonly::Scalar my $RE_SAFE_HOST => qr/[^a-zA-Z0-9.\-]/;
 # Regex: a valid TCP port number string (decimal digits only; range checked separately)
 Readonly::Scalar my $RE_PORT => qr/^\d+$/;
 
+# Default path to the journald native-protocol socket on systemd systems
+Readonly::Scalar my $DEFAULT_JOURNALD_SOCKET => '/run/systemd/journal/socket';
+
 =head1 NAME
 
 Log::Abstraction - Logging Abstraction Layer
@@ -177,7 +180,7 @@ One of:
 
 =item * An object -- method matching the level name is called on it
 
-=item * A hash reference -- may contain C<file>, C<array>, C<fd>, C<syslog>, and/or C<sendmail> keys
+=item * A hash reference -- may contain C<file>, C<array>, C<fd>, C<syslog>, C<journald>, and/or C<sendmail> keys
 
 =item * An array reference -- C<{ level, message }> hashrefs are pushed onto it
 
@@ -190,6 +193,22 @@ When not supplied, L<Log::Log4perl> is initialised as the default backend.
 The C<sendmail> sub-hash supports:
 C<host>, C<port>, C<to>, C<from>, C<subject>, C<level>, C<min_interval>.
 At most one email is sent per C<min_interval> seconds per instance.
+
+The C<journald> sub-hash sends each message as a single datagram to the
+systemd journal using the journald native protocol.  Supported keys:
+
+=over 4
+
+=item * C<socket> -- path to the journald socket (default: F</run/systemd/journal/socket>)
+
+=item * C<identifier> -- value for the C<SYSLOG_IDENTIFIER> field (default: basename of C<$0>)
+
+=item * any other key -- included verbatim as an uppercase journald field name
+
+=back
+
+The C<PRIORITY> field is set automatically from the log level (0=emerg...7=debug).
+Delivery failures are silent (C<Carp::carp> only); the application is never crashed by a journald error.
 
 =item * C<script_name>
 
@@ -453,6 +472,46 @@ sub _validate_file_path {
 }
 
 # ---------------------------------------------------------------------------
+# _journald_send -- encode fields and send one datagram to the journald socket
+#
+# Purpose:      Format key=value fields in the journald native protocol and
+#               deliver them as a single Unix-domain SOCK_DGRAM packet.
+# Entry:        $socket_path -- filesystem path of the journald socket.
+#               %fields      -- FIELD_NAME => value pairs; names must be
+#                              uppercase ASCII + digits + underscore.
+# Exit:         Returns nothing.  Croaks on socket or send failure (the caller
+#               wraps every call in eval{} so failures are silent to the app).
+# Side effects: Opens a transient Unix datagram socket, sends, closes.
+# Notes:        Values containing newline or NUL use the binary framing
+#               (field-name NL uint64-LE-length value NL) as specified by
+#               https://systemd.io/JOURNAL_NATIVE_PROTOCOL/.
+#               Values without newlines or NULs use the simpler FIELD=VALUE NL
+#               text format.
+# ---------------------------------------------------------------------------
+sub _journald_send {
+	my ($socket_path, %fields) = @_;
+
+	# Build the datagram payload from all supplied fields
+	my $payload = '';
+	for my $key (sort keys %fields) {
+		my $value = defined($fields{$key}) ? "$fields{$key}" : '';
+		if($value =~ /[\n\0]/) {
+			# Binary framing: field-name LF uint64LE-length value LF
+			$payload .= $key . "\n" . pack('Q<', length($value)) . $value . "\n";
+		} else {
+			$payload .= "$key=$value\n";
+		}
+	}
+
+	# Open a Unix-domain datagram socket, send, and close
+	require Socket;
+	socket(my $sock, Socket::AF_UNIX(), Socket::SOCK_DGRAM(), 0);
+	my $dest = Socket::sockaddr_un($socket_path);
+	send($sock, $payload, 0, $dest);
+	close $sock;
+}
+
+# ---------------------------------------------------------------------------
 # _format_message -- expand a log-format string into a final log line
 #
 # Purpose:      Centralise the repeated format-token substitution so that
@@ -590,9 +649,13 @@ sub _format_message {
 #           Open syslog connection on first use (setlogsock, openlog)
 #           (eval) map level to syslog priority; call Sys::Syslog::syslog;
 #                  carp with Data::Dumper output on failure
+#       IF 'journald' key present:
+#         Map level to syslog PRIORITY integer
+#         Build fields: MESSAGE, PRIORITY, SYSLOG_IDENTIFIER, plus any extra
+#         (eval) _journald_send(socket_path, %fields); carp on failure
 #       IF 'fd' key present:
 #         Format line; print to filehandle
-#       ELSIF no actionable key:
+#       ELSIF no actionable key (no file/array/syslog/sendmail/journald/fd):
 #         CROAK (configuration error)
 #
 #     ELSIF self->{'logger'} is an unblessed scalar (file path):
@@ -803,6 +866,36 @@ sub _log {
 				}
 			}
 
+			# -- journald sub-backend --------------------------------------
+			if(my $jd = $logger->{'journald'}) {
+				# Map internal level name to journald/syslog PRIORITY integer (0=emerg, 7=debug)
+				my $priority  = $syslog_values{$level};
+				my $sock_path = $jd->{'socket'} || $DEFAULT_JOURNALD_SOCKET;
+
+				# Determine the syslog identifier (script name or basename of $0)
+				my $ident = $jd->{'identifier'} || $self->{'script_name'} || do {
+					require File::Basename;
+					File::Basename::basename($0);
+				};
+
+				# Mandatory journald fields
+				my %fields = (
+					MESSAGE           => $str,
+					PRIORITY          => $priority,
+					SYSLOG_IDENTIFIER => $ident,
+				);
+
+				# Include any extra fields from the journald config hash
+				for my $key (keys %{$jd}) {
+					next if lc($key) =~ /^(?:socket|identifier)$/;
+					$fields{uc($key)} = $jd->{$key};
+				}
+
+				# Delivery failures are silent; the app must not crash on log errors
+				eval { _journald_send($sock_path, %fields) };
+				Carp::carp(ref($self), ": journald send failed: $@") if $@;
+			}
+
 			# -- fd sub-backend ---------------------------------------------
 			if(my $fout = $logger->{'fd'}) {
 				my $use_class = ($class ne '') ? 1 : 0;
@@ -811,7 +904,7 @@ sub _log {
 
 			} elsif(!$logger->{'file'} && !$logger->{'array'}
 					&& !$logger->{'syslog'} && !exists($logger->{'sendmail'})
-					&& !$logger->{'fd'}) {
+					&& !$logger->{'fd'} && !$logger->{'journald'}) {
 				# Hash logger with no recognised sub-key -- configuration error
 				croak(ref($self), ": Don't know how to deal with the $level message");
 			}
