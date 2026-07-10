@@ -22,6 +22,7 @@ WriteMakefile(
 		'Config::Abstraction' => 0.36,
 		'Data::Dumper' => 0,
 		'ExtUtils::MakeMaker' => 6.64,	# Minimum version for TEST_REQUIRES
+		'JSON::PP' => 0,
 		'Log::Log4perl' => 0,
 		'Params::Get' => 0.13,
 		'POSIX' => 0,
@@ -59,7 +60,9 @@ WriteMakefile(
 				type => 'git',
 				url => 'git://github.com/nigelhorne/Log-Abstraction.git',
 				web => 'https://github.com/nigelhorne/Log-Abstraction'
-			}, bugtracker => {
+			}, recommends => {
+					'Log::Any' => 0,
+				}, bugtracker => {
 				mailto => 'bug-Log-Abstraction@rt.cpan.org',
 				url => 'https://rt.cpan.org/Public/Dist/Display.html?Name=Log-Abstraction',
 				web => 'https://rt.cpan.org/Public/Dist/Display.html?Name=Log-Abstraction',

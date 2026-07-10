@@ -149,6 +149,15 @@ Format string for file/fd backends.  Tokens expanded at log time:
   %timestamp%   YYYY-MM-DD HH:MM:SS (local time)
   %env_FOO%     value of $ENV{FOO}, or empty string if unset
 
+The special value C<"json"> (not a format string but a magic keyword) switches
+all file and fd backends to emit one compact JSON object per log line:
+
+  {"timestamp":"...","level":"info","message":"...","file":"...","line":42}
+
+This format is compatible with log aggregators such as journald, Loki,
+Elasticsearch, and Splunk.  C<class> is included when the logger is a subclass
+of C<Log::Abstraction>.
+
 B<Security note:> because C<format> may contain C<%env_*%> tokens, avoid
 granting untrusted sources write access to config files that set this key.
 
@@ -459,6 +468,10 @@ sub _validate_file_path {
 #
 # Pseudocode:
 #   FUNCTION _format_message(self, level, str, use_class)
+#     IF self->{'format'} eq 'json':
+#       Build hash: timestamp, level, message, file, line (+ class if subclass)
+#       RETURN JSON::PP->encode(\%hash)   [single compact line, no trailing newline]
+#
 #     Choose default format template:
 #       use_class=1 → DEFAULT_FORMAT (includes %class%)
 #       use_class=0 → DEFAULT_FORMAT_NOCLASS
@@ -484,9 +497,27 @@ sub _validate_file_path {
 sub _format_message {
 	my ($self, $level, $str, $use_class) = @_;
 
-	# Select the appropriate default when no custom format is configured
+	my $format = $self->{'format'};
+
+	# 'json' is a magic format value: emit a compact JSON object per line
+	if(defined($format) && ($format eq 'json')) {
+		require JSON::PP;
+		my $bclass = blessed($self);
+		my $class  = ($bclass && $bclass ne __PACKAGE__) ? $bclass : undef;
+		my %obj = (
+			timestamp => strftime('%Y-%m-%d %H:%M:%S', localtime),
+			level     => $level,
+			message   => $str,
+			file      => (caller(2))[1],
+			line      => (caller(2))[2] + 0,
+		);
+		$obj{class} = $class if defined($class);
+		return JSON::PP->new->encode(\%obj);
+	}
+
+	# Select the appropriate default when no custom format is configured ('' is falsy)
 	my $default = $use_class ? $DEFAULT_FORMAT : $DEFAULT_FORMAT_NOCLASS;
-	my $format  = $self->{'format'} || $default;
+	$format = $format || $default;
 
 	my $ulevel = uc($level);
 
@@ -1612,6 +1643,11 @@ Nigel Horne C<njh@nigelhorne.com>
 =head1 SEE ALSO
 
 =over 4
+
+=item * L<Log::Any> and L<Log::Any::Adapter::Abstraction>
+
+Route messages from any C<Log::Any>-using CPAN module through
+C<Log::Abstraction> with a single C<Log::Any::Adapter-E<gt>set()> call.
 
 =item * L<Test Dashboard|https://nigelhorne.github.io/Log-Abstraction/coverage/>
 

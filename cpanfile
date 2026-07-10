@@ -6,6 +6,7 @@ requires 'Carp';
 requires 'Config::Abstraction', '0.36';
 requires 'Data::Dumper';
 requires 'ExtUtils::MakeMaker', '6.64';
+requires 'JSON::PP';
 requires 'Log::Log4perl';
 requires 'POSIX';
 requires 'Params::Get', '0.13';
@@ -14,6 +15,8 @@ requires 'Readonly::Values::Syslog', '0.04';
 requires 'Return::Set';
 requires 'Scalar::Util';
 requires 'Sys::Syslog', '0.28';
+
+recommends 'Log::Any';
 
 on 'test' => sub {
 	requires 'File::Glob';
