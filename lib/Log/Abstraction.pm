@@ -302,15 +302,15 @@ not supplied.  Loads C<Log::Log4perl> if no logger backend is specified.
 =head4 Input
 
   {
-      carp_on_warn   => { type => BOOLEAN, optional => 1 },
-      config_file    => { type => SCALAR,  optional => 1 },
-      croak_on_error => { type => BOOLEAN, optional => 1 },
+      carp_on_warn   => { type => 'boolean', optional => 1 },
+      config_file    => { type => 'string',  optional => 1 },
+      croak_on_error => { type => 'boolean', optional => 1 },
       ctx            => { optional => 1 },
-      format         => { type => SCALAR,  optional => 1 },
-      level          => { type => SCALAR,  regex => qr/^(trace|debug|info|notice|warn(?:ing)?|error)$/i, optional => 1 },
+      format         => { type => 'string',  optional => 1 },
+      level          => { type => 'string',  regex => qr/^(trace|debug|info|notice|warn(?:ing)?|error)$/i, optional => 1 },
       logger         => { optional => 1 },
-      script_name    => { type => SCALAR,  optional => 1 },
-      verbose        => { type => BOOLEAN, optional => 1 },
+      script_name    => { type => 'string',  optional => 1 },
+      verbose        => { type => 'boolean', optional => 1 },
   }
 
 =head4 Output
@@ -789,7 +789,6 @@ sub _log :Private {
 	# Dispatch to the configured backend(s)
 	# -----------------------------------------------------------------------
 	if(my $logger = $self->{'logger'}) {
-
 		if(ref($logger) eq 'CODE') {
 			# CODE-ref backend: build the args hashref and invoke the callback
 			my $args = {
@@ -803,11 +802,9 @@ sub _log :Private {
 				$args->{ctx} = $ctx;
 			}
 			$logger->($args);
-
 		} elsif(ref($logger) eq 'ARRAY') {
 			# ARRAY-ref backend: push a simple hashref
 			push @{$logger}, { level => $level, message => $str };
-
 		} elsif(ref($logger) eq 'HASH') {
 			# HASH backend: route to whichever sub-keys are present
 
@@ -1184,7 +1181,7 @@ When setting, updates C<$self-E<gt>{level}>.
 =head4 Input
 
   {
-      level => { type => SCALAR, regex => qr/^(trace|debug|info|notice|warn(?:ing)?|error)$/i, optional => 1 },
+      level => { type => 'string', regex => qr/^(trace|debug|info|notice|warn(?:ing)?|error)$/i, optional => 1 },
   }
 
 =head4 Output
@@ -1312,7 +1309,7 @@ internal history.
 
 =head4 Output
 
-  { type => 'arrayref', element_type => { level => SCALAR, message => SCALAR } }
+  { type => 'arrayref', element_type => { level => 'string', message => 'string' } }
 
 =cut
 
@@ -1361,7 +1358,7 @@ Appends to the internal message history and dispatches to configured backends.
 
 =head4 Input
 
-  { messages => { type => ARRAYREF | SCALAR } }
+  { messages => { type => [ 'arrayref', 'scalar' ] } }
 
 =head4 Output
 
@@ -1408,7 +1405,7 @@ Appends to the internal message history and dispatches to configured backends.
 
 =head4 Input
 
-  { messages => { type => ARRAYREF | SCALAR } }
+  { messages => { type => [ 'arrayref', 'scalar' ] } }
 
 =head4 Output
 
@@ -1455,7 +1452,7 @@ Appends to the internal message history and dispatches to configured backends.
 
 =head4 Input
 
-  { messages => { type => ARRAYREF | SCALAR } }
+  { messages => { type => [ 'arrayref', 'scalar' ] } }
 
 =head4 Output
 
@@ -1503,7 +1500,7 @@ Appends to the internal message history and dispatches to configured backends.
 
 =head4 Input
 
-  { messages => { type => ARRAYREF | SCALAR } }
+  { messages => { type => [ 'arrayref', 'scalar' ] } }
 
 =head4 Output
 
@@ -1562,9 +1559,9 @@ May call C<Carp::carp> if C<carp_on_warn> is set or no backend is active.
 =head4 Input
 
   # Named form
-  { warning => { type => SCALAR | ARRAYREF } }
+  { warning => { type => [ 'scalar', 'arrayref' ] } }
   # Plain-list form
-  { messages => { type => ARRAYREF } }
+  { messages => { type => 'arrayref' } }
 
 =head4 Output
 
@@ -1616,7 +1613,7 @@ Same as C<warn()> plus optional C<Carp::croak> escalation.
 
 =head4 Input
 
-  { warning => { type => SCALAR | ARRAYREF, optional => 1 } }
+  { warning => { type => [ 'scalar', 'arrayref' ], optional => 1 } }
 
 =head4 Output
 
@@ -1664,7 +1661,7 @@ Same as C<error()>.
 
 =head4 Input
 
-  { warning => { type => SCALAR | ARRAYREF, optional => 1 } }
+  { warning => { type => [ 'scalar', 'arrayref' ], optional => 1 } }
 
 =head4 Output
 

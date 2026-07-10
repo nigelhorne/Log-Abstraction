@@ -150,15 +150,15 @@ not supplied.  Loads `Log::Log4perl` if no logger backend is specified.
 #### Input
 
     {
-        carp_on_warn   => { type => BOOLEAN, optional => 1 },
-        config_file    => { type => SCALAR,  optional => 1 },
-        croak_on_error => { type => BOOLEAN, optional => 1 },
+        carp_on_warn   => { type => 'boolean', optional => 1 },
+        config_file    => { type => 'string',  optional => 1 },
+        croak_on_error => { type => 'boolean', optional => 1 },
         ctx            => { optional => 1 },
-        format         => { type => SCALAR,  optional => 1 },
-        level          => { type => SCALAR,  regex => qr/^(trace|debug|info|notice|warn(?:ing)?|error)$/i, optional => 1 },
+        format         => { type => 'string',  optional => 1 },
+        level          => { type => 'string',  regex => qr/^(trace|debug|info|notice|warn(?:ing)?|error)$/i, optional => 1 },
         logger         => { optional => 1 },
-        script_name    => { type => SCALAR,  optional => 1 },
-        verbose        => { type => BOOLEAN, optional => 1 },
+        script_name    => { type => 'string',  optional => 1 },
+        verbose        => { type => 'boolean', optional => 1 },
     }
 
 #### Output
@@ -262,7 +262,7 @@ When setting, updates `$self->{level}`.
 #### Input
 
     {
-        level => { type => SCALAR, regex => qr/^(trace|debug|info|notice|warn(?:ing)?|error)$/i, optional => 1 },
+        level => { type => 'string', regex => qr/^(trace|debug|info|notice|warn(?:ing)?|error)$/i, optional => 1 },
     }
 
 #### Output
@@ -359,7 +359,7 @@ internal history.
 
 #### Output
 
-    { type => 'arrayref', element_type => { level => SCALAR, message => SCALAR } }
+    { type => 'arrayref', element_type => { level => 'string', message => 'string' } }
 
 ## trace
 
@@ -396,7 +396,7 @@ Appends to the internal message history and dispatches to configured backends.
 
 #### Input
 
-    { messages => { type => ARRAYREF | SCALAR } }
+    { messages => { type => [ 'arrayref', 'scalar' ] } }
 
 #### Output
 
@@ -431,7 +431,7 @@ Appends to the internal message history and dispatches to configured backends.
 
 #### Input
 
-    { messages => { type => ARRAYREF | SCALAR } }
+    { messages => { type => [ 'arrayref', 'scalar' ] } }
 
 #### Output
 
@@ -466,7 +466,7 @@ Appends to the internal message history and dispatches to configured backends.
 
 #### Input
 
-    { messages => { type => ARRAYREF | SCALAR } }
+    { messages => { type => [ 'arrayref', 'scalar' ] } }
 
 #### Output
 
@@ -502,7 +502,7 @@ Appends to the internal message history and dispatches to configured backends.
 
 #### Input
 
-    { messages => { type => ARRAYREF | SCALAR } }
+    { messages => { type => [ 'arrayref', 'scalar' ] } }
 
 #### Output
 
@@ -549,9 +549,9 @@ May call `Carp::carp` if `carp_on_warn` is set or no backend is active.
 #### Input
 
     # Named form
-    { warning => { type => SCALAR | ARRAYREF } }
+    { warning => { type => [ 'scalar', 'arrayref' ] } }
     # Plain-list form
-    { messages => { type => ARRAYREF } }
+    { messages => { type => 'arrayref' } }
 
 #### Output
 
@@ -591,7 +591,7 @@ Same as `warn()` plus optional `Carp::croak` escalation.
 
 #### Input
 
-    { warning => { type => SCALAR | ARRAYREF, optional => 1 } }
+    { warning => { type => [ 'scalar', 'arrayref' ], optional => 1 } }
 
 #### Output
 
@@ -631,7 +631,7 @@ Same as `error()`.
 
 #### Input
 
-    { warning => { type => SCALAR | ARRAYREF, optional => 1 } }
+    { warning => { type => [ 'scalar', 'arrayref' ], optional => 1 } }
 
 #### Output
 
@@ -737,6 +737,43 @@ Note: the `sendmail` backend writes the module's standard text format, not
 CSV.  To produce CSV rows _and_ send email alerts from the same logger,
 embed both the CSV-write and the mail-send logic inside a single code-ref
 callback as described above.
+
+# LIMITATIONS
+
+- **Syslog hash mutation**
+
+    The `syslog` sub-hash passed to `new()` is mutated in-place on the first
+    log call: `facility` and `level` are temporarily removed before
+    `setlogsock()` is called, then restored; `server` is permanently renamed
+    to `host`.  Sharing a syslog hashref between two `Log::Abstraction`
+    instances is not supported and produces undefined behaviour on the second
+    instance.
+
+- **No structured log fields**
+
+    All backends except the CODE-ref backend reduce the message to a flat string.
+    To log structured key/value pairs, use a CODE-ref backend that formats the
+    data itself.
+
+- **Single-threaded email throttle**
+
+    The `min_interval` throttle for the `sendmail` backend and the
+    `_syslog_opened` first-open flag are stored on the object without mutex
+    protection.  Under Perl ithreads or other concurrency models, objects shared
+    between threads are not safe.
+
+- **OpenTelemetry not yet supported**
+
+    The OTel Logs SDK for Perl is incomplete; see the TODO block at the top of
+    `lib/Log/Abstraction.pm` for a full status report and the list of blockers.
+    Monitor [https://metacpan.org/pod/OpenTelemetry::SDK](https://metacpan.org/pod/OpenTelemetry::SDK) for progress.
+
+- **Log::Log4perl is a de-facto required dependency**
+
+    When no `logger`, `file`, or `array` backend is configured, `new()`
+    loads [Log::Log4perl](https://metacpan.org/pod/Log%3A%3ALog4perl) and uses it as the default backend.  Although listed
+    as an optional runtime dependency, it is required in that default-backend
+    path.
 
 # AUTHOR
 
