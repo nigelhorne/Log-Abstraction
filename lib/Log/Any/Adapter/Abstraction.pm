@@ -230,6 +230,33 @@ for my $la_level (keys %LA_TO_LEVEL) {
 	};
 }
 
+=head1 LIMITATIONS
+
+=over 4
+
+=item B<Nine-to-six level collapse>
+
+Log::Any has nine severity levels; Log::Abstraction has six.  C<critical>,
+C<alert>, and C<emergency> all map to C<error()>.  Applications that rely on
+distinguishing these three levels in downstream Log::Abstraction backends will
+lose that distinction.
+
+=item B<No structured field support>
+
+Log::Any's C<log_fields()> mechanism for structured fields is not forwarded
+to Log::Abstraction.  Only the final formatted string is dispatched; callers
+that need structured output should use the Log::Abstraction CODE-ref backend
+and access the formatted string via the C<message> key.
+
+=item B<Log::Any as optional, not required>
+
+This adapter requires L<Log::Any> at runtime, but Log::Any is listed as a
+C<recommends> dependency rather than C<requires>.  CPAN clients that do not
+install recommended modules will allow this adapter to be installed but not
+loaded.  Install Log::Any explicitly if you intend to use this adapter.
+
+=back
+
 =head1 AUTHOR
 
 Nigel Horne C<njh@nigelhorne.com>

@@ -14,6 +14,7 @@ requires 'Readonly';
 requires 'Readonly::Values::Syslog', '0.04';
 requires 'Return::Set';
 requires 'Scalar::Util';
+requires 'Sub::Private';
 requires 'Sys::Syslog', '0.28';
 
 recommends 'Log::Any';

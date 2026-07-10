@@ -74,6 +74,15 @@ called on an object.
         %timestamp%   YYYY-MM-DD HH:MM:SS (local time)
         %env_FOO%     value of $ENV{FOO}, or empty string if unset
 
+    The special value `"json"` (not a format string but a magic keyword) switches
+    all file and fd backends to emit one compact JSON object per log line:
+
+        {"timestamp":"...","level":"info","message":"...","file":"...","line":42}
+
+    This format is compatible with log aggregators such as journald, Loki,
+    Elasticsearch, and Splunk.  `class` is included when the logger is a subclass
+    of `Log::Abstraction`.
+
     **Security note:** because `format` may contain `%env_*%` tokens, avoid
     granting untrusted sources write access to config files that set this key.
 
@@ -89,7 +98,7 @@ called on an object.
 
     - A code reference -- called with a hashref `{ class, file, line, level, message, ctx }`
     - An object -- method matching the level name is called on it
-    - A hash reference -- may contain `file`, `array`, `fd`, `syslog`, and/or `sendmail` keys
+    - A hash reference -- may contain `file`, `array`, `fd`, `syslog`, `journald`, and/or `sendmail` keys
     - An array reference -- `{ level, message }` hashrefs are pushed onto it
     - A scalar string -- treated as a file path to append to
 
@@ -98,6 +107,16 @@ called on an object.
     The `sendmail` sub-hash supports:
     `host`, `port`, `to`, `from`, `subject`, `level`, `min_interval`.
     At most one email is sent per `min_interval` seconds per instance.
+
+    The `journald` sub-hash sends each message as a single datagram to the
+    systemd journal using the journald native protocol.  Supported keys:
+
+    - `socket` -- path to the journald socket (default: `/run/systemd/journal/socket`)
+    - `identifier` -- value for the `SYSLOG_IDENTIFIER` field (default: basename of `$0`)
+    - any other key -- included verbatim as an uppercase journald field name
+
+    The `PRIORITY` field is set automatically from the log level (0=emerg...7=debug).
+    Delivery failures are silent (`Carp::carp` only); the application is never crashed by a journald error.
 
 - `script_name`
 
@@ -724,6 +743,11 @@ callback as described above.
 Nigel Horne `njh@nigelhorne.com`
 
 # SEE ALSO
+
+- [Log::Any](https://metacpan.org/pod/Log%3A%3AAny) and [Log::Any::Adapter::Abstraction](https://metacpan.org/pod/Log%3A%3AAny%3A%3AAdapter%3A%3AAbstraction)
+
+    Route messages from any `Log::Any`-using CPAN module through
+    `Log::Abstraction` with a single `Log::Any::Adapter->set()` call.
 
 - [Test Dashboard](https://nigelhorne.github.io/Log-Abstraction/coverage/)
 

@@ -30,7 +30,8 @@ WriteMakefile(
 		'Readonly::Values::Syslog' => 0.04,
 		'Return::Set' => 0,
 		'Sys::Syslog' => 0.28,
-		'Scalar::Util'=> 0
+		'Scalar::Util'=> 0,
+		'Sub::Private' => 0,
 	},
 	TEST_REQUIRES => {
 		'File::Glob' => 0,	# scripts/generate_index
