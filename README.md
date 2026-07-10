@@ -759,9 +759,9 @@ You can also look for information at:
 
     [http://deps.cpantesters.org/?module=Log::Abstraction](http://deps.cpantesters.org/?module=Log::Abstraction)
 
-## FORMAL SPECIFICATION
+# FORMAL SPECIFICATION
 
-### new
+## new
 
     ┌─ LogState ──────────────────────────────────────────────────
     │ level    : ℤ
@@ -789,7 +789,7 @@ You can also look for information at:
     │ result!.logger   = overrides?.logger ∨ logger
     └─────────────────────────────────────────────────────────────
 
-### level
+## level
 
     ┌─ LevelGet ─────────────────────────────────────────────────
     │ ΞLogState
@@ -807,7 +807,7 @@ You can also look for information at:
     │ level' = syslog_values(new_level?)
     └─────────────────────────────────────────────────────────────
 
-### is\_debug
+## is\_debug
 
     ┌─ IsDebug ──────────────────────────────────────────────────
     │ ΞLogState
@@ -816,7 +816,7 @@ You can also look for information at:
     │ result! = (level ≥ syslog_values('debug'))
     └─────────────────────────────────────────────────────────────
 
-### messages
+## messages
 
     ┌─ Messages ─────────────────────────────────────────────────
     │ ΞLogState
@@ -825,7 +825,7 @@ You can also look for information at:
     │ result! = messages
     └─────────────────────────────────────────────────────────────
 
-### trace
+## trace
 
     ┌─ Trace ────────────────────────────────────────────────────
     │ ΔLogState
@@ -836,7 +836,7 @@ You can also look for information at:
     │ messages' = messages ⌢ ⟨{level ↦ 'trace', message ↦ ⊕(msg?)}⟩
     └─────────────────────────────────────────────────────────────
 
-### debug
+## debug
 
     ┌─ Debug ────────────────────────────────────────────────────
     │ ΔLogState
@@ -847,7 +847,7 @@ You can also look for information at:
     │ messages' = messages ⌢ ⟨{level ↦ 'debug', message ↦ ⊕(msg?)}⟩
     └─────────────────────────────────────────────────────────────
 
-### info
+## info
 
     ┌─ Info ─────────────────────────────────────────────────────
     │ ΔLogState
@@ -858,7 +858,7 @@ You can also look for information at:
     │ messages' = messages ⌢ ⟨{level ↦ 'info', message ↦ ⊕(msg?)}⟩
     └─────────────────────────────────────────────────────────────
 
-### notice
+## notice
 
     ┌─ Notice ───────────────────────────────────────────────────
     │ ΔLogState
@@ -869,7 +869,7 @@ You can also look for information at:
     │ messages' = messages ⌢ ⟨{level ↦ 'notice', message ↦ ⊕(msg?)}⟩
     └─────────────────────────────────────────────────────────────
 
-### warn
+## warn
 
     ┌─ Warn ─────────────────────────────────────────────────────
     │ ΔLogState
@@ -880,7 +880,7 @@ You can also look for information at:
     │ messages' = messages ⌢ ⟨{level ↦ 'warn', message ↦ join(msg?)}⟩
     └─────────────────────────────────────────────────────────────
 
-### error
+## error
 
     ┌─ Error ────────────────────────────────────────────────────
     │ ΔLogState
@@ -892,7 +892,7 @@ You can also look for information at:
     │ croak_on_error = 1 ⟹ execution_continues = false
     └─────────────────────────────────────────────────────────────
 
-### fatal
+## fatal
 
     fatal ≡ error   (identical operation schema)
 

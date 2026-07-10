@@ -1653,9 +1653,9 @@ L<http://deps.cpantesters.org/?module=Log::Abstraction>
 
 =back
 
-=head2 FORMAL SPECIFICATION
+=head1 FORMAL SPECIFICATION
 
-=head3 new
+=head2 new
 
   ┌─ LogState ──────────────────────────────────────────────────
   │ level    : ℤ
@@ -1683,7 +1683,7 @@ L<http://deps.cpantesters.org/?module=Log::Abstraction>
   │ result!.logger   = overrides?.logger ∨ logger
   └─────────────────────────────────────────────────────────────
 
-=head3 level
+=head2 level
 
   ┌─ LevelGet ─────────────────────────────────────────────────
   │ ΞLogState
@@ -1701,7 +1701,7 @@ L<http://deps.cpantesters.org/?module=Log::Abstraction>
   │ level' = syslog_values(new_level?)
   └─────────────────────────────────────────────────────────────
 
-=head3 is_debug
+=head2 is_debug
 
   ┌─ IsDebug ──────────────────────────────────────────────────
   │ ΞLogState
@@ -1710,7 +1710,7 @@ L<http://deps.cpantesters.org/?module=Log::Abstraction>
   │ result! = (level ≥ syslog_values('debug'))
   └─────────────────────────────────────────────────────────────
 
-=head3 messages
+=head2 messages
 
   ┌─ Messages ─────────────────────────────────────────────────
   │ ΞLogState
@@ -1719,7 +1719,7 @@ L<http://deps.cpantesters.org/?module=Log::Abstraction>
   │ result! = messages
   └─────────────────────────────────────────────────────────────
 
-=head3 trace
+=head2 trace
 
   ┌─ Trace ────────────────────────────────────────────────────
   │ ΔLogState
@@ -1730,7 +1730,7 @@ L<http://deps.cpantesters.org/?module=Log::Abstraction>
   │ messages' = messages ⌢ ⟨{level ↦ 'trace', message ↦ ⊕(msg?)}⟩
   └─────────────────────────────────────────────────────────────
 
-=head3 debug
+=head2 debug
 
   ┌─ Debug ────────────────────────────────────────────────────
   │ ΔLogState
@@ -1741,7 +1741,7 @@ L<http://deps.cpantesters.org/?module=Log::Abstraction>
   │ messages' = messages ⌢ ⟨{level ↦ 'debug', message ↦ ⊕(msg?)}⟩
   └─────────────────────────────────────────────────────────────
 
-=head3 info
+=head2 info
 
   ┌─ Info ─────────────────────────────────────────────────────
   │ ΔLogState
@@ -1752,7 +1752,7 @@ L<http://deps.cpantesters.org/?module=Log::Abstraction>
   │ messages' = messages ⌢ ⟨{level ↦ 'info', message ↦ ⊕(msg?)}⟩
   └─────────────────────────────────────────────────────────────
 
-=head3 notice
+=head2 notice
 
   ┌─ Notice ───────────────────────────────────────────────────
   │ ΔLogState
@@ -1763,7 +1763,7 @@ L<http://deps.cpantesters.org/?module=Log::Abstraction>
   │ messages' = messages ⌢ ⟨{level ↦ 'notice', message ↦ ⊕(msg?)}⟩
   └─────────────────────────────────────────────────────────────
 
-=head3 warn
+=head2 warn
 
   ┌─ Warn ─────────────────────────────────────────────────────
   │ ΔLogState
@@ -1774,7 +1774,7 @@ L<http://deps.cpantesters.org/?module=Log::Abstraction>
   │ messages' = messages ⌢ ⟨{level ↦ 'warn', message ↦ join(msg?)}⟩
   └─────────────────────────────────────────────────────────────
 
-=head3 error
+=head2 error
 
   ┌─ Error ────────────────────────────────────────────────────
   │ ΔLogState
@@ -1786,7 +1786,7 @@ L<http://deps.cpantesters.org/?module=Log::Abstraction>
   │ croak_on_error = 1 ⟹ execution_continues = false
   └─────────────────────────────────────────────────────────────
 
-=head3 fatal
+=head2 fatal
 
   fatal ≡ error   (identical operation schema)
 
