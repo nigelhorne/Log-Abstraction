@@ -353,20 +353,20 @@ Approximate LCSAJ segments: 179<br>
 </span><span class="">   61: 
 </span><span class="">   62: # Core and CPAN dependencies
 </span><span class="">   63: use Carp;
-</span><span class="">   64: use Config::Abstraction 0.36;
+</span><span class="">   64: use Config::Abstraction 0.40;
 </span><span class="">   65: use Data::Dumper;
-</span><span class="">   66: use Params::Get 0.13;
+</span><span class="">   66: use Params::Get 0.15;
 </span><span class="">   67: use POSIX qw(strftime);
 </span><span class="">   68: use Readonly;
 </span><span class="">   69: use Readonly::Values::Syslog 0.04;
-</span><span class="">   70: use Return::Set;
+</span><span class="">   70: use Return::Set 0.04;
 </span><span class="">   71: use Scalar::Util &#39;blessed&#39;;
 </span><span class="">   72: 
 </span><span class="">   73: # Sub::Private in enforce mode: _-prefixed subs decorated :Private croak when
 </span><span class="">   74: # called from outside this package.  HARNESS_ACTIVE bypasses checks during
 </span><span class="">   75: # make test so white-box tests can still reach private methods.
 </span><span class="">   76: BEGIN { $Sub::Private::config{mode} = &#39;enforce&#39; }
-</span><span class="">   77: use Sub::Private;
+</span><span class="">   77: use Sub::Private 0.05;
 </span><span class="">   78: 
 </span><span class="">   79: # Sys::Syslog imported with bare-function names used in _log
 </span><span class="">   80: use Sys::Syslog 0.28;
@@ -1384,7 +1384,7 @@ is( func(VALUE_AT_BOUNDARY), EXPECTED, &#39;Test boundary behaviour&#39; );
 </span><span class=""> 1028: 			open(my $fout, &#39;&gt;&gt;&#39;, $file);
 </span><span class=""> 1029: 			print $fout &quot;$line\n&quot;;
 </span><span class=""> 1030: 			close $fout;
-</span><span class="survived-2 tooltip" data-tooltip="Boolean logic mutation survived. Add tests covering both true and false paths. Return value mutation survived. Add tests asserting exact return values."> 1031: 		};
+</span><span class="survived-2 tooltip" data-tooltip="Return value mutation survived. Add tests asserting exact return values. Boolean logic mutation survived. Add tests covering both true and false paths."> 1031: 		};
 </span>
 					<details class="mutant-details">
 					<summary>Mutants (Total: 2, Killed: 0, Survived: 2)</summary>
@@ -1688,7 +1688,7 @@ is( func(INPUT), EXPECTED, &#39;Verify correct return value&#39; );
 </span><span class=""> 1269: 
 </span><span class=""> 1270: sub is_debug {
 </span><span class=""> 1271: 	my $self = $_[0];
-</span><span class="survived-2 tooltip" data-tooltip="Boolean logic mutation survived. Add tests covering both true and false paths. Return value mutation survived. Add tests asserting exact return values."> 1272: 
+</span><span class="survived-2 tooltip" data-tooltip="Return value mutation survived. Add tests asserting exact return values. Boolean logic mutation survived. Add tests covering both true and false paths."> 1272: 
 </span>
 					<details class="mutant-details">
 					<summary>Mutants (Total: 2, Killed: 0, Survived: 2)</summary>
@@ -1757,7 +1757,7 @@ is( func(INPUT), EXPECTED, &#39;Verify correct return value&#39; );
 </span><span class=""> 1317: 	my $self = $_[0];
 </span><span class=""> 1318: 
 </span><span class=""> 1319: 	return [ @{$self-&gt;{messages}} ];
-</span><span class="survived-2 tooltip" data-tooltip="Boolean logic mutation survived. Add tests covering both true and false paths. Return value mutation survived. Add tests asserting exact return values."> 1320: }
+</span><span class="survived-2 tooltip" data-tooltip="Return value mutation survived. Add tests asserting exact return values. Boolean logic mutation survived. Add tests covering both true and false paths."> 1320: }
 </span>
 					<details class="mutant-details">
 					<summary>Mutants (Total: 2, Killed: 0, Survived: 2)</summary>
@@ -1985,7 +1985,7 @@ is( func(INPUT), EXPECTED, &#39;Verify correct return value&#39; );
 </span><span class=""> 1482: 
 </span><span class=""> 1483: One or more strings, or a single array reference.
 </span><span class=""> 1484: 
-</span><span class="survived-2 tooltip" data-tooltip="Boolean logic mutation survived. Add tests covering both true and false paths. Return value mutation survived. Add tests asserting exact return values."> 1485: =back
+</span><span class="survived-2 tooltip" data-tooltip="Return value mutation survived. Add tests asserting exact return values. Boolean logic mutation survived. Add tests covering both true and false paths."> 1485: =back
 </span>
 					<details class="mutant-details">
 					<summary>Mutants (Total: 2, Killed: 0, Survived: 2)</summary>
