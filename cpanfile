@@ -16,6 +16,7 @@ requires 'Return::Set', '0.04';
 requires 'Scalar::Util';
 requires 'Sub::Private', '0.05';
 requires 'Sys::Syslog', '0.28';
+recommends 'Log::Any';
 
 on 'test' => sub {
 	requires 'File::Glob';   # scripts/generate_index
