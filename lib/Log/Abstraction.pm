@@ -91,8 +91,10 @@ package Log::Abstraction;
 use strict;
 use warnings;
 
-# Automatically throw exceptions on failed built-in I/O (open, close, print...)
-use autodie qw(:all);
+# Automatically throw exceptions on failed built-ins (open, close, socket,
+# send...).  Not ':all': that adds system()/exec(), which this module never
+# calls, and which would make IPC::System::Simple a hidden dependency
+use autodie qw(:default);
 
 # Core and CPAN dependencies
 use Carp;

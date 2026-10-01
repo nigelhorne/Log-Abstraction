@@ -2,10 +2,12 @@
 
 requires 'perl', '5.014';
 
+requires 'autodie';
 requires 'Carp';
 requires 'Config::Abstraction', '0.40';
 requires 'ExtUtils::MakeMaker', '6.64';   # Minimum version for TEST_REQUIRES
 requires 'File::Basename';
+requires 'IPC::System::Simple';   # needed by Params::Get's autodie qw(:all)
 requires 'JSON::PP';
 requires 'Log::Log4perl';
 requires 'POSIX';

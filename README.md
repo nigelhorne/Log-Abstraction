@@ -48,7 +48,9 @@ my $clone = $logger->new(level => 'debug');
 ```
 
 Creates a new `Log::Abstraction` instance, or clones an existing one when
-called on an object.
+called on an object.  It may also be called as a plain function,
+`Log::Abstraction::new(%args)`, which behaves like
+`Log::Abstraction->new(%args)`.
 
 #### Arguments
 
@@ -247,6 +249,41 @@ Error                                     Meaning / Action
   a 'to' address"
 "<class>: invalid journald field name     An extra journald key, upper-cased, is not
   '<k>'"                                  [A-Z0-9_] or starts with '_'.
+```
+
+The following are not raised by `new()` but later, by the logging methods
+(`trace`, `debug`, `info`, `notice`, `warn`, `error`, `fatal`), when
+a message that passes the level threshold reaches the backend concerned.
+Croaks are configuration errors; delivery failures only carp, because a
+logging failure must never crash the application.
+
+```
+Croak                                     Meaning / Action
+----------------------------------------  -----------------------------------------
+"<class>: Invalid file name: <path>"      A file path (logger string, 'file' key or
+                                          logger hash 'file') contains one of
+                                          < > | * ? ; ! ` $ " or a control
+                                          character, or contains '..'.
+"<class>: Invalid SMTP host: <host>"      The sendmail 'host' contains characters
+                                          other than A-Z a-z 0-9 . -
+"<class>: Invalid SMTP port: <port>"      The sendmail 'port' is not an integer in
+                                          1-65535.
+"<class>: Don't know how to deal with     A logger hash has none of the keys file,
+  the <level> message"                    array, fd, syslog, journald or sendmail.
+"<class>: <object class> doesn't know     An object logger has no method for this
+  how to deal with the <level> message"   level.  (notice falls back to info.)
+"<class>: configuration error, no         logger is a reference of an unsupported
+  handler written for the <level>         type, e.g. a SCALAR or GLOB reference.
+  message"
+
+Carp                                      Meaning / Action
+----------------------------------------  -----------------------------------------
+"Failed to send email: <error>"           SMTP delivery failed.  The other backends
+                                          still receive the message.
+"<class>: syslog failed: <error>"         Sys::Syslog::syslog() died.
+"<class>: journald send failed: <error>"  The journald socket could not be reached.
+                                          Given once, then not again until a send
+                                          succeeds.
 ```
 
 #### Pseudocode
@@ -518,6 +555,11 @@ $logger->trace('start')->debug('details')->info('summary');
 { type => 'object', class => 'Log::Abstraction' }
 ```
 
+#### Messages
+
+Croaks if the configured backend is misconfigured, and carps if delivery
+fails; see the second table under ["new"](#new)'s MESSAGES.
+
 ### Debug
 
 ```
@@ -560,6 +602,11 @@ $logger->debug('Query took ', $elapsed, 'ms');
 ```perl
 { type => 'object', class => 'Log::Abstraction' }
 ```
+
+#### Messages
+
+Croaks if the configured backend is misconfigured, and carps if delivery
+fails; see the second table under ["new"](#new)'s MESSAGES.
 
 ### Info
 
@@ -604,6 +651,11 @@ $logger->info('Server started on port ', $port);
 { type => 'object', class => 'Log::Abstraction' }
 ```
 
+#### Messages
+
+Croaks if the configured backend is misconfigured, and carps if delivery
+fails; see the second table under ["new"](#new)'s MESSAGES.
+
 ### Notice
 
 ```
@@ -647,6 +699,11 @@ $logger->notice('Configuration reloaded');
 ```perl
 { type => 'object', class => 'Log::Abstraction' }
 ```
+
+#### Messages
+
+Croaks if the configured backend is misconfigured, and carps if delivery
+fails; see the second table under ["new"](#new)'s MESSAGES.
 
 ### Warn
 
@@ -713,8 +770,15 @@ $logger->warn({ warning => ['Part A', 'Part B'] });
 #### Messages
 
 ```
-(no croak/carp messages from this method itself; see _high_priority)
+(the warning text itself)                 Carped if carp_on_warn is set, or if no
+                                          backend (logger, array, file or fd) is
+                                          configured, provided the warning passes
+                                          the level threshold.  Also carped when
+                                          called as a class method.
 ```
+
+Backend misconfiguration and delivery failures are reported as described
+in the second table under ["new"](#new)'s MESSAGES.
 
 ### Error
 
@@ -766,9 +830,16 @@ $logger->error('Fatal: database unavailable');
 ```
 Croak                                     Meaning / Action
 ----------------------------------------  ------------------------------------------
-(the error message text itself)           croak_on_error is set, or no backend is
-                                          active.  The call stack is unwound.
+(the error message text itself)           croak_on_error is set, or no backend
+                                          (logger, array, file or fd) is
+                                          configured, or error() was called as a
+                                          class method.  The call stack is unwound.
+(the error message text itself), as a     carp_on_warn is set and croak_on_error
+  carp                                    is not.
 ```
+
+Backend misconfiguration and delivery failures are reported as described
+in the second table under ["new"](#new)'s MESSAGES.
 
 ### Fatal
 

@@ -18,10 +18,14 @@ WriteMakefile(
 		? ('LICENSE'=> 'gpl_2')
 		: ()),
 	PREREQ_PM => {
+		'autodie' => 0,
 		'Carp'	 => 0,
 		'Config::Abstraction' => 0.40,
 		'ExtUtils::MakeMaker' => 6.64,	# Minimum version for TEST_REQUIRES
 		'File::Basename' => 0,
+		# Params::Get (via Config::Abstraction) uses autodie qw(:all) but
+		# doesn't declare IPC::System::Simple, which that needs
+		'IPC::System::Simple' => 0,
 		'JSON::PP' => 0,
 		'Log::Log4perl' => 0,
 		'Params::Get' => 0.15,

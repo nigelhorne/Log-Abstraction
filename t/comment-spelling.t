@@ -28,6 +28,7 @@ Getter
 HH
 HiRes
 journald
+IPC
 LF
 LoadFile
 LoggerProvider
