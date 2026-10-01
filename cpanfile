@@ -25,7 +25,6 @@ on 'test' => sub {
 	requires 'File::Temp';
 	requires 'File::stat';
 	requires 'IPC::System::Simple';
-	requires 'JSON::MaybeXS';
 	requires 'POSIX';
 	requires 'Test::DescribeMe';
 	requires 'Test::Mockingbird', '0.10';

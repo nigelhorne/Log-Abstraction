@@ -6,6 +6,7 @@ use warnings;
 
 use parent 'Log::Any::Adapter::Base';
 
+use Carp;
 use Log::Abstraction;
 use Readonly::Values::Syslog 0.04;
 use Scalar::Util 'blessed';
@@ -77,12 +78,14 @@ internal C<Log::Abstraction> backend.
 =item * C<instance>
 
 An existing C<Log::Abstraction> object.  When supplied, the adapter wraps it
-directly without creating a new instance.
+directly without creating a new instance.  Anything other than a
+C<Log::Abstraction> object (or subclass) is a fatal error.
 
 =item * Any C<Log::Abstraction-E<gt>new()> argument
 
 C<logger>, C<level>, C<file>, C<fd>, C<array>, C<format>, C<ctx>,
-C<script_name>, C<verbose>.  Used to build a fresh C<Log::Abstraction>
+C<script_name>, C<verbose>, C<carp_on_warn>, C<croak_on_error>,
+C<config_file>, C<max_messages>.  Used to build a fresh C<Log::Abstraction>
 instance when C<instance> is not supplied.
 
 =back
@@ -110,6 +113,10 @@ instance when C<instance> is not supplied.
       ctx         => { optional => 1 },
       script_name => { type => SCALAR, optional => 1 },
       verbose     => { type => BOOLEAN, optional => 1 },
+      carp_on_warn   => { type => BOOLEAN, optional => 1 },
+      croak_on_error => { type => BOOLEAN, optional => 1 },
+      config_file    => { type => SCALAR, optional => 1 },
+      max_messages   => { type => INTEGER, min => 0, optional => 1 },
   }
 
 =head4 Output
@@ -120,6 +127,8 @@ instance when C<instance> is not supplied.
 
   Error                                     Meaning / Action
   ----------------------------------------  -----------------------------------------
+  "...: instance must be a Log::Abstraction  'instance' was given something other
+    object"                                 than a Log::Abstraction object.
   (any Log::Abstraction croak)              The supplied constructor args are invalid.
                                             See Log::Abstraction for detail.
 
@@ -170,17 +179,22 @@ my %LA_TO_LEVEL = (
 sub init {
 	my $self = shift;
 
-	# Reuse a caller-supplied Log::Abstraction instance if one was provided
-	if(my $inst = $self->{instance}) {
-		if(blessed($inst) && $inst->isa('Log::Abstraction')) {
-			$self->{_logger} = $inst;
-			return;
+	# Reuse a caller-supplied Log::Abstraction instance if one was provided;
+	# anything else is a mistake, not a request for a default logger
+	if(defined(my $inst = $self->{instance})) {
+		if(!blessed($inst) || !$inst->isa('Log::Abstraction')) {
+			Carp::croak(__PACKAGE__, ': instance must be a Log::Abstraction object');
 		}
+		$self->{_logger} = $inst;
+		return;
 	}
 
 	# Build a fresh Log::Abstraction from the constructor key=value pairs
 	my %new_args;
-	for my $key (qw(logger level file fd array format ctx script_name verbose)) {
+	for my $key (qw(
+		logger level file fd array format ctx script_name verbose
+		carp_on_warn croak_on_error config_file max_messages
+	)) {
 		$new_args{$key} = $self->{$key} if exists $self->{$key};
 	}
 	$self->{_logger} = Log::Abstraction->new(%new_args);
@@ -189,13 +203,15 @@ sub init {
 # ---------------------------------------------------------------------------
 # Build logging methods for every Log::Any level name.
 # Each method delegates to the corresponding Log::Abstraction dispatch method.
+# Logging through Log::Any must never kill the module doing the logging, so
+# a croak from Log::Abstraction (e.g. croak_on_error) is turned into a carp.
 # ---------------------------------------------------------------------------
 for my $la_level (keys %LA_TO_METHOD) {
 	my $method = $LA_TO_METHOD{$la_level};
 	no strict 'refs';
 	*{$la_level} = sub {
 		my ($self, $msg) = @_;
-		$self->{_logger}->$method($msg);
+		eval { $self->{_logger}->$method($msg); 1 } or Carp::carp($@);
 		return;
 	};
 }
@@ -231,6 +247,12 @@ Log::Any's C<log_fields()> mechanism for structured fields is not forwarded
 to Log::Abstraction.  Only the final formatted string is dispatched; callers
 that need structured output should use the Log::Abstraction CODE-ref backend
 and access the formatted string via the C<message> key.
+
+=item B<Logging never dies>
+
+A croak from the wrapped C<Log::Abstraction> instance, such as from
+C<croak_on_error>, is turned into a C<Carp::carp> so that a module logging
+through Log::Any is never killed by its log call.
 
 =item B<Log::Any as optional, not required>
 
