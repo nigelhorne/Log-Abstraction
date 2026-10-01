@@ -1,6 +1,6 @@
 Revision history for Log-Abstraction
 
-0.35
+0.35	Wed Sep 30 09:44:46 PM EDT 2026
 	[ Enhancements ]
 	- New max_messages option caps the in-memory message history.
 
