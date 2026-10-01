@@ -1737,7 +1737,7 @@ is( func(INPUT), EXPECTED, &#39;Verify correct return value&#39; );
 </span><span class=""> 1269: 					MESSAGE           =&gt; $str,
 </span><span class=""> 1270: 					PRIORITY          =&gt; $priority,
 </span><span class=""> 1271: 					SYSLOG_IDENTIFIER =&gt; $ident,
-</span><span class="survived-2 tooltip" data-tooltip="Boolean logic mutation survived. Add tests covering both true and false paths. Return value mutation survived. Add tests asserting exact return values."> 1272: 				);
+</span><span class="survived-2 tooltip" data-tooltip="Return value mutation survived. Add tests asserting exact return values. Boolean logic mutation survived. Add tests covering both true and false paths."> 1272: 				);
 </span>
 					<details class="mutant-details">
 					<summary>Mutants (Total: 2, Killed: 0, Survived: 2)</summary>
@@ -1806,7 +1806,7 @@ is( func(INPUT), EXPECTED, &#39;Verify correct return value&#39; );
 </span><span class=""> 1317: 				} else {
 </span><span class=""> 1318: 					croak(
 </span><span class=""> 1319: 						ref($self), &#39;: &#39;, ref($logger),
-</span><span class="survived-2 tooltip" data-tooltip="Return value mutation survived. Add tests asserting exact return values. Boolean logic mutation survived. Add tests covering both true and false paths."> 1320: 						&quot; doesn&#39;t know how to deal with the $level message&quot;,
+</span><span class="survived-2 tooltip" data-tooltip="Boolean logic mutation survived. Add tests covering both true and false paths. Return value mutation survived. Add tests asserting exact return values."> 1320: 						&quot; doesn&#39;t know how to deal with the $level message&quot;,
 </span>
 					<details class="mutant-details">
 					<summary>Mutants (Total: 2, Killed: 0, Survived: 2)</summary>
@@ -1896,7 +1896,7 @@ is( func(INPUT), EXPECTED, &#39;Verify correct return value&#39; );
 </span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic."> 1386: #
 </span><p> <b> Mutants (Total: 4, Killed: 4, Survived: 0)</b><p><span class=""> 1387: #     no_backend = no logger, array, file or fd configured
 </span><span class=""> 1388: #
-</span><span class="survived-2 tooltip" data-tooltip="Return value mutation survived. Add tests asserting exact return values. Boolean logic mutation survived. Add tests covering both true and false paths."> 1389: #     IF error level:
+</span><span class="survived-2 tooltip" data-tooltip="Boolean logic mutation survived. Add tests covering both true and false paths. Return value mutation survived. Add tests asserting exact return values."> 1389: #     IF error level:
 </span>
 					<details class="mutant-details">
 					<summary>Mutants (Total: 2, Killed: 0, Survived: 2)</summary>
@@ -1968,7 +1968,7 @@ is( func(INPUT), EXPECTED, &#39;Verify correct return value&#39; );
 </span><span class=""> 1437: 	# A top-level file or fd counts as a backend, as do logger and array
 </span><span class=""> 1438: 	my $no_backend = !defined($self-&gt;{&#39;logger&#39;}) &amp;&amp; !defined($self-&gt;{&#39;array&#39;})
 </span><span class=""> 1439: 		&amp;&amp; !$self-&gt;{&#39;file&#39;} &amp;&amp; !$self-&gt;{&#39;fd&#39;};
-</span><span class="survived-2 tooltip" data-tooltip="Boolean logic mutation survived. Add tests covering both true and false paths. Return value mutation survived. Add tests asserting exact return values."> 1440: 
+</span><span class="survived-2 tooltip" data-tooltip="Return value mutation survived. Add tests asserting exact return values. Boolean logic mutation survived. Add tests covering both true and false paths."> 1440: 
 </span>
 					<details class="mutant-details">
 					<summary>Mutants (Total: 2, Killed: 0, Survived: 2)</summary>
@@ -2034,7 +2034,7 @@ is( func(INPUT), EXPECTED, &#39;Verify correct return value&#39; );
 </span><span class=""> 1482: =head3 Side Effects
 </span><span class=""> 1483: 
 </span><span class=""> 1484: When setting, updates C&lt;$self-E&lt;gt&gt;{level}&gt;.
-</span><span class="survived-2 tooltip" data-tooltip="Boolean logic mutation survived. Add tests covering both true and false paths. Return value mutation survived. Add tests asserting exact return values."> 1485: 
+</span><span class="survived-2 tooltip" data-tooltip="Return value mutation survived. Add tests asserting exact return values. Boolean logic mutation survived. Add tests covering both true and false paths."> 1485: 
 </span>
 					<details class="mutant-details">
 					<summary>Mutants (Total: 2, Killed: 0, Survived: 2)</summary>
