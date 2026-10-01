@@ -1,5 +1,12 @@
 Revision history for Log-Abstraction
 
+0.35
+	[ Bug Fixes ]
+	- t/10-compile.t no longer fails when Log::Any is not installed.
+	  Log::Any is only a recommended dependency, so the compile check of
+	  Log::Any::Adapter::Abstraction is now skipped when
+	  Log::Any::Adapter::Base cannot be loaded.
+
 0.34	Sat Sep 26 08:47:01 PM EDT 2026
 	[ Bug Fixes ]
 	- Bump minimum versions
