@@ -2,12 +2,11 @@
 
 requires 'perl', '5.014';
 
-requires 'autodie';
 requires 'Carp';
 requires 'Config::Abstraction', '0.40';
 requires 'ExtUtils::MakeMaker', '6.64';   # Minimum version for TEST_REQUIRES
 requires 'File::Basename';
-requires 'IPC::System::Simple';   # needed by Params::Get's autodie qw(:all)
+requires 'IPC::System::Simple';
 requires 'JSON::PP';
 requires 'Log::Log4perl';
 requires 'POSIX';
@@ -19,10 +18,11 @@ requires 'Scalar::Util';
 requires 'Socket';
 requires 'Sub::Private', '0.05';
 requires 'Sys::Syslog', '0.28';
+requires 'autodie';
 recommends 'Email::Sender::Simple';
 recommends 'Email::Sender::Transport::SMTP';
-recommends 'Email::Simple';
-recommends 'Log::Any';
+recommends 'Email::Simple';   # sendmail backend
+recommends 'Log::Any';   # Log::Any::Adapter::Abstraction
 
 on 'test' => sub {
 	requires 'Data::Dumper';
