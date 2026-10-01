@@ -17,11 +17,15 @@ my $file_count = 0;
 
 sub tmp_file { return $tmpdir . '/log' . ++$file_count . '.txt' }
 
+# Read raw bytes (to check the UTF-8 encoding), then undo the CRLF line
+# endings that text-mode output produces on Windows
 sub slurp {
 	my $path = $_[0];
 	open(my $fh, '<:raw', $path) or die "$path: $!";
 	local $/;
-	return <$fh>;
+	my $content = <$fh>;
+	$content =~ s/\r\n/\n/g;
+	return $content;
 }
 
 # Mock everything syslog touches; returns the guards and a ref to the calls
