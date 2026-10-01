@@ -1,7 +1,15 @@
 Revision history for Log-Abstraction
 
 0.35
+	[ Security ]
+	- Format tokens inside a log message are no longer expanded.  Tokens
+	  were substituted one at a time with %message% first, so a message
+	  containing "%env_FOO%" leaked $ENV{FOO} into file/fd logs.  All
+	  tokens are now expanded in a single pass.
+
 	[ Bug Fixes ]
+	- A failed sendmail delivery no longer stops the message reaching the
+	  syslog, journald, fd and top-level file/fd backends.
 	- t/10-compile.t no longer fails when Log::Any is not installed.
 	  Log::Any is only a recommended dependency, so the compile check of
 	  Log::Any::Adapter::Abstraction is now skipped when

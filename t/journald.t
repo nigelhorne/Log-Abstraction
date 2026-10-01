@@ -11,7 +11,7 @@ use Test::Most;
 use Socket qw(AF_UNIX SOCK_DGRAM sockaddr_un);
 use File::Temp qw(tempdir);
 
-use Log::Abstraction;
+use_ok('Log::Abstraction');
 
 # Unix-domain datagram sockets are not available on all platforms (notably
 # Windows without the AF_UNIX feature enabled).  Skip the whole file rather

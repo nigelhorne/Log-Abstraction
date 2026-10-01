@@ -52,6 +52,69 @@ package Log::Abstraction;
 #   - Store the provider reference, not a cached Logger, to survive
 #     provider swaps (workaround for blocker 3 above).
 
+# TODO: Outstanding items from the 0.35 gap analysis (2026-09-30).
+# Items tied to a specific routine are marked TODO next to that code;
+# the cross-cutting ones are listed here.
+#
+# Pre-release / correctness:
+#   - Sub::Private enforcement is silently disabled when this module is
+#     loaded at run time (require, use_ok, Log::Any::Adapter->set), and
+#     "Too late to run CHECK block" is emitted to the user.  Needs a fix in
+#     Sub::Private (e.g. wrap immediately or use INIT when CHECK has passed).
+#   - Unicode messages: the text file/fd backends print character strings
+#     without an encoding layer ("Wide character in print"), while the JSON
+#     path emits UTF-8 bytes.  Pick one behaviour and document multibyte
+#     support.
+#   - Log::Any::Adapter::Abstraction: file/line reported to backends point
+#     inside Log::Any::Proxy instead of the user's code; a non-Log::Abstraction
+#     'instance' is silently ignored and a default Log4perl logger built;
+#     init() does not forward carp_on_warn, croak_on_error or config_file;
+#     error/critical can croak inside a third-party module's Log::Any call
+#     when the wrapped instance has no backend.
+#   - Documentation drift: the API Specification level regex omits levels
+#     new() accepts (emerg, alert, crit, fatal, panic, err); the Z spec says
+#     msg? is non-empty for trace/debug/info/notice but empty messages are
+#     recorded; Z 'New' says logger = args?.logger but Log4perl is installed
+#     as the default; Z 'Clone' calls the history copy deep but the entries
+#     are shared hashrefs; no schema covers the Carp escalation or the
+#     class-method path of warn/error; '=encoding utf-8' should precede all
+#     other POD; the syslog sub-hash keys are undocumented; LIMITATIONS omits
+#     unbounded message history and trace == debug.
+#   - Makefile.PL lists JSON::MaybeXS in TEST_REQUIRES but nothing uses it.
+#   - Missing tests: level() with uppercase input; trace filtering at debug
+#     level; string 'level' in the syslog sub-hash; subclass warn/error as a
+#     class method; Unicode messages in text format; loading via require
+#     (Sub::Private enforcement); adapter file/line.
+#
+# Roadmap - features:
+#   - Structured fields, e.g. $log->info('msg', { user_id => 42 }), carried
+#     through to JSON, journald fields, CODE callbacks and Log::Any's
+#     log_fields().
+#   - Public critical/alert/emergency methods so the Log::Any adapter no
+#     longer collapses them into error.
+#   - is_trace/is_info/is_notice/is_warn/is_error alongside is_debug.
+#   - Timestamp options: timestamp_format, UTC, ISO-8601/RFC 3339 with
+#     offset, sub-second precision via Time::HiRes.
+#   - File rotation (size/time) and reopen on SIGHUP for logrotate.
+#   - A consistent per-backend 'level' and 'format' key for every sub-backend.
+#   - sendmail digests: batch messages suppressed by min_interval into the
+#     next email instead of discarding them.
+#   - Log::Dispatch / Log::Any producer mode.
+#   - Redaction: redact => [qr/password=\S+/] applied before any backend.
+#
+# Roadmap - technical debt:
+#   - Split _log into per-backend classes (Log::Abstraction::Backend::*)
+#     built once in new(), so configuration is validated at construction
+#     time, the caller's syslog hash is not mutated, and the "Don't know how
+#     to deal" fallback disappears.
+#   - Keep file handles open (re-open on inode change) instead of
+#     open/print/close for every message.
+#   - Reuse the journald socket rather than creating one per message.
+#   - Optional asynchronous/non-blocking delivery for the sendmail backend;
+#     a blocking SMTP conversation inside a log call is a latency hazard.
+#   - Params::Get parsing in _high_priority is ambiguous (e.g.
+#     warn('warning', 'x')); consider deprecating the 'warning =>' form.
+
 # Enforce strict variable declarations and enable common warnings
 use strict;
 use warnings;
@@ -103,6 +166,10 @@ Readonly::Scalar my $DEFAULT_FORMAT         => '%level%> [%timestamp%] %class% %
 Readonly::Scalar my $DEFAULT_FORMAT_NOCLASS => '%level%> [%timestamp%] %callstack% %message%';
 
 # Map internal level names to POSIX syslog priority strings
+# TODO: trace and debug share the numeric value 7 in Readonly::Values::Syslog,
+#	so level => 'debug' also emits trace messages and trace cannot be
+#	filtered separately, although the POD describes trace as below debug.
+#	Give trace its own threshold or document the equivalence.
 Readonly::Hash my %LEVEL_TO_SYSLOG_PRIORITY => (
 	trace   => 'debug',
 	debug   => 'debug',
@@ -134,11 +201,11 @@ Log::Abstraction - Logging Abstraction Layer
 
 =head1 VERSION
 
-0.34
+0.35
 
 =cut
 
-our $VERSION = 0.34;
+our $VERSION = 0.35;
 
 =head1 SYNOPSIS
 
@@ -433,6 +500,11 @@ sub new {
 	}
 
 	# Auto-detect script name when syslog backend is requested
+	# TODO: this only fires for a top-level 'syslog' key; the documented
+	#	logger => { syslog => {...} } form leaves script_name undef, so
+	#	openlog() is called with an undefined ident.
+	# TODO: validate the syslog and sendmail sub-hash 'level' values here
+	#	rather than failing silently at log time (see _log).
 	if($args{'syslog'} && !$args{'script_name'}) {
 		require File::Basename;
 		$args{'script_name'} = File::Basename::basename($ENV{'SCRIPT_NAME'} || $0);
@@ -608,7 +680,8 @@ sub _journald_send :Private {
 #       callstack = caller_file and caller_line
 #       timestamp = strftime 'YYYY-MM-DD HH:MM:SS'
 #
-#     Expand tokens in format string:
+#     Expand tokens in format string in a single pass (substituted values,
+#     including the message, are never rescanned for further tokens):
 #       %level%       → ulevel
 #       %class%       → class (may be empty)
 #       %message%     → str
@@ -650,16 +723,25 @@ sub _format_message :Private {
 	my $bclass = blessed($self);
 	my $class  = ($bclass && $bclass ne __PACKAGE__) ? $bclass : '';
 
+	# TODO: embedded newlines in $str are written verbatim, so a message such
+	#	as "a\nERROR> [...] forged" produces a convincing forged log line.
+	#	Escape or indent continuation lines in text formats (JSON is safe).
 	my $callstack = "$caller_file $caller_line";
 	my $timestamp = strftime '%Y-%m-%d %H:%M:%S', localtime;
 
-	# Expand all recognised tokens in a single pass per token type
-	$format =~ s/%level%/$ulevel/g;
-	$format =~ s/%class%/$class/g;
-	$format =~ s/%message%/$str/g;
-	$format =~ s/%callstack%/$callstack/g;
-	$format =~ s/%timestamp%/$timestamp/g;
-	$format =~ s/%env_(\w+)%/$ENV{$1} \/\/ ''/ge;
+	my %tokens = (
+		level     => $ulevel,
+		class     => $class,
+		message   => $str,
+		callstack => $callstack,
+		timestamp => $timestamp,
+	);
+
+	# Expand all tokens in one pass so substituted text (notably the message)
+	# is never rescanned; otherwise a message containing "%env_SECRET%" would
+	# leak the environment variable into the log
+	$format =~ s/%(?:(level|class|message|callstack|timestamp)|env_(\w+))%/
+		defined($1) ? $tokens{$1} : ($ENV{$2} \/\/ '')/gex;
 
 	return $format;
 }
@@ -770,6 +852,11 @@ sub _log :Private {
 	chomp($str);
 
 	# Record in the internal message history regardless of backend
+	# TODO: the history grows without bound - a memory leak in daemons and
+	#	mod_perl.  Add a cap (e.g. max_messages) or make history opt-in.
+	# TODO: syslog and sendmail join @messages with ' ' while every other
+	#	backend uses $str (joined with ''), so info('a', 'b') differs
+	#	between backends.
 	push @{$self->{messages}}, { level => $level, message => $str };
 
 	# Compute class once; suppress the package name for base-class instances
@@ -827,6 +914,11 @@ sub _log :Private {
 			}
 
 			# -- sendmail sub-backend ---------------------------------------
+			# TODO: a sendmail hash without 'to' is silently ignored, and
+			#	because exists('sendmail') is true the "Don't know how to
+			#	deal" croak below is also skipped.
+			# TODO: an unrecognised sendmail 'level' (e.g. 'WARN', 'warnx')
+			#	looks up undef and silently suppresses nearly all email.
 			if(exists($logger->{'sendmail'}) && exists($logger->{'sendmail'}->{'to'})) {
 				my $sm = $logger->{'sendmail'};
 
@@ -889,18 +981,26 @@ sub _log :Private {
 							sendmail($email, { transport => $transport });
 						};
 
+						# A delivery failure must not stop the remaining backends
+						# from receiving this message
 						if($@) {
 							Carp::carp("Failed to send email: $@");
-							return;
+						} else {
+							# Record send time for the throttle on success
+							$self->{_last_email_sent} = time();
 						}
-
-						# Record send time for the throttle on success
-						$self->{_last_email_sent} = time();
 					}
 				}
 			}
 
 			# -- syslog sub-backend -----------------------------------------
+			# TODO: the syslog 'level' must be numeric while the sendmail
+			#	'level' is a name; level => 'warning' here warns "isn't
+			#	numeric" and drops every message.  Accept names.
+			# TODO: the message is passed as syslog()'s format argument, so
+			#	'%m' expands to $!.  Use syslog($priority, '%s', $msg).
+			# TODO: the failure carp dumps the whole syslog config hash
+			#	(including host) to STDERR; trim it.
 			if(my $syslog = $logger->{'syslog'}) {
 				if((!defined($syslog->{'level'})) ||
 				   ($syslog_values{$level} <= $syslog->{'level'})) {
@@ -937,6 +1037,12 @@ sub _log :Private {
 			}
 
 			# -- journald sub-backend --------------------------------------
+			# TODO: on systems without journald (FreeBSD, macOS) every log
+			#	call carps; carp once per instance instead.
+			# TODO: extra field names are not validated (journald requires
+			#	[A-Z0-9_] not starting with '_', invalid fields are
+			#	dropped), and datagrams larger than the socket buffer
+			#	(~212KB) fail; large payloads need memfd + SCM_RIGHTS.
 			if(my $jd = $logger->{'journald'}) {
 				# Map internal level name to journald/syslog PRIORITY integer (0=emerg, 7=debug)
 				my $priority  = $syslog_values{$level};
@@ -1089,6 +1195,8 @@ sub _high_priority :Private {
 	return if(scalar(@_) == 0);
 
 	# Silently drop levels lower than WARNING (should not happen in practice)
+	# TODO: unreachable - only warn/error ever get here, so this guard will
+	#	keep surviving mutation testing.  Remove it.
 	return if($syslog_values{$level} > $WARNING);
 
 	# Try to interpret arguments as warn(warning => VALUE) named form
@@ -1112,6 +1220,9 @@ sub _high_priority :Private {
 	}
 
 	# If called as a class method rather than on an instance, use Carp directly
+	# TODO: only the base class matches; My::Subclass->warn('x') falls
+	#	through to _log and dies with "Can't use string as a HASH ref".
+	#	Test !ref($self) instead.
 	if($self eq __PACKAGE__) {
 		if($syslog_values{$level} <= $ERROR) {
 			Carp::croak($warning);
@@ -1124,6 +1235,11 @@ sub _high_priority :Private {
 	$self->_log($level, $warning);
 
 	# Optionally escalate to Carp for error-level messages
+	# TODO: the "no backend" test ignores a top-level 'file' (and 'fd'), so
+	#	new(file => 'x.log')->error('e') croaks.  Decide whether that is
+	#	intended and fix or document it.
+	# TODO: carp_on_warn fires even when _log dropped the message below the
+	#	level threshold (level => 'error' still carps on warn()).
 	if($syslog_values{$level} <= $ERROR) {
 		if($self->{'croak_on_error'}
 			|| (!defined($self->{logger}) && !defined($self->{array}))) {
@@ -1216,6 +1332,8 @@ sub level {
 	my ($self, $level) = @_;
 
 	if($level) {
+		# TODO: unlike new(), this does not lc() the level, so level('DEBUG')
+		#	is rejected although the POD says names are case-insensitive.
 		# Setter path: validate, store and return $self for chaining
 		if(!defined($syslog_values{$level})) {
 			Carp::carp(ref($self), ": invalid syslog level '$level'");
@@ -1694,6 +1812,8 @@ sub fatal {
 sub DESTROY {
 	my $self = $_[0];
 
+	# TODO: openlog/closelog are process-global, so destroying one instance
+	#	closes syslog for every other instance.  Reference-count it.
 	if($self->{_syslog_opened}) {
 		Sys::Syslog::closelog();
 		delete $self->{_syslog_opened};
