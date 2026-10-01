@@ -62,7 +62,9 @@ sub parse_journald {
 		} elsif($data =~ s/\A([A-Z0-9_]+)\n//) {
 			my $key = $1;
 			# Binary-framed: 8-byte uint64-LE length, then value bytes, then \n
-			my $len = unpack('Q<', substr($data, 0, 8, ''));
+			# (read as two 32-bit words so this works without 64-bit integers)
+			my ($low, $high) = unpack('VV', substr($data, 0, 8, ''));
+			my $len = $low + $high * 2**32;
 			my $val = substr($data, 0, $len, '');
 			$data    =~ s/\A\n//;
 			$fields{$key} = $val;

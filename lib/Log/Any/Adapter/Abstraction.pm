@@ -26,6 +26,8 @@ Log::Any::Adapter::Abstraction - Log::Any adapter backed by Log::Abstraction
   use Log::Any::Adapter;
   use Log::Abstraction;
 
+  my @messages;
+
   # Option A: pass a pre-built Log::Abstraction instance
   my $logger = Log::Abstraction->new(logger => \@messages, level => 'debug');
   Log::Any::Adapter->set('Abstraction', instance => $logger);
@@ -199,6 +201,90 @@ sub init {
 	}
 	$self->{_logger} = Log::Abstraction->new(%new_args);
 }
+
+=head2 Logging methods
+
+=over 4
+
+=item trace
+
+=item debug
+
+=item info
+
+=item notice
+
+=item warning
+
+=item error
+
+=item critical
+
+=item alert
+
+=item emergency
+
+=back
+
+  $adapter->info($message);
+
+Called by L<Log::Any> with the formatted message; each sends it to the
+matching L<Log::Abstraction> method (see L</Level mapping>).  These methods
+are generated when the module loads.  A croak from Log::Abstraction (e.g.
+C<croak_on_error>) is turned into a C<Carp::carp>, so logging never dies.
+
+=head3 API Specification
+
+=head4 Input
+
+  { message => { type => 'string' } }
+
+=head4 Output
+
+  { type => 'undef' }
+
+=head2 Detection methods
+
+=over 4
+
+=item is_trace
+
+=item is_debug
+
+=item is_info
+
+=item is_notice
+
+=item is_warning
+
+=item is_error
+
+=item is_critical
+
+=item is_alert
+
+=item is_emergency
+
+=back
+
+  if($adapter->is_debug()) { ... }
+
+Return 1 if a message at that level would be logged by the wrapped
+L<Log::Abstraction> instance's level threshold, otherwise 0.  As in
+Log::Abstraction, C<is_trace> equals C<is_debug>, and C<is_critical>,
+C<is_alert> and C<is_emergency> equal C<is_error>.
+
+=head3 API Specification
+
+=head4 Input
+
+  {} (no arguments)
+
+=head4 Output
+
+  { type => 'boolean' }
+
+=cut
 
 # ---------------------------------------------------------------------------
 # Build logging methods for every Log::Any level name.
