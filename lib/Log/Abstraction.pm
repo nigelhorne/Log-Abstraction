@@ -60,9 +60,6 @@ package Log::Abstraction;
 #     Sub::Private (e.g. wrap immediately or use INIT when CHECK has passed).
 #
 # Roadmap - features:
-#   - Public critical/alert/emergency methods so the Log::Any adapter no
-#     longer collapses them into error.
-#   - is_trace/is_info/is_notice/is_warn/is_error alongside is_debug.
 #   - Timestamp options: timestamp_format, UTC, ISO-8601/RFC 3339 with
 #     offset, sub-second precision via Time::HiRes.
 #   - File rotation (size/time) and reopen on SIGHUP for logrotate.
@@ -138,13 +135,16 @@ Readonly::Scalar my $DEFAULT_FORMAT_NOCLASS => '%level%> [%timestamp%] %callstac
 # Map internal level names to POSIX syslog priority strings.  syslog has no
 # priority below debug, so trace shares debug's threshold (see the POD)
 Readonly::Hash my %LEVEL_TO_SYSLOG_PRIORITY => (
-	trace   => 'debug',
-	debug   => 'debug',
-	info    => 'info',
-	notice  => 'notice',
-	warn    => 'warning',
-	warning => 'warning',
-	error   => 'err',
+	trace     => 'debug',
+	debug     => 'debug',
+	info      => 'info',
+	notice    => 'notice',
+	warn      => 'warning',
+	warning   => 'warning',
+	error     => 'err',
+	critical  => 'crit',
+	alert     => 'alert',
+	emergency => 'emerg',
 );
 
 # Regex: characters forbidden in a log-file path (prevents command injection)
@@ -501,7 +501,8 @@ C<Log::Log4perl> if no logger backend is specified.
     '<k>'"                                  [A-Z0-9_] or starts with '_'.
 
 The following are not raised by C<new()> but later, by the logging methods
-(C<trace>, C<debug>, C<info>, C<notice>, C<warn>, C<error>, C<fatal>), when
+(C<trace>, C<debug>, C<info>, C<notice>, C<warn>, C<error>, C<fatal>,
+C<critical>, C<alert>, C<emergency>), when
 a message that passes the level threshold reaches the backend concerned.
 Croaks are configuration errors; delivery failures only carp, because a
 logging failure must never crash the application.
@@ -1103,7 +1104,8 @@ sub _format_message :Private {
 #               the current level threshold, records the message in the
 #               internal history, then dispatches to the configured backend(s).
 # Entry:        $self    -- the logger object.
-#               $level   -- one of trace/debug/info/notice/warn/error.
+#               $level   -- one of trace/debug/info/notice/warn/error/
+#                           critical/alert/emergency.
 #               @messages -- one or more message strings (or a single arrayref),
 #                           optionally followed by a hashref of structured fields.
 # Exit:         Returns nothing (void).  Croaks on configuration errors.
@@ -1171,7 +1173,8 @@ sub _format_message :Private {
 #       Validate path; format line; (eval) open>>file, print, close
 #
 #     ELSIF self->{'logger'} is a blessed object:
-#       Map 'notice' to 'info' for backends without notice() (e.g. Log::Log4perl)
+#       Map 'notice' to 'info', and critical/alert/emergency to 'fatal' or
+#         else 'error', for backends without them (e.g. Log::Log4perl)
 #       CROAK if object cannot handle the level
 #       Call $logger->$level(@messages), plus the fields as logfmt text
 #
@@ -1478,9 +1481,13 @@ sub _log :Private {
 		} elsif(Scalar::Util::blessed($logger)) {
 			# Object backend: delegate to the method matching the level name
 			if(!$logger->can($level)) {
-				if(($level eq 'notice') && $logger->can('info')) {
-					# Log::Log4perl has no notice() method; map to info()
-					$level = 'info';
+				# Log::Log4perl has no notice(), critical(), alert() or
+				# emergency(); use the nearest method it does have
+				my @fallbacks = ($level eq 'notice') ? ('info')
+					: ($level =~ /^(?:critical|alert|emergency)$/) ? ('fatal', 'error')
+					: ();
+				if(my ($method) = grep { $logger->can($_) } @fallbacks) {
+					$level = $method;
 				} else {
 					croak(
 						ref($self), ': ', ref($logger),
@@ -1518,13 +1525,13 @@ sub _log :Private {
 }
 
 # ---------------------------------------------------------------------------
-# _high_priority -- common handler for warn() and error() calls
+# _high_priority -- common handler for warn(), error() and the levels above
 #
 # Purpose:      Extracts the warning/error text from a variety of argument
 #               forms (plain list, named 'warning' key, or arrayref value),
 #               then dispatches to _log and optionally to Carp.
 # Entry:        $self    -- the logger object.
-#               $level   -- 'warn' or 'error'.
+#               $level   -- 'warn', 'error', 'critical', 'alert' or 'emergency'.
 #               @_       -- remaining arguments in any of the accepted forms.
 # Exit:         Returns nothing (void).
 # Side effects: Calls _log, which appends to $self->{messages} and writes to
@@ -1549,14 +1556,14 @@ sub _log :Private {
 #       RETURN if resulting string is empty
 #
 #     IF called as a class method (self is a package name, not an object):
-#       IF error level: CROAK with warning text; RETURN
+#       IF error level or above: CROAK with warning text; RETURN
 #       CARP with warning text; RETURN
 #
 #     Call self->_log(level, warning, fields?)
 #
 #     no_backend = no logger, array, file or fd configured
 #
-#     IF error level:
+#     IF error level or above:
 #       IF croak_on_error flag set OR no_backend:
 #         CROAK with warning text
 #
@@ -1566,7 +1573,7 @@ sub _log :Private {
 # ---------------------------------------------------------------------------
 sub _high_priority :Private {
 	my $self  = shift;
-	my $level = shift;    # 'warn' or 'error'
+	my $level = shift;    # 'warn', 'error', 'critical', 'alert' or 'emergency'
 
 	# Nothing to log if no arguments supplied
 	return if(scalar(@_) == 0);
@@ -1725,13 +1732,38 @@ sub level {
 	);
 }
 
-=head2 is_debug
+=head2 Level detection methods
+
+=over 4
+
+=item is_trace
+
+=item is_debug
+
+=item is_info
+
+=item is_notice
+
+=item is_warn
+
+=item is_error
+
+=item is_critical
+
+=item is_alert
+
+=item is_emergency
+
+=back
 
   if($logger->is_debug()) { ... }
 
-Returns a true value when the logger is configured at C<debug> level or
-below (i.e. debug messages will actually be emitted).  Provided for
-compatibility with L<Log::Any>.
+Each returns a true value when a message logged with the method of the same
+name (C<is_warn> for C<warn()>) would pass the logger's level threshold, so
+that expensive message-building can be skipped.  They follow the current
+threshold, including changes made with L</level>.  As with the levels
+themselves, C<is_trace> equals C<is_debug>.  Provided for compatibility with
+L<Log::Any>.
 
 =head3 Arguments
 
@@ -1739,14 +1771,17 @@ None.
 
 =head3 Returns
 
-C<1> if the current level threshold includes debug (or trace) messages;
-C<0> otherwise.
+C<1> if messages at that level would be emitted; C<0> otherwise.
 
 =head3 Example
 
   if($logger->is_debug()) {
       $logger->debug('Expensive diagnostic: ' . Dumper(\%state));
   }
+
+  $logger->level('warning');
+  $logger->is_warn();    # 1
+  $logger->is_info();    # 0
 
 =head3 API Specification
 
@@ -1760,11 +1795,15 @@ C<0> otherwise.
 
 =cut
 
-sub is_debug {
-	my $self = $_[0];
-
-	# $DEBUG is exported by Readonly::Values::Syslog
-	return ($self->{'level'} && ($self->{'level'} >= $DEBUG)) ? 1 : 0;
+# Build is_trace, is_debug, ... is_emergency.  Each is true when its level's
+# syslog number is within the threshold (a lower number is more severe)
+for my $level (qw(trace debug info notice warn error critical alert emergency)) {
+	my $threshold = $syslog_values{$level};
+	no strict 'refs';
+	*{"is_$level"} = sub {
+		my $self = $_[0];
+		return (defined($self->{'level'}) && ($self->{'level'} >= $threshold)) ? 1 : 0;
+	};
 }
 
 =head2 messages
@@ -2222,6 +2261,85 @@ sub fatal {
 	return $self;
 }
 
+=head2 critical
+
+  $logger->critical(@messages);
+  $logger->critical(warning => $text);
+  $logger->critical($text, \%fields);
+
+Logs a message at C<critical> level (syslog C<crit>, priority 2).
+
+=head2 alert
+
+  $logger->alert(@messages);
+
+Logs a message at C<alert> level (syslog C<alert>, priority 1).
+
+=head2 emergency
+
+  $logger->emergency(@messages);
+
+Logs a message at C<emergency> level (syslog C<emerg>, priority 0).
+
+=head3 Arguments
+
+C<critical>, C<alert> and C<emergency> take the same argument forms as
+C<warn()>.
+
+=head3 Returns
+
+C<$self>, to allow method chaining (unless they croak; see below).
+
+=head3 Side Effects
+
+These behave like C<error()>, at a more severe level: C<croak_on_error>, or
+having no backend, makes them C<Carp::croak>, and C<carp_on_warn> makes them
+C<Carp::carp>.  The level string passed to backends is the method name
+(C<critical>, C<alert> or C<emergency>, upper-cased in text formats); syslog
+gets C<crit>, C<alert> or C<emerg>, and journald C<PRIORITY> 2, 1 or 0.  An
+object logger without the method (such as L<Log::Log4perl>) is called with
+C<fatal>, or C<error> if it has no C<fatal> either.
+
+=head3 Example
+
+  $logger->critical('Disk 95% full', { mount => '/var' });
+  $logger->alert('Primary database unreachable');
+  $logger->emergency('Data corruption detected; shutting down');
+
+=head3 API Specification
+
+=head4 Input
+
+  { warning => { type => [ 'scalar', 'arrayref' ], optional => 1 } }
+
+=head4 Output
+
+  { type => 'object', class => 'Log::Abstraction' }
+
+=head3 MESSAGES
+
+Same as C<error()>.
+
+=cut
+
+sub critical {
+	my $self = shift;
+	$self->_high_priority('critical', @_);
+	return $self;
+}
+
+sub alert {
+	my $self = shift;
+	$self->_high_priority('alert', @_);
+	return $self;
+}
+
+sub emergency {
+	my $self = shift;
+	$self->_high_priority('emergency', @_);
+	return $self;
+}
+
 # ---------------------------------------------------------------------------
 # DESTROY -- close the persistent syslog connection when the object is freed
 #
@@ -2507,14 +2625,17 @@ L<http://deps.cpantesters.org/?module=Log::Abstraction>
   │ level' = syslog_values(new_level?)
   └─────────────────────────────────────────────────────────────
 
-=head2 is_debug
+=head2 is_trace, is_debug, is_info, is_notice, is_warn, is_error, is_critical, is_alert, is_emergency
 
-  ┌─ IsDebug ──────────────────────────────────────────────────
+  ┌─ IsLevel ──────────────────────────────────────────────────
   │ ΞLogState
+  │ lvl? : LEVEL
   │ result! : BOOLEAN
   ├─────────────────────────────────────────────────────────────
-  │ result! = (level ≥ syslog_values('debug'))
+  │ result! = (level ≥ syslog_values(lvl?))
   └─────────────────────────────────────────────────────────────
+
+  is_<lvl> ≡ IsLevel[lvl? := lvl]
 
 =head2 messages
 
@@ -2599,6 +2720,11 @@ L<http://deps.cpantesters.org/?module=Log::Abstraction>
 =head2 fatal
 
   fatal ≡ error   (identical operation schema)
+
+=head2 critical, alert, emergency
+
+  The Error schema, with 'error' replaced by 'critical', 'alert' or
+  'emergency' respectively.
 
 =head1 COPYRIGHT AND LICENSE
 

@@ -10,6 +10,14 @@ Revision history for Log-Abstraction
 	  key=value text.
 	- The Log::Any adapter implements structured(), so a trailing hashref
 	  and the Log::Any context reach Log::Abstraction as fields.
+	- New critical(), alert() and emergency() methods, logged at their own
+	  levels (syslog crit/alert/emerg, journald PRIORITY 2/1/0).  They
+	  behave like error(): croak_on_error, or having no backend, croaks.
+	  An object logger without the method, such as Log::Log4perl, is
+	  called with fatal(), or error() if it has no fatal().
+	- The Log::Any adapter no longer collapses critical, alert and
+	  emergency into error; they go to the new methods, and is_critical,
+	  is_alert and is_emergency have their own thresholds.
 
 0.35	Wed Sep 30 09:44:46 PM EDT 2026
 	[ Enhancements ]

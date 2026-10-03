@@ -297,7 +297,8 @@ Error                                     Meaning / Action
 ```
 
 The following are not raised by `new()` but later, by the logging methods
-(`trace`, `debug`, `info`, `notice`, `warn`, `error`, `fatal`), when
+(`trace`, `debug`, `info`, `notice`, `warn`, `error`, `fatal`,
+`critical`, `alert`, `emergency`), when
 a message that passes the level threshold reaches the backend concerned.
 Croaks are configuration errors; delivery failures only carp, because a
 logging failure must never crash the application.
@@ -940,6 +941,77 @@ $logger->fatal('Unrecoverable state; aborting');
 
 Same as `error()`.
 
+### Critical
+
+```perl
+$logger->critical(@messages);
+$logger->critical(warning => $text);
+$logger->critical($text, \%fields);
+```
+
+Logs a message at `critical` level (syslog `crit`, priority 2).
+
+### Alert
+
+```
+$logger->alert(@messages);
+```
+
+Logs a message at `alert` level (syslog `alert`, priority 1).
+
+### Emergency
+
+```
+$logger->emergency(@messages);
+```
+
+Logs a message at `emergency` level (syslog `emerg`, priority 0).
+
+#### Arguments
+
+`critical`, `alert` and `emergency` take the same argument forms as
+`warn()`.
+
+#### Returns
+
+`$self`, to allow method chaining (unless they croak; see below).
+
+#### Side Effects
+
+These behave like `error()`, at a more severe level: `croak_on_error`, or
+having no backend, makes them `Carp::croak`, and `carp_on_warn` makes them
+`Carp::carp`.  The level string passed to backends is the method name
+(`critical`, `alert` or `emergency`, upper-cased in text formats); syslog
+gets `crit`, `alert` or `emerg`, and journald `PRIORITY` 2, 1 or 0.  An
+object logger without the method (such as [Log::Log4perl](https://metacpan.org/pod/Log%3A%3ALog4perl)) is called with
+`fatal`, or `error` if it has no `fatal` either.
+
+#### Example
+
+```perl
+$logger->critical('Disk 95% full', { mount => '/var' });
+$logger->alert('Primary database unreachable');
+$logger->emergency('Data corruption detected; shutting down');
+```
+
+#### API Specification
+
+##### Input
+
+```perl
+{ warning => { type => [ 'scalar', 'arrayref' ], optional => 1 } }
+```
+
+##### Output
+
+```perl
+{ type => 'object', class => 'Log::Abstraction' }
+```
+
+#### Messages
+
+Same as `error()`.
+
 ## Examples
 
 ### CSV File Logging for BI Import
@@ -1309,6 +1381,13 @@ Called as a class method (no LogState): croak(join(msg?)).
 
 ```
 fatal ≡ error   (identical operation schema)
+```
+
+### Critical, Alert, Emergency
+
+```
+The Error schema, with 'error' replaced by 'critical', 'alert' or
+'emergency' respectively.
 ```
 
 ## Copyright and License

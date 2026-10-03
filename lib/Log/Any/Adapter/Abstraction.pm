@@ -49,7 +49,8 @@ automatically send their output there.
 
 =head2 Level mapping
 
-Log::Any has nine severity levels; Log::Abstraction has six.  The mapping is:
+Each of Log::Any's nine severity levels has a Log::Abstraction method of
+the same name, except C<warning>:
 
   Log::Any level   Log::Abstraction method
   ---------------  -----------------------
@@ -59,12 +60,12 @@ Log::Any has nine severity levels; Log::Abstraction has six.  The mapping is:
   notice           notice
   warning          warn
   error            error
-  critical         error
-  alert            error
-  emergency        error
+  critical         critical
+  alert            alert
+  emergency        emergency
 
-C<critical>, C<alert>, and C<emergency> all route to C<error()> because
-Log::Abstraction follows the syslog six-level model.
+Before version 0.36, C<critical>, C<alert> and C<emergency> were all sent
+to C<error()>.
 
 =head1 METHODS
 
@@ -137,9 +138,8 @@ instance when C<instance> is not supplied.
 =cut
 
 # ---------------------------------------------------------------------------
-# Map Log::Any level names to Log::Abstraction dispatch method names.
-# critical, alert, and emergency all collapse to error() -- Log::Abstraction
-# follows the syslog six-level model and has no distinct level above error.
+# Map Log::Any level names to Log::Abstraction method names, which are also
+# its level names (for the is_* threshold checks).  Only 'warning' differs.
 # ---------------------------------------------------------------------------
 my %LA_TO_METHOD = (
 	trace     => 'trace',
@@ -148,22 +148,9 @@ my %LA_TO_METHOD = (
 	notice    => 'notice',
 	warning   => 'warn',
 	error     => 'error',
-	critical  => 'error',
-	alert     => 'error',
-	emergency => 'error',
-);
-
-# Map Log::Any level names to Log::Abstraction level strings for threshold checks.
-my %LA_TO_LEVEL = (
-	trace     => 'trace',
-	debug     => 'debug',
-	info      => 'info',
-	notice    => 'notice',
-	warning   => 'warn',
-	error     => 'error',
-	critical  => 'error',
-	alert     => 'error',
-	emergency => 'error',
+	critical  => 'critical',
+	alert     => 'alert',
+	emergency => 'emergency',
 );
 
 # ---------------------------------------------------------------------------
@@ -302,8 +289,7 @@ logging methods, a croak is turned into a C<Carp::carp>.
 
 Return 1 if a message at that level would be logged by the wrapped
 L<Log::Abstraction> instance's level threshold, otherwise 0.  As in
-Log::Abstraction, C<is_trace> equals C<is_debug>, and C<is_critical>,
-C<is_alert> and C<is_emergency> equal C<is_error>.
+Log::Abstraction, C<is_trace> equals C<is_debug>.
 
 =head3 API Specification
 
@@ -363,8 +349,8 @@ sub structured {
 # Returns 1 when the adapter's Log::Abstraction threshold is at or below the
 # requested level (i.e. messages at that level would not be dropped).
 # ---------------------------------------------------------------------------
-for my $la_level (keys %LA_TO_LEVEL) {
-	my $threshold = $syslog_values{ $LA_TO_LEVEL{$la_level} };
+for my $la_level (keys %LA_TO_METHOD) {
+	my $threshold = $syslog_values{ $LA_TO_METHOD{$la_level} };
 	no strict 'refs';
 	*{"is_$la_level"} = sub {
 		my $self = $_[0];
@@ -375,13 +361,6 @@ for my $la_level (keys %LA_TO_LEVEL) {
 =head1 LIMITATIONS
 
 =over 4
-
-=item B<Nine-to-six level collapse>
-
-Log::Any has nine severity levels; Log::Abstraction has six.  C<critical>,
-C<alert>, and C<emergency> all map to C<error()>.  Applications that rely on
-distinguishing these three levels in downstream Log::Abstraction backends will
-lose that distinction.
 
 =item B<Message parts are joined with a space>
 
