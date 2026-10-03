@@ -22,6 +22,11 @@ Revision history for Log-Abstraction
 	  is_alert and is_emergency methods alongside is_debug.  The Log::Any
 	  adapter's detection methods now call them.
 
+	[ Bug Fixes ]
+	- t/journald.t no longer hangs if a journald send fails: its receiver
+	  now reads with MSG_DONTWAIT, so the test fails instead.  This was the
+	  hang in RT#181461.
+
 0.35	Wed Sep 30 09:44:46 PM EDT 2026
 	[ Enhancements ]
 	- New max_messages option caps the in-memory message history.
