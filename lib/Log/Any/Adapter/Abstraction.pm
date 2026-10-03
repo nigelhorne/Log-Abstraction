@@ -243,6 +243,37 @@ C<croak_on_error>) is turned into a C<Carp::carp>, so logging never dies.
 
   { type => 'undef' }
 
+=head2 structured
+
+  $adapter->structured($level, $category, @parts, \%fields);
+
+Called by L<Log::Any> in place of the logging methods, with the message
+parts and, when there are any, a final hashref of structured fields: the
+proxy's C<context> merged with a hashref passed as the last argument of the
+log call.  The parts are joined with a space and sent, with the fields, to
+the matching L<Log::Abstraction> method, so
+
+  $log->info('login', { user_id => 42 });
+
+reaches Log::Abstraction as C<info('login', { user_id =E<gt> 42 })>.  See
+L<Log::Abstraction/Structured fields> for where the fields go.  As with the
+logging methods, a croak is turned into a C<Carp::carp>.
+
+=head3 API Specification
+
+=head4 Input
+
+  {
+      level    => { type => 'string' },
+      category => { type => 'string' },
+      parts    => { type => 'array' },
+      fields   => { type => 'hashref', optional => 1 },
+  }
+
+=head4 Output
+
+  { type => 'undef' }
+
 =head2 Detection methods
 
 =over 4
@@ -303,6 +334,31 @@ for my $la_level (keys %LA_TO_METHOD) {
 }
 
 # ---------------------------------------------------------------------------
+# structured -- receive a log call with its structured fields from Log::Any
+#
+# Purpose:  Log::Any calls this instead of the per-level methods when the
+#           adapter can('structured'), passing the parts as given and the
+#           merged context and fields as a final hashref (only when there are
+#           any), so the fields reach Log::Abstraction as data, not text.
+# Entry:    $self     -- the adapter.
+#           $level    -- a Log::Any level name.
+#           $category -- the Log::Any category (unused).
+#           @parts    -- message parts, then optionally a hashref of fields.
+# Exit:     Returns nothing.
+# Side effects: Logs through the wrapped Log::Abstraction instance.
+# ---------------------------------------------------------------------------
+sub structured {
+	my ($self, $level, $category, @parts) = @_;
+
+	my $fields = (@parts && (ref($parts[-1]) eq 'HASH')) ? pop(@parts) : undef;
+	my $msg = join(' ', grep { defined($_) && length($_) } @parts);
+	my $method = $LA_TO_METHOD{$level} or return;
+
+	eval { $self->{_logger}->$method($msg, ($fields ? $fields : ())); 1 } or Carp::carp($@);
+	return;
+}
+
+# ---------------------------------------------------------------------------
 # Build is_* detection methods for every Log::Any level name.
 # Returns 1 when the adapter's Log::Abstraction threshold is at or below the
 # requested level (i.e. messages at that level would not be dropped).
@@ -327,12 +383,16 @@ C<alert>, and C<emergency> all map to C<error()>.  Applications that rely on
 distinguishing these three levels in downstream Log::Abstraction backends will
 lose that distinction.
 
-=item B<No structured field support>
+=item B<Message parts are joined with a space>
 
-Log::Any's C<log_fields()> mechanism for structured fields is not forwarded
-to Log::Abstraction.  Only the final formatted string is dispatched; callers
-that need structured output should use the Log::Abstraction CODE-ref backend
-and access the formatted string via the C<message> key.
+In structured mode Log::Any passes the message parts, including any
+C<prefix>, separately; L</structured> joins them with a single space, so
+a prefix is followed by a space.
+
+=item B<Filters disable structured fields>
+
+Log::Any doesn't use L</structured> when the proxy has a C<filter>; the
+fields then arrive as text appended to the message, as Log::Any formats them.
 
 =item B<Logging never dies>
 

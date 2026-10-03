@@ -31,6 +31,7 @@ journald
 IPC
 LF
 LoadFile
+logfmt
 LoggerProvider
 LogRecord
 logrotate
@@ -64,4 +65,5 @@ TODO
 uint
 ulevel
 Util
+xNN
 YYYY

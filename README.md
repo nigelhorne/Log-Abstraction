@@ -18,6 +18,9 @@ $logger->info('This is an info message');
 $logger->notice('This is a notice message');
 $logger->trace('This is a trace message');
 $logger->warn({ warning => 'This is a warning message' });
+
+# Structured fields
+$logger->info('User logged in', { user_id => 42 });
 ```
 
 ## Description
@@ -33,6 +36,45 @@ fd and scalar-path backends write character strings as UTF-8 (unless an
 `fd` handle already has a `:utf8` or `:encoding` layer, in which case the
 handle does the encoding), and `format => 'json'` output is UTF-8 too.
 journald fields are sent as UTF-8.  Byte strings are written unchanged.
+
+### Structured Fields
+
+Every logging method accepts a hash reference of structured fields after
+the message:
+
+```perl
+$logger->info('User logged in', { user_id => 42, ip => $ip });
+$logger->warn('Slow query', { ms => 1250 });
+```
+
+A hash reference is taken as fields only when it is the last of two or more
+arguments, so `warn({ warning => ... })` keeps its meaning, and a lone
+hash reference is still a message.  An empty hash reference is ignored.  The
+fields are copied, so changing the hash afterwards doesn't change what was
+logged.  They are kept out of the message and go to each backend as follows:
+
+- ["messages"](#messages), `array` and an ARRAY `logger` -- a `fields` key in
+the entry, alongside `level` and `message`.
+- a CODE `logger` -- a `fields` key in the hashref it is called with.
+- `format => 'json'` -- a nested `fields` object.  Objects are
+stringified; other references are kept as JSON data.
+- `journald` -- journal fields.  Each name is upper-cased, characters
+other than `A-Z`, `0-9` and `_` become `_`, leading underscores are
+removed and it is cut to 64 characters; a field left with no name is
+dropped.  Fields override the extra keys in the `journald` hash, but never
+`MESSAGE`, `PRIORITY` or `SYSLOG_IDENTIFIER`.
+- text formats (`file`, `fd`, a scalar `logger`), `syslog`,
+`sendmail` and object loggers -- appended to the message as logfmt-style
+`key=value` pairs in key order, e.g. `User logged in ip=10.0.0.1 user_id=42`.
+Characters other than `[\w.-]` in a key become `_`.  A value that is empty
+or contains white space, `"`, `=` or `\` is double-quoted, with `"` and
+`\` escaped and control characters written as `\n`, `\r`, `\t` or
+`\xNN`.  Objects are stringified and other references written as JSON.  An
+object logger is passed the pairs as an extra argument after the message.
+
+When logging through [Log::Any](https://metacpan.org/pod/Log%3A%3AAny), a hash reference at the end of the call,
+together with the proxy's `context`, arrives here as fields; see
+["structured" in Log::Any::Adapter::Abstraction](https://metacpan.org/pod/Log%3A%3AAny%3A%3AAdapter%3A%3AAbstraction#structured).
 
 ## Methods
 
@@ -105,7 +147,8 @@ called on an object.  It may also be called as a plain function,
 
     This format is compatible with log aggregators such as journald, Loki,
     Elasticsearch, and Splunk.  `class` is included when the logger is a subclass
-    of `Log::Abstraction`.  Keys are emitted in sorted order.
+    of `Log::Abstraction`, and `fields` when the call has ["Structured fields"](#structured-fields).
+    Keys are emitted in sorted order.
 
     **Security note:** because `format` may contain `%env_*%` tokens, avoid
     granting untrusted sources write access to config files that set this key.
@@ -129,10 +172,12 @@ called on an object.  It may also be called as a plain function,
 
     One of:
 
-    - A code reference -- called with a hashref `{ class, file, line, level, message, ctx }`
+    - A code reference -- called with a hashref `{ class, file, line, level, message, ctx, fields }`
+    (`ctx` and `fields` only when there are any)
     - An object -- method matching the level name is called on it
     - A hash reference -- may contain `file`, `array`, `fd`, `syslog`, `journald`, and/or `sendmail` keys
-    - An array reference -- `{ level, message }` hashrefs are pushed onto it
+    - An array reference -- `{ level, message }` hashrefs are pushed onto it, with a
+    `fields` key when the call has ["Structured fields"](#structured-fields)
     - A scalar string -- treated as a file path to append to
 
     When not supplied, [Log::Log4perl](https://metacpan.org/pod/Log%3A%3ALog4perl) is initialised as the default backend.
@@ -476,7 +521,8 @@ None.
 #### Returns
 
 An array reference of hashrefs, each with keys `level` (string) and
-`message` (string).
+`message` (string), and `fields` (hashref) when the message was logged with
+["Structured fields"](#structured-fields).
 
 #### Side Effects
 
@@ -502,7 +548,7 @@ my $msgs = $logger->messages();
 ##### Output
 
 ```perl
-{ type => 'arrayref', element_type => { level => 'string', message => 'string' } }
+{ type => 'arrayref', element_type => { level => 'string', message => 'string', fields => 'hashref?' } }
 ```
 
 ### Trace
@@ -522,7 +568,8 @@ message is dropped silently when the configured level is above `debug`.
 - `@messages`
 
     One or more strings, or a single array reference.  All elements are joined
-    without a separator before storage.
+    without a separator before storage.  May be followed by a hashref of
+    ["Structured fields"](#structured-fields).
 
 #### Returns
 
@@ -573,7 +620,8 @@ Logs a message at `debug` level.
 
 - `@messages`
 
-    One or more strings, or a single array reference.
+    One or more strings, or a single array reference, optionally followed by
+    a hashref of ["Structured fields"](#structured-fields).
 
 #### Returns
 
@@ -621,7 +669,8 @@ Logs a message at `info` level.
 
 - `@messages`
 
-    One or more strings, or a single array reference.
+    One or more strings, or a single array reference, optionally followed by
+    a hashref of ["Structured fields"](#structured-fields).
 
 #### Returns
 
@@ -670,7 +719,8 @@ Logs a message at `notice` level (higher priority than `info`, lower than
 
 - `@messages`
 
-    One or more strings, or a single array reference.
+    One or more strings, or a single array reference, optionally followed by
+    a hashref of ["Structured fields"](#structured-fields).
 
 #### Returns
 
@@ -713,6 +763,7 @@ $logger->warn(\@messages);
 $logger->warn(warning => $text);
 $logger->warn({ warning => $text });
 $logger->warn(warning => \@parts);
+$logger->warn($text, \%fields);
 ```
 
 Logs a warning message.  Also dispatches to syslog and/or email backends
@@ -732,6 +783,8 @@ A `warn()` call with an empty or all-undef argument list is a silent no-op.
 
     A plain list of strings joined without separator, **or** a named `warning`
     parameter whose value may be a string or an array reference of strings.
+    Either form may be followed by a hashref of ["Structured fields"](#structured-fields), e.g.
+    `warn('Slow query', { ms => 1250 })`.
 
 #### Returns
 
@@ -785,6 +838,7 @@ in the second table under ["new"](#new)'s MESSAGES.
 ```perl
 $logger->error(@messages);
 $logger->error(warning => $text);
+$logger->error($text, \%fields);
 ```
 
 Logs an error-level message.  Behaves identically to `warn()` but at the
@@ -1018,11 +1072,12 @@ callback as described above.
     logging to syslog shares one connection, opened with the `script_name` of
     the first.  It is closed when the last such instance is destroyed.
 
-- **No structured log fields**
+- **Structured fields are text in most backends**
 
-    All backends except the CODE-ref backend reduce the message to a flat string.
-    To log structured key/value pairs, use a CODE-ref backend that formats the
-    data itself.
+    Only the history, array, CODE-ref, JSON and journald backends keep
+    ["Structured fields"](#structured-fields) as data.  Text formats, syslog, email and object
+    loggers get them as `key=value` text appended to the message, and a custom
+    `format` has no token for them on their own.
 
 - **Single-threaded email throttle**
 

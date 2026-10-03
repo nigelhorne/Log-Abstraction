@@ -1,5 +1,16 @@
 Revision history for Log-Abstraction
 
+0.36
+	[ Enhancements ]
+	- Structured fields: every logging method accepts a hashref of
+	  fields after the message, e.g. $log->info('login', { user_id => 42 }).
+	  They are kept as data in the history, array and CODE-ref backends,
+	  as a nested "fields" object in format => 'json', and as journal
+	  fields in journald; other backends get them appended as logfmt
+	  key=value text.
+	- The Log::Any adapter implements structured(), so a trailing hashref
+	  and the Log::Any context reach Log::Abstraction as fields.
+
 0.35	Wed Sep 30 09:44:46 PM EDT 2026
 	[ Enhancements ]
 	- New max_messages option caps the in-memory message history.

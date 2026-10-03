@@ -60,9 +60,6 @@ package Log::Abstraction;
 #     Sub::Private (e.g. wrap immediately or use INIT when CHECK has passed).
 #
 # Roadmap - features:
-#   - Structured fields, e.g. $log->info('msg', { user_id => 42 }), carried
-#     through to JSON, journald fields, CODE callbacks and Log::Any's
-#     log_fields().
 #   - Public critical/alert/emergency methods so the Log::Any adapter no
 #     longer collapses them into error.
 #   - is_trace/is_info/is_notice/is_warn/is_error alongside is_debug.
@@ -173,6 +170,9 @@ Readonly::Scalar my $RE_JOURNALD_FIELD => qr/^[A-Z0-9][A-Z0-9_]*$/;
 # and bigger datagrams fail, so longer messages are truncated to fit
 Readonly::Scalar my $JOURNALD_MAX_PAYLOAD => 200_000;
 
+# Longest journald field name; journald ignores fields with longer names
+Readonly::Scalar my $JOURNALD_MAX_FIELD_NAME => 64;
+
 # Marker appended to a message truncated to fit in a journald datagram
 Readonly::Scalar my $TRUNCATED_MARKER => ' [truncated]';
 
@@ -210,6 +210,9 @@ our $VERSION = 0.35;
   $logger->trace('This is a trace message');
   $logger->warn({ warning => 'This is a warning message' });
 
+  # Structured fields
+  $logger->info('User logged in', { user_id => 42 });
+
 =head1 DESCRIPTION
 
 The C<Log::Abstraction> class provides a flexible logging layer on top of
@@ -223,6 +226,51 @@ fd and scalar-path backends write character strings as UTF-8 (unless an
 C<fd> handle already has a C<:utf8> or C<:encoding> layer, in which case the
 handle does the encoding), and C<format =E<gt> 'json'> output is UTF-8 too.
 journald fields are sent as UTF-8.  Byte strings are written unchanged.
+
+=head2 Structured fields
+
+Every logging method accepts a hash reference of structured fields after
+the message:
+
+  $logger->info('User logged in', { user_id => 42, ip => $ip });
+  $logger->warn('Slow query', { ms => 1250 });
+
+A hash reference is taken as fields only when it is the last of two or more
+arguments, so C<warn({ warning =E<gt> ... })> keeps its meaning, and a lone
+hash reference is still a message.  An empty hash reference is ignored.  The
+fields are copied, so changing the hash afterwards doesn't change what was
+logged.  They are kept out of the message and go to each backend as follows:
+
+=over 4
+
+=item * L</messages>, C<array> and an ARRAY C<logger> -- a C<fields> key in
+the entry, alongside C<level> and C<message>.
+
+=item * a CODE C<logger> -- a C<fields> key in the hashref it is called with.
+
+=item * C<format =E<gt> 'json'> -- a nested C<fields> object.  Objects are
+stringified; other references are kept as JSON data.
+
+=item * C<journald> -- journal fields.  Each name is upper-cased, characters
+other than C<A-Z>, C<0-9> and C<_> become C<_>, leading underscores are
+removed and it is cut to 64 characters; a field left with no name is
+dropped.  Fields override the extra keys in the C<journald> hash, but never
+C<MESSAGE>, C<PRIORITY> or C<SYSLOG_IDENTIFIER>.
+
+=item * text formats (C<file>, C<fd>, a scalar C<logger>), C<syslog>,
+C<sendmail> and object loggers -- appended to the message as logfmt-style
+C<key=value> pairs in key order, e.g. C<User logged in ip=10.0.0.1 user_id=42>.
+Characters other than C<[\w.-]> in a key become C<_>.  A value that is empty
+or contains white space, C<">, C<=> or C<\> is double-quoted, with C<"> and
+C<\> escaped and control characters written as C<\n>, C<\r>, C<\t> or
+C<\xNN>.  Objects are stringified and other references written as JSON.  An
+object logger is passed the pairs as an extra argument after the message.
+
+=back
+
+When logging through L<Log::Any>, a hash reference at the end of the call,
+together with the proxy's C<context>, arrives here as fields; see
+L<Log::Any::Adapter::Abstraction/structured>.
 
 =head1 METHODS
 
@@ -289,7 +337,8 @@ all file and fd backends to emit one compact JSON object per log line:
 
 This format is compatible with log aggregators such as journald, Loki,
 Elasticsearch, and Splunk.  C<class> is included when the logger is a subclass
-of C<Log::Abstraction>.  Keys are emitted in sorted order.
+of C<Log::Abstraction>, and C<fields> when the call has L</Structured fields>.
+Keys are emitted in sorted order.
 
 B<Security note:> because C<format> may contain C<%env_*%> tokens, avoid
 granting untrusted sources write access to config files that set this key.
@@ -315,13 +364,15 @@ One of:
 
 =over 4
 
-=item * A code reference -- called with a hashref C<{ class, file, line, level, message, ctx }>
+=item * A code reference -- called with a hashref C<{ class, file, line, level, message, ctx, fields }>
+(C<ctx> and C<fields> only when there are any)
 
 =item * An object -- method matching the level name is called on it
 
 =item * A hash reference -- may contain C<file>, C<array>, C<fd>, C<syslog>, C<journald>, and/or C<sendmail> keys
 
-=item * An array reference -- C<{ level, message }> hashrefs are pushed onto it
+=item * An array reference -- C<{ level, message }> hashrefs are pushed onto it, with a
+C<fields> key when the call has L</Structured fields>
 
 =item * A scalar string -- treated as a file path to append to
 
@@ -726,6 +777,78 @@ sub _level_number :Private {
 }
 
 # ---------------------------------------------------------------------------
+# _to_json -- encode a data structure as a compact, canonical JSON string
+#
+# Purpose:      One place to build and use the cached JSON::PP encoder, for
+#               format => 'json' lines and for reference-valued fields.
+# Entry:        $data -- a reference to encode.
+# Exit:         Returns a character string (not UTF-8 bytes).  Falls back to
+#               Perl's stringification if the data can't be encoded (e.g. it
+#               is nested too deeply), so logging never dies.
+# Notes:        A pure function (no $self), called as _to_json($data).
+#               Blessed objects and other values JSON can't represent are
+#               encoded as null.
+# ---------------------------------------------------------------------------
+sub _to_json :Private {
+	my ($data) = @_;
+
+	require JSON::PP;
+	$json_encoder ||= JSON::PP->new->canonical(1)->allow_blessed(1)->allow_unknown(1);
+	my $json = eval { $json_encoder->encode($data) };
+	return $json // "$data";
+}
+
+# ---------------------------------------------------------------------------
+# _field_string -- turn one structured-field value into a plain string
+#
+# Purpose:      Text backends and journald need a string for each field.
+# Entry:        $value -- the field value: a scalar, an object, or a reference.
+# Exit:         Returns '' for undef, the stringified object for a blessed
+#               value (so overloaded stringification is honoured), JSON for
+#               any other reference, and the value itself otherwise.
+# Notes:        A pure function (no $self), called as _field_string($value).
+# ---------------------------------------------------------------------------
+sub _field_string :Private {
+	my ($value) = @_;
+
+	return '' unless defined($value);
+	return "$value" if(!ref($value) || blessed($value));
+	return _to_json($value);
+}
+
+# ---------------------------------------------------------------------------
+# _fields_text -- render structured fields as logfmt-style key=value pairs
+#
+# Purpose:      Text formats, syslog, email and object backends have no field
+#               support, so the fields are appended to the message as text.
+# Entry:        $fields -- a hashref of field names to values.
+# Exit:         Returns 'key=value key2="value 2"', with keys in sorted order.
+# Notes:        A pure function (no $self), called as _fields_text($fields).
+#               Characters outside [\w.-] in a key become '_'.  A value that
+#               is empty or contains white space, '"', '=' or '\' is quoted,
+#               with '"' and '\' escaped and control characters written as
+#               \n, \r, \t or \xNN, so a field can never contain a line break
+#               and forge a log entry.
+# ---------------------------------------------------------------------------
+sub _fields_text :Private {
+	my ($fields) = @_;
+
+	my %escapes = ("\n" => '\n', "\r" => '\r', "\t" => '\t');
+	my @pairs;
+	for my $name (sort keys %{$fields}) {
+		(my $key = $name) =~ s/[^\w.\-]/_/g;
+		my $value = _field_string($fields->{$name});
+		if(($value eq '') || ($value =~ /[\s"=\\\x00-\x1F\x7F]/)) {
+			$value =~ s/(["\\])/\\$1/g;
+			$value =~ s/([\x00-\x1F\x7F])/$escapes{$1} \/\/ sprintf('\\x%02x', ord($1))/ge;
+			$value = qq{"$value"};
+		}
+		push @pairs, "$key=$value";
+	}
+	return join(' ', @pairs);
+}
+
+# ---------------------------------------------------------------------------
 # _write_line -- append one formatted line to a file path or filehandle
 #
 # Purpose:      Single output path for the file, fd and scalar-path backends.
@@ -867,6 +990,7 @@ sub _journald_send :Private {
 #                               0 to use the no-class format.
 #               $caller_file -- pre-resolved source file of the logging call.
 #               $caller_line -- pre-resolved source line of the logging call.
+#               $fields      -- optional hashref of structured fields.
 # Exit:         Returns the formatted log line (without trailing newline).
 # Notes:        %env_FOO% tokens are expanded with a // '' fallback so that
 #               missing environment variables expand silently to empty string.
@@ -876,11 +1000,12 @@ sub _journald_send :Private {
 #               caller's code, not an internal dispatch frame.
 #
 # Pseudocode:
-#   FUNCTION _format_message(self, level, str, use_class, caller_file, caller_line)
+#   FUNCTION _format_message(self, level, str, use_class, caller_file, caller_line, fields)
 #     IF self->{'format'} eq 'json':
 #       Build hash: timestamp, level, message, file=caller_file, line=caller_line
 #                   (+ class if subclass)
-#       RETURN cached JSON::PP encoder->encode(\%hash)
+#                   (+ fields, with blessed values stringified, if any)
+#       RETURN _to_json(\%hash)
 #              [single compact line, character string, sorted keys]
 #
 #     Choose default format template:
@@ -889,7 +1014,8 @@ sub _journald_send :Private {
 #     Override with self->{'format'} if the caller supplied a custom format
 #
 #     Compute token values:
-#       message   = str with each embedded line break followed by a tab, so
+#       message   = str, plus the fields as logfmt key=value pairs if any,
+#                   with each embedded line break followed by a tab, so
 #                   continuation lines can't pass as new log entries
 #       ulevel    = uc(level)
 #       class     = blessed class if it is a subclass, else '' (base package)
@@ -909,13 +1035,12 @@ sub _journald_send :Private {
 #   END FUNCTION
 # ---------------------------------------------------------------------------
 sub _format_message :Private {
-	my ($self, $level, $str, $use_class, $caller_file, $caller_line) = @_;
+	my ($self, $level, $str, $use_class, $caller_file, $caller_line, $fields) = @_;
 
 	my $format = $self->{'format'};
 
 	# 'json' is a magic format value: emit a compact JSON object per line
 	if(defined($format) && ($format eq 'json')) {
-		require JSON::PP;
 		my $bclass = blessed($self);
 		my $class  = ($bclass && $bclass ne __PACKAGE__) ? $bclass : undef;
 		my %obj = (
@@ -926,9 +1051,14 @@ sub _format_message :Private {
 			line      => $caller_line + 0,
 		);
 		$obj{class} = $class if defined($class);
+		if($fields) {
+			# Stringify objects, which would otherwise be encoded as null
+			$obj{fields} = {
+				map { $_ => (blessed($fields->{$_}) ? "$fields->{$_}" : $fields->{$_}) } keys %{$fields}
+			};
+		}
 		# Characters out (not UTF-8 bytes): _write_line does the encoding
-		$json_encoder ||= JSON::PP->new->canonical(1);
-		return $json_encoder->encode(\%obj);
+		return _to_json(\%obj);
 	}
 
 	# Select the appropriate default when no custom format is configured ('' is falsy)
@@ -943,7 +1073,8 @@ sub _format_message :Private {
 
 	# Indent continuation lines so that a message such as
 	# "a\nERROR> [...] forged" can't pass as a separate log entry
-	(my $message = $str) =~ s/\r\n?|\n/\n\t/g;
+	my $message = $fields ? join(' ', grep { length } $str, _fields_text($fields)) : $str;
+	$message =~ s/\r\n?|\n/\n\t/g;
 
 	my $callstack = "$caller_file $caller_line";
 	my $timestamp = strftime '%Y-%m-%d %H:%M:%S', localtime;
@@ -973,7 +1104,8 @@ sub _format_message :Private {
 #               internal history, then dispatches to the configured backend(s).
 # Entry:        $self    -- the logger object.
 #               $level   -- one of trace/debug/info/notice/warn/error.
-#               @messages -- one or more message strings (or a single arrayref).
+#               @messages -- one or more message strings (or a single arrayref),
+#                           optionally followed by a hashref of structured fields.
 # Exit:         Returns nothing (void).  Croaks on configuration errors.
 # Side effects: Appends to $self->{messages}.  May write to a file, fd,
 #               array, syslog, or email backend.  May load Email::* modules.
@@ -987,39 +1119,45 @@ sub _format_message :Private {
 #     CROAK if level is not a recognised syslog level name
 #     RETURN early if syslog_values{level} > self->{'level'} (below threshold)
 #
+#     IF more than one argument AND the last is an unblessed hashref:
+#       Pop it as the structured fields (a shallow copy; undef if empty)
 #     Flatten single-arrayref argument to a list; filter out undefs; join to $str
-#     Push { level, message } onto self->{messages} (always recorded);
+#     $text = $str plus the fields as logfmt key=value pairs (for backends
+#       with no field support: syslog, email, objects)
+#     Push { level, message, fields? } onto self->{messages} (always recorded);
 #       drop the oldest entries beyond max_messages
 #     Set $class = '' for base package, else the blessed class name
 #
 #     IF self->{'logger'} is a CODE ref:
-#       Build args hashref { class, file, line, level, message, ctx? }
+#       Build args hashref { class, file, line, level, message, ctx?, fields? }
 #       Call logger->( args )
 #
 #     ELSIF self->{'logger'} is an ARRAY ref:
-#       Push { level, message }
+#       Push { level, message, fields? }
 #
 #     ELSIF self->{'logger'} is a HASH ref:
 #       IF 'file' key present:
 #         validate path; format line; (eval) open>>file, print, close
 #       IF 'array' key present:
-#         push { level, message }
+#         push { level, message, fields? }
 #       IF 'sendmail' key present with a 'to' address:
 #         IF level passes threshold AND not throttled:
 #           CROAK if host contains unsafe characters
 #           CROAK if port is out of 1-65535 range
-#           (eval) load Email::* modules; build email with sanitised headers;
-#                  send via SMTP transport; carp on delivery failure
+#           (eval) load Email::* modules; build email with sanitised headers
+#                  and $text as the body; send via SMTP transport
 #           Record timestamp for throttle on success; a failure is carped
 #           and the remaining backends still run
 #       IF 'syslog' key present:
 #         IF level passes threshold:
 #           Open syslog connection on first use (setlogsock, openlog)
 #           (eval) map level to syslog priority; call Sys::Syslog::syslog
-#                  with a '%s' format; carp on failure
+#                  with a '%s' format and $text; carp on failure
 #       IF 'journald' key present:
 #         Map level to syslog PRIORITY integer
 #         Build fields: MESSAGE, PRIORITY, SYSLOG_IDENTIFIER, plus any extra
+#           from the config hash, plus the structured fields (names
+#           upper-cased and sanitised; they can't replace the first three)
 #         (eval) _journald_send(socket_path, %fields); carp on the first
 #                failure only, until a send succeeds again
 #       IF 'fd' key present:
@@ -1035,10 +1173,10 @@ sub _format_message :Private {
 #     ELSIF self->{'logger'} is a blessed object:
 #       Map 'notice' to 'info' for backends without notice() (e.g. Log::Log4perl)
 #       CROAK if object cannot handle the level
-#       Call $logger->$level(@messages)
+#       Call $logger->$level(@messages), plus the fields as logfmt text
 #
 #     ELSIF self->{'array'} top-level key:
-#       Push { level, message }
+#       Push { level, message, fields? }
 #
 #     IF self->{'file'} top-level key:
 #       Validate path; format line; (eval) open>>file, print, close
@@ -1064,6 +1202,15 @@ sub _log :Private {
 		return;
 	}
 
+	# A trailing hashref after the message holds structured fields, e.g.
+	# $log->info('login', { user_id => 42 }).  Copy it so that the caller
+	# changing it later doesn't rewrite the history
+	my $fields;
+	if((scalar(@messages) > 1) && (ref($messages[-1]) eq 'HASH')) {
+		$fields = pop @messages;
+		$fields = %{$fields} ? { %{$fields} } : undef;
+	}
+
 	# Flatten a single arrayref argument to a plain list
 	if((scalar(@messages) == 1) && (ref($messages[0]) eq 'ARRAY')) {
 		@messages = @{$messages[0]};
@@ -1074,10 +1221,17 @@ sub _log :Private {
 	my $str = join('', @messages);
 	chomp($str);
 
+	# Backends with no notion of fields get them appended as text
+	my $fields_text = $fields ? _fields_text($fields) : undef;
+	my $text = $fields ? join(' ', grep { length } $str, $fields_text) : $str;
+
+	# The entry recorded by the history and the array backends
+	my @entry = (level => $level, message => $str, ($fields ? (fields => $fields) : ()));
+
 	# Record in the internal message history regardless of backend,
 	# discarding the oldest entries beyond max_messages
 	my $history = $self->{messages};
-	push @{$history}, { level => $level, message => $str };
+	push @{$history}, { @entry };
 	if(defined(my $max = $self->{'max_messages'})) {
 		splice(@{$history}, 0, scalar(@{$history}) - $max) if(scalar(@{$history}) > $max);
 	}
@@ -1116,10 +1270,11 @@ sub _log :Private {
 			if(my $ctx = $self->{ctx}) {
 				$args->{ctx} = $ctx;
 			}
+			$args->{fields} = $fields if($fields);
 			$logger->($args);
 		} elsif(ref($logger) eq 'ARRAY') {
 			# ARRAY-ref backend: push a simple hashref
-			push @{$logger}, { level => $level, message => $str };
+			push @{$logger}, { @entry };
 		} elsif(ref($logger) eq 'HASH') {
 			# HASH backend: route to whichever sub-keys are present
 
@@ -1127,13 +1282,13 @@ sub _log :Private {
 			if(my $raw_file = $logger->{'file'}) {
 				my $file = $self->_validate_file_path($raw_file);
 				my $use_class = ($class ne '') ? 1 : 0;
-				my $line = $self->_format_message($level, $str, $use_class, $caller_file, $caller_line);
+				my $line = $self->_format_message($level, $str, $use_class, $caller_file, $caller_line, $fields);
 				$self->_write_line($file, $line);
 			}
 
 			# -- array sub-backend ------------------------------------------
 			if(my $array = $logger->{'array'}) {
-				push @{$array}, { level => $level, message => $str };
+				push @{$array}, { @entry };
 			}
 
 			# -- sendmail sub-backend ---------------------------------------
@@ -1192,7 +1347,7 @@ sub _log :Private {
 									_sanitize_email_header($subject),
 								);
 							}
-							$email->body_set($str);
+							$email->body_set($text);
 
 							my $transport = Email::Sender::Transport::SMTP->new({
 								host => $host,
@@ -1243,7 +1398,7 @@ sub _log :Private {
 					eval {
 						my $priority = $LEVEL_TO_SYSLOG_PRIORITY{$level} // 'warning';
 						my $facility = $syslog->{'facility'};
-						Sys::Syslog::syslog("$priority|$facility", '%s', $str);
+						Sys::Syslog::syslog("$priority|$facility", '%s', $text);
 					};
 					if($@) {
 						Carp::carp(ref($self), ": syslog failed: $@");
@@ -1265,7 +1420,7 @@ sub _log :Private {
 				};
 
 				# Mandatory journald fields
-				my %fields = (
+				my %entry = (
 					MESSAGE           => $str,
 					PRIORITY          => $priority,
 					SYSLOG_IDENTIFIER => $ident,
@@ -1274,14 +1429,26 @@ sub _log :Private {
 				# Include any extra fields from the journald config hash
 				for my $key (keys %{$jd}) {
 					next if lc($key) =~ /^(?:socket|identifier)$/;
-					$fields{uc($key)} = $jd->{$key};
+					$entry{uc($key)} = $jd->{$key};
+				}
+
+				# Then the structured fields.  These weren't checked by new(),
+				# so make each name valid rather than reject it: upper-case,
+				# other characters to '_', no leading '_' (journald reserves
+				# those for trusted fields) and at most 64 characters
+				for my $key (keys %{$fields || {}}) {
+					(my $name = uc($key)) =~ s/[^A-Z0-9_]/_/g;
+					$name =~ s/^_+//;
+					$name = substr($name, 0, $JOURNALD_MAX_FIELD_NAME);
+					next if(($name eq '') || $name =~ /^(?:MESSAGE|PRIORITY|SYSLOG_IDENTIFIER)$/);
+					$entry{$name} = _field_string($fields->{$key});
 				}
 
 				# Delivery failures are silent; the app must not crash on log
 				# errors.  Carp only on the first failure, so that a system
 				# without journald (FreeBSD, macOS) isn't flooded with warnings;
 				# a later success re-arms the warning.
-				if(eval { $self->_journald_send($sock_path, %fields); 1 }) {
+				if(eval { $self->_journald_send($sock_path, %entry); 1 }) {
 					delete $self->{_journald_failed};
 				} elsif(!$self->{_journald_failed}++) {
 					Carp::carp(ref($self), ": journald send failed: $@");
@@ -1291,7 +1458,7 @@ sub _log :Private {
 			# -- fd sub-backend ---------------------------------------------
 			if(my $fout = $logger->{'fd'}) {
 				my $use_class = ($class ne '') ? 1 : 0;
-				my $line = $self->_format_message($level, $str, $use_class, $caller_file, $caller_line);
+				my $line = $self->_format_message($level, $str, $use_class, $caller_file, $caller_line, $fields);
 				$self->_write_line($fout, $line);
 
 			} elsif(!$logger->{'file'} && !$logger->{'array'}
@@ -1305,7 +1472,7 @@ sub _log :Private {
 			# Scalar-path backend: validate path then append to the file
 			my $safe_path = $self->_validate_file_path($logger);
 			my $use_class = ($class ne '') ? 1 : 0;
-			my $line = $self->_format_message($level, $str, $use_class, $caller_file, $caller_line);
+			my $line = $self->_format_message($level, $str, $use_class, $caller_file, $caller_line, $fields);
 			$self->_write_line($safe_path, $line);
 
 		} elsif(Scalar::Util::blessed($logger)) {
@@ -1321,7 +1488,7 @@ sub _log :Private {
 					);
 				}
 			}
-			$logger->$level(@messages);
+			$logger->$level(@messages, ($fields ? ((length($str) ? ' ' : '') . $fields_text) : ()));
 
 		} else {
 			croak(ref($self),
@@ -1330,7 +1497,7 @@ sub _log :Private {
 
 	} elsif($self->{'array'}) {
 		# Top-level 'array' key (not nested inside logger hash)
-		push @{$self->{'array'}}, { level => $level, message => $str };
+		push @{$self->{'array'}}, { @entry };
 	}
 
 	# -----------------------------------------------------------------------
@@ -1339,13 +1506,13 @@ sub _log :Private {
 	if($self->{'file'}) {
 		my $file = $self->_validate_file_path($self->{'file'});
 		my $use_class = ($class ne '') ? 1 : 0;
-		my $line = $self->_format_message($level, $str, $use_class, $caller_file, $caller_line);
+		my $line = $self->_format_message($level, $str, $use_class, $caller_file, $caller_line, $fields);
 		$self->_write_line($file, $line);
 	}
 
 	if(my $fout = $self->{'fd'}) {
 		my $use_class = ($class ne '') ? 1 : 0;
-		my $line = $self->_format_message($level, $str, $use_class, $caller_file, $caller_line);
+		my $line = $self->_format_message($level, $str, $use_class, $caller_file, $caller_line, $fields);
 		$self->_write_line($fout, $line);
 	}
 }
@@ -1369,6 +1536,9 @@ sub _log :Private {
 #   FUNCTION _high_priority(self, level, args...)
 #     RETURN early if no args supplied
 #
+#     IF more than one arg AND the last is an unblessed hashref:
+#       Pop it as the structured fields
+#
 #     Attempt to parse args as named-parameter form via Params::Get (in eval)
 #
 #     IF named 'warning' key found in result:
@@ -1382,7 +1552,7 @@ sub _log :Private {
 #       IF error level: CROAK with warning text; RETURN
 #       CARP with warning text; RETURN
 #
-#     Call self->_log(level, warning)
+#     Call self->_log(level, warning, fields?)
 #
 #     no_backend = no logger, array, file or fd configured
 #
@@ -1400,6 +1570,13 @@ sub _high_priority :Private {
 
 	# Nothing to log if no arguments supplied
 	return if(scalar(@_) == 0);
+
+	# A trailing hashref after the message holds structured fields.  A lone
+	# hashref is the warn({ warning => ... }) form, not fields
+	my @fields;
+	if((scalar(@_) > 1) && (ref($_[-1]) eq 'HASH')) {
+		@fields = (pop @_);
+	}
 
 	# Try to interpret arguments as warn(warning => VALUE) named form
 	my $params;
@@ -1432,7 +1609,7 @@ sub _high_priority :Private {
 	}
 
 	# Log the message through the normal dispatch path
-	$self->_log($level, $warning);
+	$self->_log($level, $warning, @fields);
 
 	# A top-level file or fd counts as a backend, as do logger and array
 	my $no_backend = !defined($self->{'logger'}) && !defined($self->{'array'})
@@ -1604,7 +1781,8 @@ None.
 =head3 Returns
 
 An array reference of hashrefs, each with keys C<level> (string) and
-C<message> (string).
+C<message> (string), and C<fields> (hashref) when the message was logged with
+L</Structured fields>.
 
 =head3 Side Effects
 
@@ -1625,7 +1803,7 @@ internal history.
 
 =head4 Output
 
-  { type => 'arrayref', element_type => { level => 'string', message => 'string' } }
+  { type => 'arrayref', element_type => { level => 'string', message => 'string', fields => 'hashref?' } }
 
 =cut
 
@@ -1652,7 +1830,8 @@ message is dropped silently when the configured level is above C<debug>.
 =item * C<@messages>
 
 One or more strings, or a single array reference.  All elements are joined
-without a separator before storage.
+without a separator before storage.  May be followed by a hashref of
+L</Structured fields>.
 
 =back
 
@@ -1707,7 +1886,8 @@ Logs a message at C<debug> level.
 
 =item * C<@messages>
 
-One or more strings, or a single array reference.
+One or more strings, or a single array reference, optionally followed by
+a hashref of L</Structured fields>.
 
 =back
 
@@ -1759,7 +1939,8 @@ Logs a message at C<info> level.
 
 =item * C<@messages>
 
-One or more strings, or a single array reference.
+One or more strings, or a single array reference, optionally followed by
+a hashref of L</Structured fields>.
 
 =back
 
@@ -1812,7 +1993,8 @@ C<warn>).
 
 =item * C<@messages>
 
-One or more strings, or a single array reference.
+One or more strings, or a single array reference, optionally followed by
+a hashref of L</Structured fields>.
 
 =back
 
@@ -1858,6 +2040,7 @@ sub notice {
   $logger->warn(warning => $text);
   $logger->warn({ warning => $text });
   $logger->warn(warning => \@parts);
+  $logger->warn($text, \%fields);
 
 Logs a warning message.  Also dispatches to syslog and/or email backends
 when those are configured.  Falls back to C<Carp::carp> when no backend
@@ -1878,6 +2061,8 @@ A C<warn()> call with an empty or all-undef argument list is a silent no-op.
 
 A plain list of strings joined without separator, B<or> a named C<warning>
 parameter whose value may be a string or an array reference of strings.
+Either form may be followed by a hashref of L</Structured fields>, e.g.
+C<warn('Slow query', { ms =E<gt> 1250 })>.
 
 =back
 
@@ -1936,6 +2121,7 @@ sub warn {
 
   $logger->error(@messages);
   $logger->error(warning => $text);
+  $logger->error($text, \%fields);
 
 Logs an error-level message.  Behaves identically to C<warn()> but at the
 C<error> level, which triggers C<Carp::croak> if C<croak_on_error> is set
@@ -2189,11 +2375,12 @@ C<openlog()> and C<closelog()> act on the whole process, so every instance
 logging to syslog shares one connection, opened with the C<script_name> of
 the first.  It is closed when the last such instance is destroyed.
 
-=item B<No structured log fields>
+=item B<Structured fields are text in most backends>
 
-All backends except the CODE-ref backend reduce the message to a flat string.
-To log structured key/value pairs, use a CODE-ref backend that formats the
-data itself.
+Only the history, array, CODE-ref, JSON and journald backends keep
+L</Structured fields> as data.  Text formats, syslog, email and object
+loggers get them as C<key=value> text appended to the message, and a custom
+C<format> has no token for them on their own.
 
 =item B<Single-threaded email throttle>
 
