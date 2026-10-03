@@ -38,6 +38,9 @@ t/pod-coverage.t
 t/pod-synopsis.t
 t/pod.t
 t/regressions.t
+t/rt_178070.t
+t/rt_180018.t
+t/rt_181461.t
 t/sendmail.t
 t/structured_fields.t
 t/subclass.t
