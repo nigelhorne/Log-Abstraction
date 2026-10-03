@@ -26,6 +26,7 @@ t/extended_tests.t
 t/function.t
 t/high_levels.t
 t/integration.t
+t/is_level.t
 t/journald.t
 t/json_format.t
 t/locales.t

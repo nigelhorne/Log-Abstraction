@@ -8,7 +8,6 @@ use parent 'Log::Any::Adapter::Base';
 
 use Carp;
 use Log::Abstraction;
-use Readonly::Values::Syslog 0.04;
 use Scalar::Util 'blessed';
 
 our $VERSION = '0.35';
@@ -288,8 +287,9 @@ logging methods, a croak is turned into a C<Carp::carp>.
   if($adapter->is_debug()) { ... }
 
 Return 1 if a message at that level would be logged by the wrapped
-L<Log::Abstraction> instance's level threshold, otherwise 0.  As in
-Log::Abstraction, C<is_trace> equals C<is_debug>.
+L<Log::Abstraction> instance's level threshold, otherwise 0.  Each calls the
+L<Log::Abstraction> method of the same name (C<is_warning> calls
+C<is_warn>).  As in Log::Abstraction, C<is_trace> equals C<is_debug>.
 
 =head3 API Specification
 
@@ -346,15 +346,15 @@ sub structured {
 
 # ---------------------------------------------------------------------------
 # Build is_* detection methods for every Log::Any level name.
-# Returns 1 when the adapter's Log::Abstraction threshold is at or below the
-# requested level (i.e. messages at that level would not be dropped).
+# Each delegates to the matching Log::Abstraction is_* method (is_warning to
+# is_warn), which returns 1 when messages at that level would not be dropped.
 # ---------------------------------------------------------------------------
 for my $la_level (keys %LA_TO_METHOD) {
-	my $threshold = $syslog_values{ $LA_TO_METHOD{$la_level} };
+	my $detector = "is_$LA_TO_METHOD{$la_level}";
 	no strict 'refs';
 	*{"is_$la_level"} = sub {
 		my $self = $_[0];
-		return ($self->{_logger}->level() >= $threshold) ? 1 : 0;
+		return $self->{_logger}->$detector();
 	};
 }
 
