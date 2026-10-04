@@ -11,6 +11,7 @@
 use strict;
 use warnings;
 
+use Config;
 use File::Spec;
 use File::Temp qw(tempdir);
 use IPC::Open3;
@@ -18,17 +19,36 @@ use Test::Most;
 
 use Log::Abstraction;
 
-# Run perl in a child, with $dir searched before the current @INC.  @args
-# follow the -I options.  Returns the exit status and the combined output
-sub run_perl {
-	my ($dir, @args) = @_;
+# Run the perl script $script in a child, with $dir searched before the
+# current @INC.  Returns the exit status and the combined output.
+#
+# On Windows, IPC::Open3 joins the command into one line without quoting it,
+# so an argument containing spaces is split (a "-e" script then reaches perl
+# as just "require").  Hence code goes in a script file, the library path
+# goes in PERL5LIB rather than -I options, and what's left (perl and the
+# script, whose paths may contain spaces) is quoted on Windows
+sub run_script {
+	my ($dir, $script) = @_;
 
-	my @cmd = ($^X, "-I$dir", (map { "-I$_" } grep { !ref } @INC), @args);
+	local $ENV{PERL5LIB} = join($Config{path_sep}, $dir, grep { !ref } @INC);
+	my @cmd = map { (($^O eq 'MSWin32') && /\s/) ? qq{"$_"} : $_ } ($^X, $script);
 	my $pid = open3(my $in, my $out, undef, @cmd);
 	close $in;
 	my $output = do { local $/; <$out> } // '';
 	waitpid($pid, 0);
 	return ($? >> 8, $output);
+}
+
+# Run perl code in a child, as run_script does
+my $scripts = 0;
+sub run_perl {
+	my ($dir, $code) = @_;
+
+	my $script = File::Spec->catfile($dir, 'child' . ++$scripts . '.pl');
+	open(my $fout, '>', $script) or die "$script: $!";
+	print $fout $code, "\n";
+	close $fout;
+	return run_script($dir, $script);
 }
 
 # Write a file below $dir, creating directories as needed
@@ -69,7 +89,7 @@ subtest 'Log::Abstraction refuses to load with Sub::Private 0.04' => sub {
 	my $dir = tempdir(CLEANUP => 1);
 	write_file($dir, 'Sub/Private.pm', "package Sub::Private;\nour \$VERSION = '0.04';\n1;\n");
 
-	my ($status, $output) = run_perl($dir, '-e', 'require Log::Abstraction; print "loaded\n"');
+	my ($status, $output) = run_perl($dir, 'require Log::Abstraction; print "loaded\n"');
 	isnt($status, 0, 'require fails');
 	like($output, qr/Sub::Private version 0\.05 required--this is only version 0\.04/,
 		'with a clear version message, not a missing _log at log time');
@@ -92,12 +112,12 @@ subtest 'Log::Abstraction works without Log::Any' => sub {
 	my $dir = tempdir(CLEANUP => 1);
 	write_file($dir, 'HideLogAny.pm', $HIDER);
 
-	my ($status, $output) = run_perl($dir, '-MHideLogAny', '-e',
-		'require Log::Abstraction; my @a; Log::Abstraction->new(logger => \@a, level => "info")->info("ok"); print "logged $a[0]{message}\n"');
+	my ($status, $output) = run_perl($dir,
+		'use HideLogAny; require Log::Abstraction; my @a; Log::Abstraction->new(logger => \@a, level => "info")->info("ok"); print "logged $a[0]{message}\n"');
 	is($status, 0, 'Log::Abstraction loads and logs');
 	like($output, qr/^logged ok$/m, 'message logged');
 
-	($status, $output) = run_perl($dir, '-MHideLogAny', '-e', 'require Log::Any::Adapter::Abstraction');
+	($status, $output) = run_perl($dir, 'use HideLogAny; require Log::Any::Adapter::Abstraction');
 	isnt($status, 0, 'the adapter needs Log::Any');
 	like($output, qr{Can't locate Log/Any/Adapter/Base\.pm}, 'and fails as in the report');
 };
@@ -110,12 +130,11 @@ subtest 't/10-compile.t skips the adapter without Log::Any' => sub {
 	my $dir = tempdir(CLEANUP => 1);
 	write_file($dir, 'HideLogAny.pm', $HIDER);
 
-	# Test::Compile checks each file in a new perl, so hide Log::Any in those too
-	my $sep = ($^O eq 'MSWin32') ? ';' : ':';
+	# Test::Compile checks each file in a new perl, so hide Log::Any in
+	# those too (run_script puts $dir in PERL5LIB)
 	local $ENV{PERL5OPT} = '-MHideLogAny';
-	local $ENV{PERL5LIB} = join($sep, $dir, grep { !ref } @INC);
 
-	my ($status, $output) = run_perl($dir, $compile_test);
+	my ($status, $output) = run_script($dir, $compile_test);
 	is($status, 0, "$compile_test passes") or diag($output);
 	like($output, qr{^ok \d+ # skip \S*Log/Any/Adapter/Abstraction\.pm: Log::Any not installed}m,
 		'the adapter is skipped');

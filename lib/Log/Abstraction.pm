@@ -60,7 +60,6 @@ package Log::Abstraction;
 #     Sub::Private (e.g. wrap immediately or use INIT when CHECK has passed).
 #
 # Roadmap - features:
-#   - File rotation (size/time) and reopen on SIGHUP for logrotate.
 #   - A consistent per-backend 'level' and 'format' key for every sub-backend.
 #   - sendmail digests: batch messages suppressed by min_interval into the
 #     next email instead of discarding them.
@@ -72,7 +71,9 @@ package Log::Abstraction;
 #     built once in new(), so the caller's syslog hash is not mutated and
 #     the "Don't know how to deal" fallback disappears.
 #   - Keep file handles open (re-open on inode change) instead of
-#     open/print/close for every message.
+#     open/print/close for every message.  logrotate then needs the file
+#     reopened: add a reopen() method (and document hooking it to SIGHUP),
+#     and have _rotate close the handle before renaming.
 #   - Reuse the journald socket rather than creating one per message.
 #   - Optional asynchronous/non-blocking delivery for the sendmail backend;
 #     a blocking SMTP conversation inside a log call is a latency hazard.
@@ -138,6 +139,28 @@ Readonly::Scalar my $RFC3339_TIMESTAMP_FORMAT => '%Y-%m-%dT%H:%M:%S';
 # Most digits of fractional seconds (nanoseconds); a %N without a width
 # gives this many
 Readonly::Scalar my $MAX_TIMESTAMP_PRECISION => 9;
+
+# Number of rotated files kept (FILE.1 ... FILE.5) when rotate_keep isn't given
+Readonly::Scalar my $DEFAULT_ROTATE_KEEP => 5;
+
+# Multipliers for the K/M/G suffixes of rotate_size
+Readonly::Hash my %SIZE_UNITS => (
+	''  => 1,
+	'k' => 1024,
+	'm' => 1024 ** 2,
+	'g' => 1024 ** 3,
+);
+
+# rotate_interval names, each mapped to a function of (epoch seconds, UTC
+# offset in seconds, use UTC?) that returns the period it falls in.  The file
+# rotates when its last-modified time is in an earlier period than now.
+# Weeks start on Monday: day 0 (1970-01-01) was a Thursday
+Readonly::Hash my %ROTATE_PERIOD => (
+	hourly  => sub { int(($_[0] + $_[1]) / 3600) },
+	daily   => sub { int(($_[0] + $_[1]) / 86_400) },
+	weekly  => sub { int((int(($_[0] + $_[1]) / 86_400) + 3) / 7) },
+	monthly => sub { my @tm = $_[2] ? gmtime($_[0]) : localtime($_[0]); ($tm[5] * 12) + $tm[4] },
+);
 
 # Default log-line format tokens for file/fd/scalar-path backends
 Readonly::Scalar my $DEFAULT_FORMAT         => '%level%> [%timestamp%] %class% %callstack% %message%';
@@ -282,6 +305,34 @@ object logger is passed the pairs as an extra argument after the message.
 When logging through L<Log::Any>, a hash reference at the end of the call,
 together with the proxy's C<context>, arrives here as fields; see
 L<Log::Any::Adapter::Abstraction/structured>.
+
+=head2 File rotation
+
+Log files written by path (a scalar C<logger>, a C<file> key in a C<logger>
+hash, and the top-level C<file>) can be rotated by size, by time, or both:
+
+  my $log = Log::Abstraction->new(
+      file            => '/var/log/myapp.log',
+      rotate_size     => '10M',
+      rotate_interval => 'daily',
+      rotate_keep     => 7,
+  );
+
+Before each write the file is checked, and if it is due it is renamed to
+F<myapp.log.1>, the old F<.1> to F<.2> and so on, the oldest beyond
+C<rotate_keep> being deleted; the line then goes to a new F<myapp.log>.  A
+rotation that fails (e.g. for lack of permission) is ignored, and the line is
+still written.  File handles passed as C<fd> aren't rotated.
+
+Rotation isn't coordinated between processes: if several processes log to the
+same file, use B<logrotate> instead.
+
+=head3 logrotate
+
+The file is opened, appended to and closed for every message, never held
+open, so B<logrotate>'s default (rename the file and let the application
+create a new one) works without C<copytruncate>, and without sending the
+process a C<SIGHUP>: the next message is written to the new file.
 
 =head1 METHODS
 
@@ -434,6 +485,25 @@ Delivery failures are silent apart from a single C<Carp::carp> (repeated only
 after a later send has succeeded); the application is never crashed by a
 journald error.
 
+=item * C<rotate_interval>
+
+Rotate log files by time: C<hourly>, C<daily>, C<weekly> (weeks start on
+Monday) or C<monthly>, case-insensitive.  Before each write, a file whose
+last-modified time is in an earlier period than now (in local time, or UTC
+with C<utc>) is rotated, so a file not written to for a while rotates on the
+next write.  See L</File rotation>.
+
+=item * C<rotate_keep>
+
+How many rotated files to keep, F<FILE.1> to F<FILE.I<n>> (default 5).  With
+C<0>, a file due for rotation is deleted instead.
+
+=item * C<rotate_size>
+
+Rotate log files that have reached this size: a number of bytes, optionally
+followed by C<K>, C<M> or C<G> (powers of 1024), e.g. C<10M>.  See
+L</File rotation>.
+
 =item * C<script_name>
 
 Script name reported to syslog.  Auto-detected from C<$0> if not supplied.
@@ -511,6 +581,9 @@ C<Log::Log4perl> if no logger backend is specified.
       level          => { type => 'string',  regex => qr/^(trace|debug|info(?:rmational)?|notice|warn(?:ing)?|err(?:or)?|crit(?:ical)?|fatal|alert|emerg(?:ency)?|panic)$/i, optional => 1 },
       logger         => { optional => 1 },
       max_messages   => { type => 'integer', min => 0, optional => 1 },
+      rotate_interval => { type => 'string', regex => qr/^(hourly|daily|weekly|monthly)$/i, optional => 1 },
+      rotate_keep    => { type => 'integer', min => 0, optional => 1 },
+      rotate_size    => { type => 'string',  regex => qr/^\s*[1-9]\d*\s*[kmg]?b?\s*$/i, optional => 1 },
       script_name    => { type => 'string',  optional => 1 },
       timestamp_format    => { type => 'string', min => 1, optional => 1 },
       timestamp_precision => { type => 'integer', min => 0, max => 9, optional => 1 },
@@ -539,6 +612,14 @@ C<Log::Log4perl> if no logger backend is specified.
                                             level name.  Use trace/debug/info/notice/
                                             warn/warning/error.
   "<class>: max_messages must be a          max_messages is negative or not a number.
+    non-negative integer, not '<v>'"
+  "<class>: rotate_size must be a           rotate_size is not, e.g., 1048576, 512K,
+    positive number of bytes, optionally    10M or 1G.
+    with K, M or G, not '<v>'"
+  "<class>: rotate_interval must be         rotate_interval is not one of those names.
+    hourly, daily, weekly or monthly,
+    not '<v>'"
+  "<class>: rotate_keep must be a           rotate_keep is negative or not a number.
     non-negative integer, not '<v>'"
   "<class>: timestamp_format must be a      timestamp_format is undef, empty or a
     non-empty string"                       reference.
@@ -603,6 +684,8 @@ logging failure must never crash the application.
 
     IF called on a blessed instance (clone form):
       CROAK on an invalid timestamp_format or timestamp_precision
+      CROAK on an invalid rotate_size, rotate_interval or rotate_keep, and
+        normalise rotate_size to bytes
       shallow-clone self merged with override args
       validate and store new level integer if level given in args
       copy message history list
@@ -630,6 +713,9 @@ logging failure must never crash the application.
     CROAK if max_messages is given and is not a non-negative integer
     CROAK if timestamp_format is empty or not a string, or
       timestamp_precision is not an integer 0-9
+    CROAK if rotate_size is not a positive size, rotate_interval is not
+      hourly/daily/weekly/monthly, or rotate_keep is not a non-negative
+      integer; normalise rotate_size to bytes
 
     IF logger is a hash:
       CROAK if the syslog or sendmail sub-hash 'level' is not a level
@@ -686,6 +772,7 @@ sub new {
 	} elsif(Scalar::Util::blessed($class)) {
 		# Called on an existing instance -- return a shallow clone
 		_check_timestamp_args(ref($class), \%args);
+		_check_rotate_args(ref($class), \%args);
 		my $clone = bless { %{$class}, %args }, ref($class);
 		if(my $level = $args{'level'}) {
 			$level = lc($level);
@@ -754,6 +841,7 @@ sub new {
 	}
 
 	_check_timestamp_args($class, \%args);
+	_check_rotate_args($class, \%args);
 
 	# Validate the HASH logger's sub-backends now, rather than have a bad
 	# value silently drop messages at log time
@@ -937,6 +1025,123 @@ sub _check_timestamp_args :Private {
 }
 
 # ---------------------------------------------------------------------------
+# _utc_offset -- the local time zone's offset from UTC at a given time
+#
+# Purpose:      Portable %z/%:z, and local period boundaries for rotation.
+# Entry:        $secs -- epoch seconds.
+#               $utc  -- true to return 0 (timestamps are in UTC).
+# Exit:         Returns the offset in seconds (negative west of Greenwich).
+# Notes:        A pure function (no $self), called as _utc_offset($secs, $utc).
+#               The offset is what the local broken-down time would be as
+#               UTC, less the real time.  The year is passed in full so that
+#               Time::Local doesn't guess a century.
+# ---------------------------------------------------------------------------
+sub _utc_offset :Private {
+	my ($secs, $utc) = @_;
+
+	return 0 if($utc);
+	my @tm = localtime($secs);
+	return Time::Local::timegm(@tm[0..4], $tm[5] + 1900) - $secs;
+}
+
+# ---------------------------------------------------------------------------
+# _check_rotate_args -- validate and normalise the file-rotation options
+#
+# Purpose:      Croak in new() (and when cloning) on a bad rotate_size,
+#               rotate_interval or rotate_keep, rather than fail at log time.
+# Entry:        $class -- the class name, for the error message.
+#               $args  -- hashref of constructor arguments; changed in place.
+# Exit:         Returns nothing.  rotate_size becomes a number of bytes and
+#               rotate_interval is lower-cased.  Croaks on an invalid value.
+# Notes:        A pure function (no $self), called as
+#               _check_rotate_args($class, \%args).
+# ---------------------------------------------------------------------------
+sub _check_rotate_args :Private {
+	my ($class, $args) = @_;
+
+	if(defined(my $size = $args->{'rotate_size'})) {
+		if($size !~ /^\s*(\d+)\s*([kmg]?)b?\s*$/i || ($1 == 0)) {
+			Carp::croak("$class: rotate_size must be a positive number of bytes, optionally with K, M or G, not '$size'");
+		}
+		$args->{'rotate_size'} = $1 * $SIZE_UNITS{lc($2)};
+	}
+	if(defined(my $interval = $args->{'rotate_interval'})) {
+		if(!$ROTATE_PERIOD{lc($interval)}) {
+			Carp::croak("$class: rotate_interval must be hourly, daily, weekly or monthly, not '$interval'");
+		}
+		$args->{'rotate_interval'} = lc($interval);
+	}
+	if(defined(my $keep = $args->{'rotate_keep'})) {
+		if($keep !~ /^\d+$/) {
+			Carp::croak("$class: rotate_keep must be a non-negative integer, not '$keep'");
+		}
+	}
+	return;
+}
+
+# ---------------------------------------------------------------------------
+# _rotate -- rotate a log file if it is too big or from an earlier period
+#
+# Purpose:      Size- and time-based rotation for the file backends.
+# Entry:        $self -- the logger object (rotate_size, rotate_interval,
+#                        rotate_keep and utc).
+#               $path -- the validated log-file path, about to be appended to.
+# Exit:         Returns nothing.  Croaks if a rename fails (autodie);
+#               _write_line calls this in an eval of its own, so the line is
+#               still written.
+# Side effects: Renames FILE to FILE.1, FILE.1 to FILE.2 and so on, deleting
+#               FILE.<rotate_keep>; with rotate_keep 0, deletes FILE.
+# Notes:        Called before each write, so it costs one stat() per line.
+#               Time-based rotation compares the file's last-modified time
+#               with now, so a file not written to for a while rotates on the
+#               next write.  Not safe for several processes rotating the same
+#               file; use logrotate for that.
+#
+# Pseudocode:
+#   FUNCTION _rotate(self, path)
+#     RETURN unless stat(path) succeeds (no file yet)
+#     due = rotate_size AND file size >= rotate_size
+#     IF NOT due AND rotate_interval:
+#       period = ROTATE_PERIOD{rotate_interval}
+#       due = period(mtime) < period(now), each with its own UTC offset
+#     RETURN unless due
+#     keep = rotate_keep // 5
+#     IF keep == 0: unlink path; RETURN
+#     unlink path.keep if it exists
+#     FOR i = keep-1 down to 1: rename path.i to path.(i+1) if it exists
+#     rename path to path.1
+#   END FUNCTION
+# ---------------------------------------------------------------------------
+sub _rotate :Private {
+	my ($self, $path) = @_;
+
+	my @st = stat($path) or return;
+	my ($size, $mtime) = @st[7, 9];
+
+	my $due = $self->{'rotate_size'} && ($size >= $self->{'rotate_size'});
+	if(!$due && (my $interval = $self->{'rotate_interval'})) {
+		my $utc = $self->{'utc'};
+		my $period = $ROTATE_PERIOD{$interval};
+		my $now = time();
+		$due = $period->($mtime, _utc_offset($mtime, $utc), $utc) < $period->($now, _utc_offset($now, $utc), $utc);
+	}
+	return unless($due);
+
+	my $keep = $self->{'rotate_keep'} // $DEFAULT_ROTATE_KEEP;
+	if($keep == 0) {
+		unlink($path);
+		return;
+	}
+	# Unlink before each rename: Windows can't rename onto an existing file
+	unlink("$path.$keep") if(-e "$path.$keep");
+	for my $i (reverse(1 .. $keep - 1)) {
+		rename("$path.$i", "$path." . ($i + 1)) if(-e "$path.$i");
+	}
+	rename($path, "$path.1");
+	return;
+}
+
+# ---------------------------------------------------------------------------
 # _timestamp -- the time of a log call, formatted for log lines
 #
 # Purpose:      Single source of %timestamp% and the JSON 'timestamp' value,
@@ -982,11 +1187,9 @@ sub _timestamp :Private {
 		$format =~ s/%(%|S)/($1 eq 'S') ? "%S.%${precision}N" : '%%'/ge;
 	}
 
-	# The UTC offset: what the broken-down time would be as UTC, less the
-	# real time.  Year is passed in full so Time::Local doesn't guess a century
 	my $offset = sub {
 		my ($colon) = @_;
-		my $diff = $utc ? 0 : Time::Local::timegm(@tm[0..4], $tm[5] + 1900) - $secs;
+		my $diff = _utc_offset($secs, $utc);
 		my $sign = ($diff < 0) ? '-' : '+';
 		$diff = abs($diff);
 		return sprintf('%s%02d%s%02d', $sign, int($diff / 3600), $colon, int(($diff % 3600) / 60));
@@ -1010,7 +1213,8 @@ sub _timestamp :Private {
 #               $target -- a validated file path, or an open filehandle.
 #               $line   -- the formatted line, without trailing newline.
 # Exit:         Returns nothing.
-# Side effects: Appends to the file or prints to the handle.
+# Side effects: Appends to the file or prints to the handle.  A file path
+#               is rotated first if rotate_size or rotate_interval says so.
 # Notes:        Character strings are encoded to UTF-8, avoiding "Wide
 #               character" warnings, unless the handle already has a
 #               :utf8 or :encoding layer.  File I/O failures are silent by
@@ -1029,6 +1233,11 @@ sub _write_line :Private {
 	}
 
 	utf8::encode($line) if(utf8::is_utf8($line));
+
+	# Rotate in its own eval: if a rename fails (autodie), still write the line
+	if($self->{'rotate_size'} || $self->{'rotate_interval'}) {
+		eval { $self->_rotate($target) };
+	}
 	eval {
 		open(my $fout, '>>', $target);
 		print $fout "$line\n";

@@ -28,6 +28,12 @@ Revision history for Log-Abstraction
 	  platform.  They apply to %timestamp% and the JSON timestamp.  The
 	  time is now read once per message, so all backends show the same
 	  time.  Time::HiRes and Time::Local (both core) are new dependencies.
+	- File rotation for the path backends: rotate_size (bytes, or with
+	  K/M/G), rotate_interval (hourly, daily, weekly, monthly) and
+	  rotate_keep (default 5).  Files are rotated to FILE.1, FILE.2 ...
+	  before the write that is due.  Since the file is opened for every
+	  message, logrotate's default rename-and-create works without
+	  copytruncate or SIGHUP; this is now documented and tested.
 
 	[ Bug Fixes ]
 	- t/journald.t no longer hangs if a journald send fails: its receiver

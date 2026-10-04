@@ -9,6 +9,7 @@
 use strict;
 use warnings;
 
+use Config;
 use File::Spec;
 use File::Temp qw(tempdir);
 use IPC::Open3;
@@ -17,17 +18,36 @@ use Test::Most;
 use Log::Abstraction;
 use Readonly::Values::Syslog;
 
-# Run perl code in a child, with $dir searched before the current @INC.
-# Returns the exit status and the combined output
-sub run_perl {
-	my ($dir, $code) = @_;
+# Run the perl script $script in a child, with $dir searched before the
+# current @INC.  Returns the exit status and the combined output.
+#
+# On Windows, IPC::Open3 joins the command into one line without quoting it,
+# so an argument containing spaces is split (a "-e" script then reaches perl
+# as just "require").  Hence code goes in a script file, the library path
+# goes in PERL5LIB rather than -I options, and what's left (perl and the
+# script, whose paths may contain spaces) is quoted on Windows
+sub run_script {
+	my ($dir, $script) = @_;
 
-	my @cmd = ($^X, "-I$dir", (map { "-I$_" } grep { !ref } @INC), '-e', $code);
+	local $ENV{PERL5LIB} = join($Config{path_sep}, $dir, grep { !ref } @INC);
+	my @cmd = map { (($^O eq 'MSWin32') && /\s/) ? qq{"$_"} : $_ } ($^X, $script);
 	my $pid = open3(my $in, my $out, undef, @cmd);
 	close $in;
 	my $output = do { local $/; <$out> } // '';
 	waitpid($pid, 0);
 	return ($? >> 8, $output);
+}
+
+# Run perl code in a child, as run_script does
+my $scripts = 0;
+sub run_perl {
+	my ($dir, $code) = @_;
+
+	my $script = File::Spec->catfile($dir, 'child' . ++$scripts . '.pl');
+	open(my $fout, '>', $script) or die "$script: $!";
+	print $fout $code, "\n";
+	close $fout;
+	return run_script($dir, $script);
 }
 
 subtest 'the loaded Readonly::Values::Syslog is new enough' => sub {

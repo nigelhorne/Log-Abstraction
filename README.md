@@ -76,6 +76,36 @@ When logging through [Log::Any](https://metacpan.org/pod/Log%3A%3AAny), a hash r
 together with the proxy's `context`, arrives here as fields; see
 ["structured" in Log::Any::Adapter::Abstraction](https://metacpan.org/pod/Log%3A%3AAny%3A%3AAdapter%3A%3AAbstraction#structured).
 
+### File Rotation
+
+Log files written by path (a scalar `logger`, a `file` key in a `logger`
+hash, and the top-level `file`) can be rotated by size, by time, or both:
+
+```perl
+my $log = Log::Abstraction->new(
+    file            => '/var/log/myapp.log',
+    rotate_size     => '10M',
+    rotate_interval => 'daily',
+    rotate_keep     => 7,
+);
+```
+
+Before each write the file is checked, and if it is due it is renamed to
+`myapp.log.1`, the old `.1` to `.2` and so on, the oldest beyond
+`rotate_keep` being deleted; the line then goes to a new `myapp.log`.  A
+rotation that fails (e.g. for lack of permission) is ignored, and the line is
+still written.  File handles passed as `fd` aren't rotated.
+
+Rotation isn't coordinated between processes: if several processes log to the
+same file, use **logrotate** instead.
+
+#### Logrotate
+
+The file is opened, appended to and closed for every message, never held
+open, so **logrotate**'s default (rename the file and let the application
+create a new one) works without `copytruncate`, and without sending the
+process a `SIGHUP`: the next message is written to the new file.
+
 ## Methods
 
 ### New
@@ -213,6 +243,25 @@ called on an object.  It may also be called as a plain function,
     after a later send has succeeded); the application is never crashed by a
     journald error.
 
+- `rotate_interval`
+
+    Rotate log files by time: `hourly`, `daily`, `weekly` (weeks start on
+    Monday) or `monthly`, case-insensitive.  Before each write, a file whose
+    last-modified time is in an earlier period than now (in local time, or UTC
+    with `utc`) is rotated, so a file not written to for a while rotates on the
+    next write.  See ["File rotation"](#file-rotation).
+
+- `rotate_keep`
+
+    How many rotated files to keep, `FILE.1` to `FILE._n_` (default 5).  With
+    `0`, a file due for rotation is deleted instead.
+
+- `rotate_size`
+
+    Rotate log files that have reached this size: a number of bytes, optionally
+    followed by `K`, `M` or `G` (powers of 1024), e.g. `10M`.  See
+    ["File rotation"](#file-rotation).
+
 - `script_name`
 
     Script name reported to syslog.  Auto-detected from `$0` if not supplied.
@@ -297,6 +346,9 @@ my $clone = $logger->new(level => 'info');
     level          => { type => 'string',  regex => qr/^(trace|debug|info(?:rmational)?|notice|warn(?:ing)?|err(?:or)?|crit(?:ical)?|fatal|alert|emerg(?:ency)?|panic)$/i, optional => 1 },
     logger         => { optional => 1 },
     max_messages   => { type => 'integer', min => 0, optional => 1 },
+    rotate_interval => { type => 'string', regex => qr/^(hourly|daily|weekly|monthly)$/i, optional => 1 },
+    rotate_keep    => { type => 'integer', min => 0, optional => 1 },
+    rotate_size    => { type => 'string',  regex => qr/^\s*[1-9]\d*\s*[kmg]?b?\s*$/i, optional => 1 },
     script_name    => { type => 'string',  optional => 1 },
     timestamp_format    => { type => 'string', min => 1, optional => 1 },
     timestamp_precision => { type => 'integer', min => 0, max => 9, optional => 1 },
@@ -329,6 +381,14 @@ Error                                     Meaning / Action
                                           level name.  Use trace/debug/info/notice/
                                           warn/warning/error.
 "<class>: max_messages must be a          max_messages is negative or not a number.
+  non-negative integer, not '<v>'"
+"<class>: rotate_size must be a           rotate_size is not, e.g., 1048576, 512K,
+  positive number of bytes, optionally    10M or 1G.
+  with K, M or G, not '<v>'"
+"<class>: rotate_interval must be         rotate_interval is not one of those names.
+  hourly, daily, weekly or monthly,
+  not '<v>'"
+"<class>: rotate_keep must be a           rotate_keep is negative or not a number.
   non-negative integer, not '<v>'"
 "<class>: timestamp_format must be a      timestamp_format is undef, empty or a
   non-empty string"                       reference.
@@ -397,6 +457,8 @@ FUNCTION new(class_or_obj, args...)
 
   IF called on a blessed instance (clone form):
     CROAK on an invalid timestamp_format or timestamp_precision
+    CROAK on an invalid rotate_size, rotate_interval or rotate_keep, and
+      normalise rotate_size to bytes
     shallow-clone self merged with override args
     validate and store new level integer if level given in args
     copy message history list
@@ -424,6 +486,9 @@ FUNCTION new(class_or_obj, args...)
   CROAK if max_messages is given and is not a non-negative integer
   CROAK if timestamp_format is empty or not a string, or
     timestamp_precision is not an integer 0-9
+  CROAK if rotate_size is not a positive size, rotate_interval is not
+    hourly/daily/weekly/monthly, or rotate_keep is not a non-negative
+    integer; normalise rotate_size to bytes
 
   IF logger is a hash:
     CROAK if the syslog or sendmail sub-hash 'level' is not a level

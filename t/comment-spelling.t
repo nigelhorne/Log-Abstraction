@@ -13,6 +13,7 @@ Test::Spelling::Comment->new()->add_stopwords(<DATA>)->all_files_ok();
 
 __DATA__
 Any
+autodie
 callstack
 closelog
 Corinna
