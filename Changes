@@ -1,6 +1,6 @@
 Revision history for Log-Abstraction
 
-0.36	Not Released
+0.36	Sat Oct  3 09:35:44 PM EDT 2026
 	[ Enhancements ]
 	- Structured fields: every logging method accepts a hashref of
 	  fields after the message, e.g. $log->info('login', { user_id => 42 }).
