@@ -19,6 +19,7 @@ Corinna
 ctx
 debug
 DGRAM
+dT
 emerg
 ENV
 env
@@ -26,9 +27,12 @@ falsy
 fd
 Getter
 HH
+hh
+hhmm
 HiRes
-journald
 IPC
+iso
+journald
 LF
 LoadFile
 logfmt
@@ -39,6 +43,7 @@ macOS
 msg
 nERROR
 NL
+nN
 NOCLASS
 NUL
 NULs
@@ -54,6 +59,7 @@ params
 Pseudocode
 Readonly
 rescanned
+rfc
 SDK
 SeverityNumber
 SIGHUP
@@ -61,6 +67,7 @@ str
 Sys
 systemd
 TCP
+tm
 TODO
 uint
 ulevel

@@ -60,8 +60,6 @@ package Log::Abstraction;
 #     Sub::Private (e.g. wrap immediately or use INIT when CHECK has passed).
 #
 # Roadmap - features:
-#   - Timestamp options: timestamp_format, UTC, ISO-8601/RFC 3339 with
-#     offset, sub-second precision via Time::HiRes.
 #   - File rotation (size/time) and reopen on SIGHUP for logrotate.
 #   - A consistent per-backend 'level' and 'format' key for every sub-backend.
 #   - sendmail digests: batch messages suppressed by min_interval into the
@@ -99,6 +97,8 @@ use Readonly;
 use Readonly::Values::Syslog 0.04;
 use Return::Set 0.04;
 use Scalar::Util 'blessed';
+use Time::HiRes ();
+use Time::Local ();
 
 # Sub::Private in enforce mode: _-prefixed subs decorated :Private croak when
 # called from outside this package.  HARNESS_ACTIVE bypasses checks during
@@ -127,6 +127,17 @@ Readonly::Scalar my $MAX_PORT          => 65535;
 Readonly::Scalar my $DEFAULT_SYSLOG_FACILITY => 'local0';
 Readonly::Scalar my $DEFAULT_SYSLOG_OPTIONS  => 'cons,pid';
 Readonly::Scalar my $DEFAULT_SYSLOG_IDENTITY => 'user';
+
+# Default strftime pattern for %timestamp% and the JSON timestamp
+Readonly::Scalar my $DEFAULT_TIMESTAMP_FORMAT => '%Y-%m-%d %H:%M:%S';
+
+# strftime pattern for timestamp_format => 'iso8601' or 'rfc3339', without
+# the offset, which is 'Z' in UTC and '%:z' otherwise
+Readonly::Scalar my $RFC3339_TIMESTAMP_FORMAT => '%Y-%m-%dT%H:%M:%S';
+
+# Most digits of fractional seconds (nanoseconds); a %N without a width
+# gives this many
+Readonly::Scalar my $MAX_TIMESTAMP_PRECISION => 9;
 
 # Default log-line format tokens for file/fd/scalar-path backends
 Readonly::Scalar my $DEFAULT_FORMAT         => '%level%> [%timestamp%] %class% %callstack% %message%';
@@ -323,7 +334,8 @@ Format string for file/fd backends.  Tokens expanded at log time:
   %class%       blessed class of the logger object
   %level%       upper-cased level name
   %message%     the joined log message
-  %timestamp%   YYYY-MM-DD HH:MM:SS (local time)
+  %timestamp%   the time of the call; YYYY-MM-DD HH:MM:SS local time by
+                default (see timestamp_format, timestamp_precision and utc)
   %env_FOO%     value of $ENV{FOO}, or empty string if unset
 
 Tokens are only expanded in the format string itself, never in the text
@@ -426,6 +438,40 @@ journald error.
 
 Script name reported to syslog.  Auto-detected from C<$0> if not supplied.
 
+=item * C<timestamp_format>
+
+How C<%timestamp%>, and the C<timestamp> key of C<format =E<gt> 'json'>,
+are written.  Either a L<POSIX/strftime> pattern (default
+C<%Y-%m-%d %H:%M:%S>) or one of these names (case-insensitive):
+
+  iso8601, rfc3339   2026-10-03T20:14:23-04:00, or 2026-10-04T00:14:23Z with utc
+
+The pattern may also use:
+
+  %N        fractional seconds, 9 digits (nanoseconds)
+  %3N       fractional seconds, 3 digits (milliseconds); any width 1-9
+  %z        UTC offset as +hhmm (on every platform, unlike some strftimes)
+  %:z       UTC offset as +hh:mm, as RFC 3339 needs
+  %Z        the time-zone name; "UTC" when utc is set
+  %%        a literal %
+
+Fractional seconds come from L<Time::HiRes> and are truncated, not rounded;
+digits beyond the system clock's resolution (usually microseconds) are
+noise.  The timestamp is taken once per message, so every backend shows the
+same time.
+
+=item * C<timestamp_precision>
+
+The number of fractional-second digits, 0-9 (default 0), added after the
+seconds (each C<%S>) of whichever C<timestamp_format> is in use:
+
+  Log::Abstraction->new(timestamp_format => 'rfc3339', timestamp_precision => 3, utc => 1);
+  # 2026-10-04T00:14:24.094Z
+
+=item * C<utc>
+
+If true, timestamps are in UTC rather than local time.
+
 =item * C<verbose>
 
 When using the default Log::Log4perl backend, raises the logging level to
@@ -466,6 +512,9 @@ C<Log::Log4perl> if no logger backend is specified.
       logger         => { optional => 1 },
       max_messages   => { type => 'integer', min => 0, optional => 1 },
       script_name    => { type => 'string',  optional => 1 },
+      timestamp_format    => { type => 'string', min => 1, optional => 1 },
+      timestamp_precision => { type => 'integer', min => 0, max => 9, optional => 1 },
+      utc            => { type => 'boolean', optional => 1 },
       verbose        => { type => 'boolean', optional => 1 },
   }
 
@@ -491,6 +540,10 @@ C<Log::Log4perl> if no logger backend is specified.
                                             warn/warning/error.
   "<class>: max_messages must be a          max_messages is negative or not a number.
     non-negative integer, not '<v>'"
+  "<class>: timestamp_format must be a      timestamp_format is undef, empty or a
+    non-empty string"                       reference.
+  "<class>: timestamp_precision must be     timestamp_precision is not a whole
+    an integer from 0 to 9, not '<v>'"      number of digits from 0 to 9.
   "<class>: invalid sendmail level '<l>'"   The sendmail sub-hash 'level' is neither
                                             a level name nor 0-7.  (A bad syslog
                                             sub-hash 'level' gives "invalid syslog
@@ -549,6 +602,7 @@ logging failure must never crash the application.
       Restore caller-supplied array ref that config merge would have dropped
 
     IF called on a blessed instance (clone form):
+      CROAK on an invalid timestamp_format or timestamp_precision
       shallow-clone self merged with override args
       validate and store new level integer if level given in args
       copy message history list
@@ -574,6 +628,8 @@ logging failure must never crash the application.
       default to $DEFAULT_LEVEL if not supplied
 
     CROAK if max_messages is given and is not a non-negative integer
+    CROAK if timestamp_format is empty or not a string, or
+      timestamp_precision is not an integer 0-9
 
     IF logger is a hash:
       CROAK if the syslog or sendmail sub-hash 'level' is not a level
@@ -629,6 +685,7 @@ sub new {
 		$class = __PACKAGE__;
 	} elsif(Scalar::Util::blessed($class)) {
 		# Called on an existing instance -- return a shallow clone
+		_check_timestamp_args(ref($class), \%args);
 		my $clone = bless { %{$class}, %args }, ref($class);
 		if(my $level = $args{'level'}) {
 			$level = lc($level);
@@ -695,6 +752,8 @@ sub new {
 			Carp::croak("$class: max_messages must be a non-negative integer, not '$max'");
 		}
 	}
+
+	_check_timestamp_args($class, \%args);
 
 	# Validate the HASH logger's sub-backends now, rather than have a bad
 	# value silently drop messages at log time
@@ -850,6 +909,100 @@ sub _fields_text :Private {
 }
 
 # ---------------------------------------------------------------------------
+# _check_timestamp_args -- validate the timestamp options given to new()
+#
+# Purpose:      Croak in new() (and when cloning) on a bad timestamp_format
+#               or timestamp_precision, rather than log a broken timestamp.
+# Entry:        $class -- the class name, for the error message.
+#               $args  -- hashref of constructor arguments.
+# Exit:         Returns nothing; croaks on an invalid value.
+# Notes:        A pure function (no $self), called as
+#               _check_timestamp_args($class, \%args).
+# ---------------------------------------------------------------------------
+sub _check_timestamp_args :Private {
+	my ($class, $args) = @_;
+
+	if(exists($args->{'timestamp_format'})) {
+		my $format = $args->{'timestamp_format'};
+		if(!defined($format) || ref($format) || ($format eq '')) {
+			Carp::croak("$class: timestamp_format must be a non-empty string");
+		}
+	}
+	if(defined(my $precision = $args->{'timestamp_precision'})) {
+		if(($precision !~ /^\d+$/) || ($precision > $MAX_TIMESTAMP_PRECISION)) {
+			Carp::croak("$class: timestamp_precision must be an integer from 0 to $MAX_TIMESTAMP_PRECISION, not '$precision'");
+		}
+	}
+	return;
+}
+
+# ---------------------------------------------------------------------------
+# _timestamp -- the time of a log call, formatted for log lines
+#
+# Purpose:      Single source of %timestamp% and the JSON 'timestamp' value,
+#               honouring timestamp_format, utc and timestamp_precision.
+# Entry:        $self -- the logger object.
+#               $now  -- optional epoch seconds, possibly fractional
+#                        (default: Time::HiRes::time()).
+# Exit:         Returns the formatted timestamp string.
+# Notes:        Extends strftime with %N (fractional seconds; %3N, %6N etc.
+#               give that many digits, truncated, not rounded), %z (+hhmm)
+#               and %:z (+hh:mm), computed here because Windows' strftime
+#               gives a zone name for %z; and in UTC, %Z is 'UTC'.  A '%%'
+#               is passed through, so '%%N' is a literal '%N'.
+#
+# Pseudocode:
+#   FUNCTION _timestamp(self, now)
+#     now  = now // Time::HiRes::time(); secs = int(now)
+#     tm   = utc ? gmtime(secs) : localtime(secs)
+#     format = timestamp_format, or the default
+#       'iso8601'/'rfc3339' (any case) -> '%Y-%m-%dT%H:%M:%S' + ('Z' if utc, else '%:z')
+#     IF timestamp_precision > 0: follow each %S with '.%<precision>N'
+#     Replace, in one pass:
+#       %%  -> %% (left for strftime)
+#       %nN -> first n (default 9) digits of the fraction of now
+#       %z  -> +hhmm, %:z -> +hh:mm (offset = timegm(tm) - secs; 0 in UTC)
+#       %Z  -> 'UTC' if utc (else left for strftime)
+#     RETURN strftime(format, tm)
+#   END FUNCTION
+# ---------------------------------------------------------------------------
+sub _timestamp :Private {
+	my ($self, $now) = @_;
+
+	$now //= Time::HiRes::time();
+	my $secs = int($now);
+	my $utc  = $self->{'utc'};
+	my @tm   = $utc ? gmtime($secs) : localtime($secs);
+
+	my $format = $self->{'timestamp_format'} // $DEFAULT_TIMESTAMP_FORMAT;
+	if($format =~ /^(?:iso8601|rfc3339)$/i) {
+		$format = $RFC3339_TIMESTAMP_FORMAT . ($utc ? 'Z' : '%:z');
+	}
+	if(my $precision = $self->{'timestamp_precision'}) {
+		$format =~ s/%(%|S)/($1 eq 'S') ? "%S.%${precision}N" : '%%'/ge;
+	}
+
+	# The UTC offset: what the broken-down time would be as UTC, less the
+	# real time.  Year is passed in full so Time::Local doesn't guess a century
+	my $offset = sub {
+		my ($colon) = @_;
+		my $diff = $utc ? 0 : Time::Local::timegm(@tm[0..4], $tm[5] + 1900) - $secs;
+		my $sign = ($diff < 0) ? '-' : '+';
+		$diff = abs($diff);
+		return sprintf('%s%02d%s%02d', $sign, int($diff / 3600), $colon, int(($diff % 3600) / 60));
+	};
+
+	$format =~ s/%(%|([1-9]?)N|:z|z|Z)/
+		($1 eq '%') ? '%%'
+		: defined($2) ? substr(sprintf('%09d', int(($now - $secs) * 1e9)), 0, $2 || $MAX_TIMESTAMP_PRECISION)
+		: ($1 eq ':z') ? $offset->(':')
+		: ($1 eq 'z') ? $offset->('')
+		: $utc ? 'UTC' : '%Z'/gex;
+
+	return strftime($format, @tm);
+}
+
+# ---------------------------------------------------------------------------
 # _write_line -- append one formatted line to a file path or filehandle
 #
 # Purpose:      Single output path for the file, fd and scalar-path backends.
@@ -992,6 +1145,8 @@ sub _journald_send :Private {
 #               $caller_file -- pre-resolved source file of the logging call.
 #               $caller_line -- pre-resolved source line of the logging call.
 #               $fields      -- optional hashref of structured fields.
+#               $timestamp   -- the formatted time of the log call, from
+#                               _timestamp (computed here if undef).
 # Exit:         Returns the formatted log line (without trailing newline).
 # Notes:        %env_FOO% tokens are expanded with a // '' fallback so that
 #               missing environment variables expand silently to empty string.
@@ -1001,7 +1156,8 @@ sub _journald_send :Private {
 #               caller's code, not an internal dispatch frame.
 #
 # Pseudocode:
-#   FUNCTION _format_message(self, level, str, use_class, caller_file, caller_line, fields)
+#   FUNCTION _format_message(self, level, str, use_class, caller_file, caller_line, fields, timestamp)
+#     timestamp = timestamp // _timestamp()
 #     IF self->{'format'} eq 'json':
 #       Build hash: timestamp, level, message, file=caller_file, line=caller_line
 #                   (+ class if subclass)
@@ -1021,7 +1177,7 @@ sub _journald_send :Private {
 #       ulevel    = uc(level)
 #       class     = blessed class if it is a subclass, else '' (base package)
 #       callstack = caller_file and caller_line
-#       timestamp = strftime 'YYYY-MM-DD HH:MM:SS'
+#       timestamp = the timestamp argument
 #
 #     Expand tokens in format string in a single pass (substituted values,
 #     including the message, are never rescanned for further tokens):
@@ -1036,8 +1192,9 @@ sub _journald_send :Private {
 #   END FUNCTION
 # ---------------------------------------------------------------------------
 sub _format_message :Private {
-	my ($self, $level, $str, $use_class, $caller_file, $caller_line, $fields) = @_;
+	my ($self, $level, $str, $use_class, $caller_file, $caller_line, $fields, $timestamp) = @_;
 
+	$timestamp //= $self->_timestamp();
 	my $format = $self->{'format'};
 
 	# 'json' is a magic format value: emit a compact JSON object per line
@@ -1045,7 +1202,7 @@ sub _format_message :Private {
 		my $bclass = blessed($self);
 		my $class  = ($bclass && $bclass ne __PACKAGE__) ? $bclass : undef;
 		my %obj = (
-			timestamp => strftime('%Y-%m-%d %H:%M:%S', localtime),
+			timestamp => $timestamp,
 			level     => $level,
 			message   => $str,
 			file      => $caller_file,
@@ -1078,7 +1235,6 @@ sub _format_message :Private {
 	$message =~ s/\r\n?|\n/\n\t/g;
 
 	my $callstack = "$caller_file $caller_line";
-	my $timestamp = strftime '%Y-%m-%d %H:%M:%S', localtime;
 
 	my %tokens = (
 		level     => $ulevel,
@@ -1129,6 +1285,8 @@ sub _format_message :Private {
 #     Push { level, message, fields? } onto self->{messages} (always recorded);
 #       drop the oldest entries beyond max_messages
 #     Set $class = '' for base package, else the blessed class name
+#     Resolve caller file/line; format the timestamp once (_timestamp),
+#       shared by every file/fd backend
 #
 #     IF self->{'logger'} is a CODE ref:
 #       Build args hashref { class, file, line, level, message, ctx?, fields? }
@@ -1257,6 +1415,9 @@ sub _log :Private {
 	my $caller_file = (caller($depth))[1];
 	my $caller_line = (caller($depth))[2];
 
+	# One timestamp per message, so that every backend shows the same time
+	my $timestamp = $self->_timestamp();
+
 	# -----------------------------------------------------------------------
 	# Dispatch to the configured backend(s)
 	# -----------------------------------------------------------------------
@@ -1285,7 +1446,7 @@ sub _log :Private {
 			if(my $raw_file = $logger->{'file'}) {
 				my $file = $self->_validate_file_path($raw_file);
 				my $use_class = ($class ne '') ? 1 : 0;
-				my $line = $self->_format_message($level, $str, $use_class, $caller_file, $caller_line, $fields);
+				my $line = $self->_format_message($level, $str, $use_class, $caller_file, $caller_line, $fields, $timestamp);
 				$self->_write_line($file, $line);
 			}
 
@@ -1461,7 +1622,7 @@ sub _log :Private {
 			# -- fd sub-backend ---------------------------------------------
 			if(my $fout = $logger->{'fd'}) {
 				my $use_class = ($class ne '') ? 1 : 0;
-				my $line = $self->_format_message($level, $str, $use_class, $caller_file, $caller_line, $fields);
+				my $line = $self->_format_message($level, $str, $use_class, $caller_file, $caller_line, $fields, $timestamp);
 				$self->_write_line($fout, $line);
 
 			} elsif(!$logger->{'file'} && !$logger->{'array'}
@@ -1475,7 +1636,7 @@ sub _log :Private {
 			# Scalar-path backend: validate path then append to the file
 			my $safe_path = $self->_validate_file_path($logger);
 			my $use_class = ($class ne '') ? 1 : 0;
-			my $line = $self->_format_message($level, $str, $use_class, $caller_file, $caller_line, $fields);
+			my $line = $self->_format_message($level, $str, $use_class, $caller_file, $caller_line, $fields, $timestamp);
 			$self->_write_line($safe_path, $line);
 
 		} elsif(Scalar::Util::blessed($logger)) {
@@ -1513,13 +1674,13 @@ sub _log :Private {
 	if($self->{'file'}) {
 		my $file = $self->_validate_file_path($self->{'file'});
 		my $use_class = ($class ne '') ? 1 : 0;
-		my $line = $self->_format_message($level, $str, $use_class, $caller_file, $caller_line, $fields);
+		my $line = $self->_format_message($level, $str, $use_class, $caller_file, $caller_line, $fields, $timestamp);
 		$self->_write_line($file, $line);
 	}
 
 	if(my $fout = $self->{'fd'}) {
 		my $use_class = ($class ne '') ? 1 : 0;
-		my $line = $self->_format_message($level, $str, $use_class, $caller_file, $caller_line, $fields);
+		my $line = $self->_format_message($level, $str, $use_class, $caller_file, $caller_line, $fields, $timestamp);
 		$self->_write_line($fout, $line);
 	}
 }

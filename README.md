@@ -130,7 +130,8 @@ called on an object.  It may also be called as a plain function,
     %class%       blessed class of the logger object
     %level%       upper-cased level name
     %message%     the joined log message
-    %timestamp%   YYYY-MM-DD HH:MM:SS (local time)
+    %timestamp%   the time of the call; YYYY-MM-DD HH:MM:SS local time by
+                  default (see timestamp_format, timestamp_precision and utc)
     %env_FOO%     value of $ENV{FOO}, or empty string if unset
     ```
 
@@ -216,6 +217,46 @@ called on an object.  It may also be called as a plain function,
 
     Script name reported to syslog.  Auto-detected from `$0` if not supplied.
 
+- `timestamp_format`
+
+    How `%timestamp%`, and the `timestamp` key of `format => 'json'`,
+    are written.  Either a ["strftime" in POSIX](https://metacpan.org/pod/POSIX#strftime) pattern (default
+    `%Y-%m-%d %H:%M:%S`) or one of these names (case-insensitive):
+
+    ```
+    iso8601, rfc3339   2026-10-03T20:14:23-04:00, or 2026-10-04T00:14:23Z with utc
+    ```
+
+    The pattern may also use:
+
+    ```
+    %N        fractional seconds, 9 digits (nanoseconds)
+    %3N       fractional seconds, 3 digits (milliseconds); any width 1-9
+    %z        UTC offset as +hhmm (on every platform, unlike some strftimes)
+    %:z       UTC offset as +hh:mm, as RFC 3339 needs
+    %Z        the time-zone name; "UTC" when utc is set
+    %%        a literal %
+    ```
+
+    Fractional seconds come from [Time::HiRes](https://metacpan.org/pod/Time%3A%3AHiRes) and are truncated, not rounded;
+    digits beyond the system clock's resolution (usually microseconds) are
+    noise.  The timestamp is taken once per message, so every backend shows the
+    same time.
+
+- `timestamp_precision`
+
+    The number of fractional-second digits, 0-9 (default 0), added after the
+    seconds (each `%S`) of whichever `timestamp_format` is in use:
+
+    ```perl
+    Log::Abstraction->new(timestamp_format => 'rfc3339', timestamp_precision => 3, utc => 1);
+    # 2026-10-04T00:14:24.094Z
+    ```
+
+- `utc`
+
+    If true, timestamps are in UTC rather than local time.
+
 - `verbose`
 
     When using the default Log::Log4perl backend, raises the logging level to
@@ -257,6 +298,9 @@ my $clone = $logger->new(level => 'info');
     logger         => { optional => 1 },
     max_messages   => { type => 'integer', min => 0, optional => 1 },
     script_name    => { type => 'string',  optional => 1 },
+    timestamp_format    => { type => 'string', min => 1, optional => 1 },
+    timestamp_precision => { type => 'integer', min => 0, max => 9, optional => 1 },
+    utc            => { type => 'boolean', optional => 1 },
     verbose        => { type => 'boolean', optional => 1 },
 }
 ```
@@ -286,6 +330,10 @@ Error                                     Meaning / Action
                                           warn/warning/error.
 "<class>: max_messages must be a          max_messages is negative or not a number.
   non-negative integer, not '<v>'"
+"<class>: timestamp_format must be a      timestamp_format is undef, empty or a
+  non-empty string"                       reference.
+"<class>: timestamp_precision must be     timestamp_precision is not a whole
+  an integer from 0 to 9, not '<v>'"      number of digits from 0 to 9.
 "<class>: invalid sendmail level '<l>'"   The sendmail sub-hash 'level' is neither
                                           a level name nor 0-7.  (A bad syslog
                                           sub-hash 'level' gives "invalid syslog
@@ -348,6 +396,7 @@ FUNCTION new(class_or_obj, args...)
     Restore caller-supplied array ref that config merge would have dropped
 
   IF called on a blessed instance (clone form):
+    CROAK on an invalid timestamp_format or timestamp_precision
     shallow-clone self merged with override args
     validate and store new level integer if level given in args
     copy message history list
@@ -373,6 +422,8 @@ FUNCTION new(class_or_obj, args...)
     default to $DEFAULT_LEVEL if not supplied
 
   CROAK if max_messages is given and is not a non-negative integer
+  CROAK if timestamp_format is empty or not a string, or
+    timestamp_precision is not an integer 0-9
 
   IF logger is a hash:
     CROAK if the syslog or sendmail sub-hash 'level' is not a level
@@ -465,15 +516,28 @@ FUNCTION level(self, level?)
 END FUNCTION
 ```
 
-### Is\_Debug
+### Level Detection Methods
+
+- is\_trace
+- is\_debug
+- is\_info
+- is\_notice
+- is\_warn
+- is\_error
+- is\_critical
+- is\_alert
+- is\_emergency
 
 ```
 if($logger->is_debug()) { ... }
 ```
 
-Returns a true value when the logger is configured at `debug` level or
-below (i.e. debug messages will actually be emitted).  Provided for
-compatibility with [Log::Any](https://metacpan.org/pod/Log%3A%3AAny).
+Each returns a true value when a message logged with the method of the same
+name (`is_warn` for `warn()`) would pass the logger's level threshold, so
+that expensive message-building can be skipped.  They follow the current
+threshold, including changes made with ["level"](#level).  As with the levels
+themselves, `is_trace` equals `is_debug`.  Provided for compatibility with
+[Log::Any](https://metacpan.org/pod/Log%3A%3AAny).
 
 #### Arguments
 
@@ -481,8 +545,7 @@ None.
 
 #### Returns
 
-`1` if the current level threshold includes debug (or trace) messages;
-`0` otherwise.
+`1` if messages at that level would be emitted; `0` otherwise.
 
 #### Example
 
@@ -490,6 +553,10 @@ None.
 if($logger->is_debug()) {
     $logger->debug('Expensive diagnostic: ' . Dumper(\%state));
 }
+
+$logger->level('warning');
+$logger->is_warn();    # 1
+$logger->is_info();    # 0
 ```
 
 #### API Specification
@@ -1272,15 +1339,18 @@ Clone operation (called on an existing object):
 └─────────────────────────────────────────────────────────────
 ```
 
-### Is\_Debug
+### Is\_Trace, Is\_Debug, Is\_Info, Is\_Notice, Is\_Warn, Is\_Error, Is\_Critical, Is\_Alert, Is\_Emergency
 
 ```
-┌─ IsDebug ──────────────────────────────────────────────────
+┌─ IsLevel ──────────────────────────────────────────────────
 │ ΞLogState
+│ lvl? : LEVEL
 │ result! : BOOLEAN
 ├─────────────────────────────────────────────────────────────
-│ result! = (level ≥ syslog_values('debug'))
+│ result! = (level ≥ syslog_values(lvl?))
 └─────────────────────────────────────────────────────────────
+
+is_<lvl> ≡ IsLevel[lvl? := lvl]
 ```
 
 ### Messages

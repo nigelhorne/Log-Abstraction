@@ -21,6 +21,13 @@ Revision history for Log-Abstraction
 	- New is_trace, is_info, is_notice, is_warn, is_error, is_critical,
 	  is_alert and is_emergency methods alongside is_debug.  The Log::Any
 	  adapter's detection methods now call them.
+	- New timestamp options: timestamp_format (a strftime pattern, or
+	  'iso8601'/'rfc3339'), utc, and timestamp_precision (0-9 digits of
+	  fractional seconds, from Time::HiRes).  Patterns may also use %N,
+	  %3N etc., and %z/%:z, which now give a numeric offset on every
+	  platform.  They apply to %timestamp% and the JSON timestamp.  The
+	  time is now read once per message, so all backends show the same
+	  time.  Time::HiRes and Time::Local (both core) are new dependencies.
 
 	[ Bug Fixes ]
 	- t/journald.t no longer hangs if a journald send fails: its receiver

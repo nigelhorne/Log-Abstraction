@@ -45,4 +45,5 @@ t/sendmail.t
 t/structured_fields.t
 t/subclass.t
 t/syslog.t
+t/timestamp.t
 t/unit.t

@@ -18,6 +18,8 @@ requires 'Scalar::Util';
 requires 'Socket';
 requires 'Sub::Private', '0.05';
 requires 'Sys::Syslog', '0.28';
+requires 'Time::HiRes';
+requires 'Time::Local';
 requires 'autodie';
 recommends 'Email::Sender::Simple';
 recommends 'Email::Sender::Transport::SMTP';

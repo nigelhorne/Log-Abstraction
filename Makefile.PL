@@ -37,6 +37,8 @@ WriteMakefile(
 		'Scalar::Util'=> 0,
 		'Socket' => 0,
 		'Sub::Private' => 0.05,
+		'Time::HiRes' => 0,
+		'Time::Local' => 0,
 	},
 	TEST_REQUIRES => {
 		'Data::Dumper' => 0,
