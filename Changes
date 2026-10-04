@@ -34,6 +34,17 @@ Revision history for Log-Abstraction
 	  before the write that is due.  Since the file is opened for every
 	  message, logrotate's default rename-and-create works without
 	  copytruncate or SIGHUP; this is now documented and tested.
+	- Every backend can have its own 'level' and 'format'.  syslog,
+	  journald and sendmail take them as keys; file, fd and array (in a
+	  logger hash or at the top level) may be given as a hash, e.g.
+	  file => { file => $path, level => 'info', format => 'json' }.  A
+	  format replaces the message for array, syslog, journald and email.
+	  Invalid values croak in new().
+
+	[ Incompatible Changes ]
+	- 'level' and 'format' in the journald hash are now that backend's
+	  level and format; they were sent to the journal as LEVEL and FORMAT
+	  fields.
 
 	[ Bug Fixes ]
 	- t/journald.t no longer hangs if a journald send fails: its receiver

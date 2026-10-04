@@ -24,10 +24,11 @@ sub lines {
 	return @lines;
 }
 
-# Create a file with one line, last modified $age seconds ago
+# Create a file with one line, last modified $age seconds ago.  It is written
+# raw, so it is 4 bytes everywhere: in text mode Windows writes "old\r\n"
 sub old_file {
 	my ($path, $age) = @_;
-	open(my $fout, '>', $path) or die "$path: $!";
+	open(my $fout, '>:raw', $path) or die "$path: $!";
 	print $fout "old\n";
 	close $fout;
 	my $when = time() - $age;
@@ -45,7 +46,8 @@ subtest 'size rotation' => sub {
 	my $path = new_path();
 	my $log = logger($path, rotate_size => 20, rotate_keep => 2);
 
-	# Each line is 10 bytes with its newline, so a file holds two
+	# Each line is 10 bytes with its newline (11 with CRLF on Windows), so a
+	# file holds two either way
 	$log->info(sprintf('line %04d', $_)) for(1 .. 7);
 
 	is_deeply([ lines($path) ], ['line 0007'], 'the current file has the newest line');
@@ -119,7 +121,9 @@ subtest 'time rotation in UTC' => sub {
 subtest 'size and time together' => sub {
 	my $path = new_path();
 	old_file($path, 0);
-	my $log = logger($path, rotate_interval => 'daily', rotate_size => 5);    # 'old\n' is 4 bytes
+	my $log = logger($path, rotate_interval => 'daily', rotate_size => 5);
+	# old_file's 4 bytes are under the limit; with "x\n" (or "x\r\n" on
+	# Windows) the file is 6 or 7 bytes, so the next write rotates it
 	$log->info('x');
 	is_deeply([ lines($path) ], ['old', 'x'], 'not yet due');
 	$log->info('y');

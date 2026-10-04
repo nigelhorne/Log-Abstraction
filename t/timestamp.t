@@ -9,7 +9,7 @@ use Readonly;
 use Test::Mockingbird;
 use Test::Most;
 
-use Log::Abstraction;
+use_ok('Log::Abstraction');
 
 # 2001-09-09T01:46:40Z, plus a fraction that is exact in binary
 Readonly::Scalar my $EPOCH => 1_000_000_000;
