@@ -76,6 +76,40 @@ When logging through [Log::Any](https://metacpan.org/pod/Log%3A%3AAny), a hash r
 together with the proxy's `context`, arrives here as fields; see
 ["structured" in Log::Any::Adapter::Abstraction](https://metacpan.org/pod/Log%3A%3AAny%3A%3AAdapter%3A%3AAbstraction#structured).
 
+### Per-Backend Level and Format
+
+Every backend can have its own `level` and `format`, as well as the
+logger's.  `syslog`, `journald` and `sendmail` are hashes already, so
+they take them as keys.  `file`, `fd` and `array`, inside a `logger` hash
+or at the top level, may be given as a hash holding the destination under
+the backend's own name:
+
+```perl
+my $log = Log::Abstraction->new(
+    level  => 'debug',
+    logger => {
+        file   => { file => '/var/log/myapp.log', format => 'json' },
+        fd     => { fd => \*STDERR, level => 'warning' },
+        array  => { array => \@recent, level => 'info' },
+        syslog => { level => 'error', format => '%level%: %message%' },
+    },
+);
+```
+
+- `level` -- the backend only gets messages at this level or more
+severe.  A level name or a syslog number (0-7).  The logger's `level` is
+applied first, so a backend's level can only narrow it: set the logger's
+`level` to the most verbose any backend wants.
+- `format` -- a format string, or `json`, as for the logger's
+["format"](#format), which it overrides.  For `file` and `fd` it is the line
+written.  For the others, which by default get the message as it is, it
+replaces the message: the `array` entry's `message`, the text sent to
+syslog, the journal's `MESSAGE` field and the email body.
+
+The plain forms (`file => $path`, `fd => $handle`,
+`array => \@array`) still work and have no level or format of their
+own.  A blessed handle object is a destination, not the hash form.
+
 ### File Rotation
 
 Log files written by path (a scalar `logger`, a `file` key in a `logger`
@@ -153,7 +187,9 @@ called on an object.  It may also be called as a plain function,
 
 - `format`
 
-    Format string for file/fd backends.  Tokens expanded at log time:
+    Format string for the file, fd and scalar-path backends; a backend's own
+    `format` (see ["Per-backend level and format"](#per-backend-level-and-format)) overrides it for that
+    backend.  Tokens expanded at log time:
 
     ```
     %callstack%   caller file and line number
@@ -206,7 +242,8 @@ called on an object.  It may also be called as a plain function,
     - A code reference -- called with a hashref `{ class, file, line, level, message, ctx, fields }`
     (`ctx` and `fields` only when there are any)
     - An object -- method matching the level name is called on it
-    - A hash reference -- may contain `file`, `array`, `fd`, `syslog`, `journald`, and/or `sendmail` keys
+    - A hash reference -- may contain `file`, `array`, `fd`, `syslog`, `journald`, and/or `sendmail` keys,
+    each of which may have its own `level` and `format` (see ["Per-backend level and format"](#per-backend-level-and-format))
     - An array reference -- `{ level, message }` hashrefs are pushed onto it, with a
     `fields` key when the call has ["Structured fields"](#structured-fields)
     - A scalar string -- treated as a file path to append to
@@ -214,8 +251,9 @@ called on an object.  It may also be called as a plain function,
     When not supplied, [Log::Log4perl](https://metacpan.org/pod/Log%3A%3ALog4perl) is initialised as the default backend.
 
     The `sendmail` sub-hash supports:
-    `host`, `port`, `to`, `from`, `subject`, `level`, `min_interval`.
-    `to` is required.  `level` may be a level name or a syslog number (0-7);
+    `host`, `port`, `to`, `from`, `subject`, `level`, `format`,
+    `min_interval`.  `to` is required.  With `format`, the email body is the
+    formatted line rather than the message.  `level` may be a level name or a syslog number (0-7);
     without it, every message is emailed.
     At most one email is sent per `min_interval` seconds per instance.  If
     delivery fails, `Carp::carp` is called and the other backends still receive
@@ -225,6 +263,7 @@ called on an object.  It may also be called as a plain function,
 
     - `facility` -- the syslog facility (default: `local0`)
     - `level` -- only messages at this level or more severe are sent; a level name or a syslog number (0-7)
+    - `format` -- format the message with this (see ["format"](#format)) before sending it; by default the message is sent as it is
     - `host` (or its alias `server`), and any other ["setlogsock" in Sys::Syslog](https://metacpan.org/pod/Sys%3A%3ASyslog#setlogsock) option -- passed to `setlogsock()`
 
     The `journald` sub-hash sends each message as a single datagram to the
@@ -232,6 +271,8 @@ called on an object.  It may also be called as a plain function,
 
     - `socket` -- path to the journald socket (default: `/run/systemd/journal/socket`)
     - `identifier` -- value for the `SYSLOG_IDENTIFIER` field (default: basename of `$0`)
+    - `level` -- only messages at this level or more severe are sent; a level name or a syslog number (0-7)
+    - `format` -- the `MESSAGE` field is the message formatted with this (see ["format"](#format)); by default it is the message as it is
     - any other key -- included verbatim as an uppercase journald field name.
     The upper-cased name must contain only `A-Z`, `0-9` and `_`, and must not
     start with `_`; `new()` croaks otherwise.
@@ -319,7 +360,8 @@ A blessed `Log::Abstraction` object.
 
 Loads `File::Basename` if `syslog` is configured (either at the top level
 or in a `logger` hash) and `script_name` is not supplied.  Loads
-`Log::Log4perl` if no logger backend is specified.
+`Log::Log4perl` if no backend (`logger`, `file`, `fd` or `array`) is
+specified.
 
 #### Example
 
@@ -394,10 +436,15 @@ Error                                     Meaning / Action
   non-empty string"                       reference.
 "<class>: timestamp_precision must be     timestamp_precision is not a whole
   an integer from 0 to 9, not '<v>'"      number of digits from 0 to 9.
-"<class>: invalid sendmail level '<l>'"   The sendmail sub-hash 'level' is neither
-                                          a level name nor 0-7.  (A bad syslog
-                                          sub-hash 'level' gives "invalid syslog
-                                          level", as above.)
+"<class>: invalid <backend> level '<l>'"  A backend's 'level' (file, fd, array,
+                                          sendmail, journald) is neither a level
+                                          name nor 0-7.  (A bad syslog 'level'
+                                          gives "invalid syslog level", as above.)
+"<class>: the <backend> format must be   A backend's 'format' is undef, empty or
+  a non-empty string"                     a reference.
+"<class>: the <backend> hash needs a      The hash form of file, fd or array has
+  '<backend>' key"                        no destination (e.g. file => { level =>
+                                          'info' } without a 'file' key).
 "<class>: the sendmail backend needs      The sendmail sub-hash has no 'to' key.
   a 'to' address"
 "<class>: invalid journald field name     An extra journald key, upper-cased, is not
@@ -473,7 +520,7 @@ FUNCTION new(class_or_obj, args...)
   IF logger arg is a Log::Abstraction object:
     CROAK (would create a needless forwarding loop)
 
-  IF no logger AND no file AND no array:
+  IF no logger AND no file AND no fd AND no array:
     load Log::Log4perl, easy_init at DEBUG or ERROR per verbose flag
     store Log4perl logger as the backend
 
@@ -490,9 +537,13 @@ FUNCTION new(class_or_obj, args...)
     hourly/daily/weekly/monthly, or rotate_keep is not a non-negative
     integer; normalise rotate_size to bytes
 
+  FOR each backend (top-level file/fd/array, and the logger hash's
+  file/fd/array/syslog/sendmail/journald) given as a hash:
+    CROAK if a file/fd/array hash lacks its destination key (its own name)
+    CROAK if its 'level' is not a level name or 0-7
+    CROAK if its 'format' is undef, empty or not a string
+
   IF logger is a hash:
-    CROAK if the syslog or sendmail sub-hash 'level' is not a level
-      name or 0-7
     CROAK if a sendmail sub-hash has no 'to' address
     CROAK if an extra journald key is not a valid journald field name
 
@@ -1298,7 +1349,7 @@ callback as described above.
 
 - **Log::Log4perl is a de-facto required dependency**
 
-    When no `logger`, `file`, or `array` backend is configured, `new()`
+    When no `logger`, `file`, `fd` or `array` backend is configured, `new()`
     loads [Log::Log4perl](https://metacpan.org/pod/Log%3A%3ALog4perl) and uses it as the default backend.  Although listed
     as an optional runtime dependency, it is required in that default-backend
     path.

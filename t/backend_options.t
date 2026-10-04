@@ -206,6 +206,24 @@ subtest 'the plain forms are unchanged' => sub {
 	is_deeply(\@array, [ { level => 'info', message => 'm' } ], 'array');
 };
 
+subtest 'a top-level fd alone is a backend: no Log4perl fallback' => sub {
+	my @warnings;
+	local $SIG{__WARN__} = sub { push @warnings, $_[0] };
+
+	for my $form ('plain', 'hash') {
+		my ($fh, $fd_lines) = string_fd();
+		my $fd = ($form eq 'plain') ? $fh : { fd => $fh };
+		my $log = Log::Abstraction->new(level => 'info', format => '%message%', fd => $fd);
+
+		ok(!defined($log->{logger}), "$form fd: no default logger");
+		lives_ok(sub { $log->info('i')->warn('w')->error('e') }, "$form fd: error() does not croak");
+		is_deeply([ $fd_lines->() ], ['i', 'w', 'e'], "$form fd: messages go to the fd");
+	}
+	is_deeply(\@warnings, [], 'and warn() does not carp');
+
+	isa_ok(Log::Abstraction->new()->{logger}, 'Log::Log4perl::Logger', 'with no backend at all, Log4perl');
+};
+
 subtest 'invalid options croak' => sub {
 	my ($fh) = string_fd();
 	my %dest = (file => "$tmpdir/x.log", fd => $fh, array => []);

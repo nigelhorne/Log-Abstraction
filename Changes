@@ -40,13 +40,14 @@ Revision history for Log-Abstraction
 	  file => { file => $path, level => 'info', format => 'json' }.  A
 	  format replaces the message for array, syslog, journald and email.
 	  Invalid values croak in new().
-
 	[ Incompatible Changes ]
 	- 'level' and 'format' in the journald hash are now that backend's
 	  level and format; they were sent to the journal as LEVEL and FORMAT
 	  fields.
-
 	[ Bug Fixes ]
+	- A top-level 'fd' now counts as a backend in new(), as 'file' and
+	  'array' do: Log::Abstraction->new(fd => $fh) no longer also sets up
+	  Log::Log4perl and sends every message there too.
 	- t/journald.t no longer hangs if a journald send fails: its receiver
 	  now reads with MSG_DONTWAIT, so the test fails instead.  This was the
 	  hang in RT#181461.

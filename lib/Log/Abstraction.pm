@@ -599,7 +599,8 @@ A blessed C<Log::Abstraction> object.
 
 Loads C<File::Basename> if C<syslog> is configured (either at the top level
 or in a C<logger> hash) and C<script_name> is not supplied.  Loads
-C<Log::Log4perl> if no logger backend is specified.
+C<Log::Log4perl> if no backend (C<logger>, C<file>, C<fd> or C<array>) is
+specified.
 
 =head3 Example
 
@@ -747,7 +748,7 @@ logging failure must never crash the application.
     IF logger arg is a Log::Abstraction object:
       CROAK (would create a needless forwarding loop)
 
-    IF no logger AND no file AND no array:
+    IF no logger AND no file AND no fd AND no array:
       load Log::Log4perl, easy_init at DEBUG or ERROR per verbose flag
       store Log4perl logger as the backend
 
@@ -859,7 +860,7 @@ sub new {
 				' as a logging class, that would add a needless indirection',
 			);
 		}
-	} elsif((!$args{'file'}) && (!$args{'array'})) {
+	} elsif(!$args{'file'} && !$args{'fd'} && !$args{'array'}) {
 		# Fall back to Log::Log4perl when no other backend is configured
 		require Log::Log4perl;
 		Log::Log4perl->import();
@@ -3019,7 +3020,7 @@ Monitor L<https://metacpan.org/pod/OpenTelemetry::SDK> for progress.
 
 =item B<Log::Log4perl is a de-facto required dependency>
 
-When no C<logger>, C<file>, or C<array> backend is configured, C<new()>
+When no C<logger>, C<file>, C<fd> or C<array> backend is configured, C<new()>
 loads L<Log::Log4perl> and uses it as the default backend.  Although listed
 as an optional runtime dependency, it is required in that default-backend
 path.
