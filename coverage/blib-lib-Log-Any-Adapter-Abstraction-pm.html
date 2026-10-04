@@ -27,20 +27,20 @@ https://pjcj.net
 <tr><th>line</th><th>stmt</th><th>bran</th><th>cond</th><th>sub</th><th>time</th><th>code</th></tr>
 <tr><td class="h">1</td><td></td><td></td><td></td><td></td><td></td><td class="s">package Log::Any::Adapter::Abstraction;</td></tr>
 <tr><td class="h">2</td><td colspan="6"></td></tr><tr><td class="h">3</td><td></td><td></td><td></td><td></td><td></td><td class="s"># Route Log::Any log calls through a Log::Abstraction backend</td></tr>
-<tr><td class="h">4</td><td><div class="c3">1</div><div class="c3">1</div><div class="c3">1</div></td><td></td><td></td><td><div class="c3"><a href="blib-lib-Log-Any-Adapter-Abstraction-pm--subroutine.html#L4">1</a></div></td><td><div>63419</div><div>1</div><div>14</div></td><td class="s">use strict;</td></tr>
-<tr><td class="h">5</td><td><div class="c3">1</div><div class="c3">1</div><div class="c3">1</div></td><td></td><td></td><td><div class="c3"><a href="blib-lib-Log-Any-Adapter-Abstraction-pm--subroutine.html#L5">1</a></div></td><td><div>1</div><div>1</div><div>22</div></td><td class="s">use warnings;</td></tr>
-<tr><td class="h">6</td><td colspan="6"></td></tr><tr><td class="h">7</td><td><div class="c3">1</div><div class="c3">1</div><div class="c3">1</div></td><td></td><td></td><td><div class="c3"><a href="blib-lib-Log-Any-Adapter-Abstraction-pm--subroutine.html#L7">1</a></div></td><td><div>1</div><div>2</div><div>2</div></td><td class="s">use parent &#39;Log::Any::Adapter::Base&#39;;</td></tr>
-<tr><td class="h">8</td><td colspan="6"></td></tr><tr><td class="h">9</td><td></td><td></td><td></td><td></td><td></td><td class="s">use Carp;</td></tr>
+<tr><td class="h">4</td><td><div class="c3">2</div><div class="c3">2</div><div class="c3">2</div></td><td></td><td></td><td><div class="c3"><a href="blib-lib-Log-Any-Adapter-Abstraction-pm--subroutine.html#L4">2</a></div></td><td><div>72956</div><div>2</div><div>30</div></td><td class="s">use strict;</td></tr>
+<tr><td class="h">5</td><td><div class="c3">2</div><div class="c3">2</div><div class="c3">2</div></td><td></td><td></td><td><div class="c3"><a href="blib-lib-Log-Any-Adapter-Abstraction-pm--subroutine.html#L5">2</a></div></td><td><div>3</div><div>2</div><div>45</div></td><td class="s">use warnings;</td></tr>
+<tr><td class="h">6</td><td colspan="6"></td></tr><tr><td class="h">7</td><td><div class="c3">2</div><div class="c3">2</div><div class="c3">2</div></td><td></td><td></td><td><div class="c3"><a href="blib-lib-Log-Any-Adapter-Abstraction-pm--subroutine.html#L7">2</a></div></td><td><div>3</div><div>2</div><div>6</div></td><td class="s">use parent &#39;Log::Any::Adapter::Base&#39;;</td></tr>
+<tr><td class="h">8</td><td colspan="6"></td></tr><tr><td class="h">9</td><td></td><td></td><td></td><td></td><td></td><td class="s">use Carp ();</td></tr>
 <tr><td class="h">10</td><td></td><td></td><td></td><td></td><td></td><td class="s">use Log::Abstraction;</td></tr>
-<tr><td class="h">11</td><td></td><td></td><td></td><td></td><td></td><td class="s">use Scalar::Util &#39;blessed&#39;;</td></tr>
-<tr><td class="h">12</td><td colspan="6"></td></tr><tr><td class="h">13</td><td></td><td></td><td></td><td></td><td></td><td class="s">our $VERSION = &#39;0.35&#39;;</td></tr>
+<tr><td class="h">11</td><td></td><td></td><td></td><td></td><td></td><td class="s">use Scalar::Util ();</td></tr>
+<tr><td class="h">12</td><td colspan="6"></td></tr><tr><td class="h">13</td><td></td><td></td><td></td><td></td><td></td><td class="s">our $VERSION = &#39;0.36&#39;;</td></tr>
 <tr><td class="h">14</td><td colspan="6"></td></tr><tr><td class="h">15 - 137</td><td colspan="5"></td><td class="s"><pre>=head1 NAME
 
 Log::Any::Adapter::Abstraction - Log::Any adapter backed by Log::Abstraction
 
 =head1 VERSION
 
-0.35
+0.36
 
 =head1 SYNOPSIS
 
@@ -122,7 +122,7 @@ instance when C&lt;instance&gt; is not supplied.
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;file&nbsp;&nbsp;&nbsp;=&gt; &#39;/var/log/myapp.log&#39;,
 &nbsp;&nbsp;);
 
-=head3 API Specification
+=head3 API SPECIFICATION
 
 =head4 Input
 
@@ -189,7 +189,7 @@ instance when C&lt;instance&gt; is not supplied.
 <tr><td class="h">169</td><td colspan="6"></td></tr><tr><td class="h">170</td><td></td><td></td><td></td><td></td><td></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;# Reuse a caller-supplied Log::Abstraction instance if one was provided;</td></tr>
 <tr><td class="h">171</td><td></td><td></td><td></td><td></td><td></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;# anything else is a mistake, not a request for a default logger</td></tr>
 <tr><td class="h">172</td><td></td><td></td><td></td><td></td><td></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if(defined(my $inst = $self-&gt;{instance})) {</td></tr>
-<tr><td class="h">173</td><td></td><td></td><td></td><td></td><td></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if(!blessed($inst) || !$inst-&gt;isa(&#39;Log::Abstraction&#39;)) {</td></tr>
+<tr><td class="h">173</td><td></td><td></td><td></td><td></td><td></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if(!Scalar::Util::blessed($inst) || !$inst-&gt;isa(&#39;Log::Abstraction&#39;)) {</td></tr>
 <tr><td class="h">174</td><td></td><td></td><td></td><td></td><td></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Carp::croak(__PACKAGE__, &#39;: instance must be a Log::Abstraction object&#39;);</td></tr>
 <tr><td class="h">175</td><td></td><td></td><td></td><td></td><td></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}</td></tr>
 <tr><td class="h">176</td><td></td><td></td><td></td><td></td><td></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;$self-&gt;{_logger} = $inst;</td></tr>
@@ -236,7 +236,7 @@ matching L&lt;Log::Abstraction&gt; method (see L&lt;/Level mapping&gt;).&nbsp;&n
 are generated when the module loads.&nbsp;&nbsp;A croak from Log::Abstraction (e.g.
 C&lt;croak_on_error&gt;) is turned into a C&lt;Carp::carp&gt;, so logging never dies.
 
-=head3 API Specification
+=head3 API SPECIFICATION
 
 =head4 Input
 
@@ -262,7 +262,7 @@ reaches Log::Abstraction as C&lt;info(&#39;login&#39;, { user_id =E&lt;gt&gt; 42
 L&lt;Log::Abstraction/Structured fields&gt; for where the fields go.&nbsp;&nbsp;As with the
 logging methods, a croak is turned into a C&lt;Carp::carp&gt;.
 
-=head3 API Specification
+=head3 API SPECIFICATION
 
 =head4 Input
 
@@ -308,7 +308,7 @@ L&lt;Log::Abstraction&gt; instance&#39;s level threshold, otherwise 0.&nbsp;&nbs
 L&lt;Log::Abstraction&gt; method of the same name (C&lt;is_warning&gt; calls
 C&lt;is_warn&gt;).&nbsp;&nbsp;As in Log::Abstraction, C&lt;is_trace&gt; equals C&lt;is_debug&gt;.
 
-=head3 API Specification
+=head3 API SPECIFICATION
 
 =head4 Input
 
