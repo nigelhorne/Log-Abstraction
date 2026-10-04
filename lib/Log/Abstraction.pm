@@ -86,15 +86,18 @@ use warnings;
 # calls, and which would make IPC::System::Simple a hidden dependency
 use autodie qw(:default);
 
-# Core and CPAN dependencies
-use Carp;
+# Core and CPAN dependencies.  Functions are called by their full names
+# and nothing is imported, so that they can't be called as methods on a
+# logger ($log->croak, $log->syslog ...).  Readonly::Values::Syslog only
+# exports variables (%syslog_values, $DEBUG ...)
+use Carp ();
 use Config::Abstraction 0.40;
 use Params::Get 0.15;
-use POSIX qw(strftime);
-use Readonly;
+use POSIX ();
+use Readonly ();
 use Readonly::Values::Syslog 0.04;
 use Return::Set 0.04;
-use Scalar::Util 'blessed';
+use Scalar::Util ();
 use Time::HiRes ();
 use Time::Local ();
 
@@ -104,8 +107,8 @@ use Time::Local ();
 BEGIN { $Sub::Private::config{mode} = 'enforce' }
 use Sub::Private 0.05;
 
-# Sys::Syslog imported with bare-function names used in _log
-use Sys::Syslog 0.28;
+# Sys::Syslog, called as Sys::Syslog::openlog() etc. in _log and DESTROY
+use Sys::Syslog 0.28 ();
 
 # ---------------------------------------------------------------------------
 # Module-level constants -- no magic strings or numbers anywhere below
@@ -221,17 +224,18 @@ Log::Abstraction - Logging Abstraction Layer
 
 =head1 VERSION
 
-0.35
+0.36
 
 =cut
 
-our $VERSION = 0.35;
+our $VERSION = '0.36';
 
 =head1 SYNOPSIS
 
   use Log::Abstraction;
 
-  my $logger = Log::Abstraction->new(logger => 'logfile.log');
+  # The default level is 'warning'; 'trace' lets every example through
+  my $logger = Log::Abstraction->new(logger => 'logfile.log', level => 'trace');
 
   $logger->debug('This is a debug message');
   $logger->info('This is an info message');
@@ -413,7 +417,9 @@ C<$args-E<gt>{ctx}>.
 
 Format string for the file, fd and scalar-path backends; a backend's own
 C<format> (see L</Per-backend level and format>) overrides it for that
-backend.  Tokens expanded at log time:
+backend.  Unset or an empty string means the default,
+C<%level%E<gt> [%timestamp%] %class% %callstack% %message%>.  Tokens expanded
+at log time:
 
   %callstack%   caller file and line number
   %class%       blessed class of the logger object
@@ -437,8 +443,10 @@ Elasticsearch, and Splunk.  C<class> is included when the logger is a subclass
 of C<Log::Abstraction>, and C<fields> when the call has L</Structured fields>.
 Keys are emitted in sorted order.
 
-B<Security note:> because C<format> may contain C<%env_*%> tokens, avoid
-granting untrusted sources write access to config files that set this key.
+B<Security note:> because a format may contain C<%env_*%> tokens, which
+expand to environment variables, avoid granting untrusted sources write
+access to config files that set C<format> or any backend's C<format> (see
+L</Per-backend level and format>).
 
 =item * C<level>
 
@@ -446,13 +454,14 @@ Minimum level at which to emit log entries.  Defaults to C<"warning">.
 Valid values (case-insensitive): C<trace>, C<debug>, C<info>/C<informational>,
 C<notice>, C<warn>/C<warning>, C<error>/C<err>, C<crit>/C<critical>/C<fatal>,
 C<alert>, C<emerg>/C<emergency>/C<panic>.  C<trace> and C<debug> are the same
-threshold (see L</LIMITATIONS>).
+threshold (see L</LIMITATIONS>).  It may also be an array reference, whose
+first element is used, as some configuration-file formats produce.
 
 =item * C<max_messages>
 
 The most entries to keep in the in-memory history returned by
 L</messages>; when it is full, the oldest entry is discarded.  Must be a
-non-negative integer.  Unlimited by default, which in a long-running process
+non-negative integer; C<0> keeps no history at all.  Unlimited by default, which in a long-running process
 means the history grows without bound.
 
 =item * C<logger>
@@ -487,7 +496,9 @@ At most one email is sent per C<min_interval> seconds per instance.  If
 delivery fails, C<Carp::carp> is called and the other backends still receive
 the message.
 
-The C<syslog> sub-hash supports:
+The C<syslog> sub-hash supports the keys below.  The message is passed to
+C<syslog()> through a C<%s> format, so C<%> sequences in it, such as C<%m>,
+are logged literally.
 
 =over 4
 
@@ -611,7 +622,7 @@ specified.
 
   my $clone = $logger->new(level => 'info');
 
-=head3 API Specification
+=head3 API SPECIFICATION
 
 =head4 Input
 
@@ -795,7 +806,7 @@ sub new {
 	# Load configuration from a file when config_file is present
 	if(exists($args{'config_file'})) {
 		if(!-r $args{'config_file'}) {
-			croak("$class: ", $args{'config_file'}, ': File not readable');
+			Carp::croak("$class: ", $args{'config_file'}, ': File not readable');
 		}
 		if(my $config = Config::Abstraction->new(
 			config_dirs => [''],
@@ -814,7 +825,7 @@ sub new {
 				$args{'array'} = $array;
 			}
 		} else {
-			croak("$class: Can't load configuration from ", $args{'config_file'});
+			Carp::croak("$class: Can't load configuration from ", $args{'config_file'});
 		}
 	}
 
@@ -847,14 +858,14 @@ sub new {
 	if($wants_syslog && !$args{'script_name'}) {
 		require File::Basename;
 		$args{'script_name'} = File::Basename::basename($ENV{'SCRIPT_NAME'} || $0);
-		croak("$class: syslog needs to know the script name")
+		Carp::croak("$class: syslog needs to know the script name")
 			if(!defined($args{'script_name'}));
 	}
 
 	# Reject attempts to use this module as its own logger backend
 	if(defined(my $logger = $args{logger})) {
 		if(Scalar::Util::blessed($logger) && (ref($logger) eq __PACKAGE__)) {
-			croak(
+			Carp::croak(
 				"$class: attempt to encapsulate ",
 				__PACKAGE__,
 				' as a logging class, that would add a needless indirection',
@@ -1069,7 +1080,7 @@ sub _field_string :Private {
 	my ($value) = @_;
 
 	return '' unless defined($value);
-	return "$value" if(!ref($value) || blessed($value));
+	return "$value" if(!ref($value) || Scalar::Util::blessed($value));
 	return _to_json($value);
 }
 
@@ -1311,7 +1322,7 @@ sub _timestamp :Private {
 		: ($1 eq 'z') ? $offset->('')
 		: $utc ? 'UTC' : '%Z'/gex;
 
-	return strftime($format, @tm);
+	return POSIX::strftime($format, @tm);
 }
 
 # ---------------------------------------------------------------------------
@@ -1520,7 +1531,7 @@ sub _format_message :Private {
 
 	# 'json' is a magic format value: emit a compact JSON object per line
 	if(defined($format) && ($format eq 'json')) {
-		my $bclass = blessed($self);
+		my $bclass = Scalar::Util::blessed($self);
 		my $class  = ($bclass && $bclass ne __PACKAGE__) ? $bclass : undef;
 		my %obj = (
 			timestamp => $timestamp,
@@ -1533,7 +1544,7 @@ sub _format_message :Private {
 		if($fields) {
 			# Stringify objects, which would otherwise be encoded as null
 			$obj{fields} = {
-				map { $_ => (blessed($fields->{$_}) ? "$fields->{$_}" : $fields->{$_}) } keys %{$fields}
+				map { $_ => (Scalar::Util::blessed($fields->{$_}) ? "$fields->{$_}" : $fields->{$_}) } keys %{$fields}
 			};
 		}
 		# Characters out (not UTF-8 bytes): _write_line does the encoding
@@ -1547,7 +1558,7 @@ sub _format_message :Private {
 	my $ulevel = uc($level);
 
 	# Suppress the class name for the base package (only show for subclasses)
-	my $bclass = blessed($self);
+	my $bclass = Scalar::Util::blessed($self);
 	my $class  = ($bclass && $bclass ne __PACKAGE__) ? $bclass : '';
 
 	# Indent continuation lines so that a message such as
@@ -1728,7 +1739,7 @@ sub _log :Private {
 	}
 
 	# Compute class once; suppress the package name for base-class instances
-	my $class = blessed($self) || $self;
+	my $class = Scalar::Util::blessed($self) || $self;
 	if($class eq __PACKAGE__) {
 		$class = '';
 	}
@@ -1766,7 +1777,7 @@ sub _log :Private {
 		if(ref($logger) eq 'CODE') {
 			# CODE-ref backend: build the args hashref and invoke the callback
 			my $args = {
-				class   => blessed($self) || __PACKAGE__,
+				class   => Scalar::Util::blessed($self) || __PACKAGE__,
 				file    => $caller_file,
 				line    => $caller_line,
 				level   => $level,
@@ -1833,9 +1844,6 @@ sub _log :Private {
 							require Email::Sender::Simple;
 							require Email::Sender::Transport::SMTP;
 
-							Email::Simple->import();
-							Email::Sender::Simple->import('sendmail');
-							Email::Sender::Transport::SMTP->import();
 
 							# Build the email object with sanitised headers
 							my $email = Email::Simple->new('');
@@ -1860,7 +1868,9 @@ sub _log :Private {
 								host => $host,
 								port => $port,
 							});
-							sendmail($email, { transport => $transport });
+							# A class method, rather than the exported sendmail(),
+							# so that nothing is imported into this package
+							Email::Sender::Simple->send($email, { transport => $transport });
 						};
 
 						# A delivery failure must not stop the remaining backends
@@ -1894,7 +1904,7 @@ sub _log :Private {
 						$syslog->{'level'}    = $min_level if(defined($min_level));
 						$syslog->{'format'}   = $format if(defined($format));
 
-						openlog($self->{script_name}, $DEFAULT_SYSLOG_OPTIONS, $DEFAULT_SYSLOG_IDENTITY);
+						Sys::Syslog::openlog($self->{script_name}, $DEFAULT_SYSLOG_OPTIONS, $DEFAULT_SYSLOG_IDENTITY);
 						$self->{_syslog_opened} = 1;
 						$syslog_open_count++;
 					}
@@ -1903,7 +1913,7 @@ sub _log :Private {
 					# message is passed through '%s' so that a '%m' (or any other
 					# '%' sequence) in it is logged literally.
 					eval {
-						my $priority = $LEVEL_TO_SYSLOG_PRIORITY{$level} // 'warning';
+						my $priority = $LEVEL_TO_SYSLOG_PRIORITY{$level};
 						my $facility = $syslog->{'facility'};
 						my $message = defined($syslog->{'format'}) ? $render->($syslog->{'format'}) : $text;
 						Sys::Syslog::syslog("$priority|$facility", '%s', $message);
@@ -1973,7 +1983,7 @@ sub _log :Private {
 					&& !$logger->{'syslog'} && !exists($logger->{'sendmail'})
 					&& !$logger->{'fd'} && !$logger->{'journald'}) {
 				# Hash logger with no recognised sub-key -- configuration error
-				croak(ref($self), ": Don't know how to deal with the $level message");
+				Carp::croak(ref($self), ": Don't know how to deal with the $level message");
 			}
 
 		} elsif(!ref($logger)) {
@@ -1992,7 +2002,7 @@ sub _log :Private {
 				if(my ($method) = grep { $logger->can($_) } @fallbacks) {
 					$level = $method;
 				} else {
-					croak(
+					Carp::croak(
 						ref($self), ': ', ref($logger),
 						" doesn't know how to deal with the $level message",
 					);
@@ -2001,7 +2011,7 @@ sub _log :Private {
 			$logger->$level(@messages, ($fields ? ((length($str) ? ' ' : '') . $fields_text) : ()));
 
 		} else {
-			croak(ref($self),
+			Carp::croak(ref($self),
 				": configuration error, no handler written for the $level message");
 		}
 
@@ -2166,7 +2176,10 @@ or C<error>.  Case-insensitive.  Omit to perform a pure get.
 
 In getter mode: an integer in the range 0 (emergency) to 7 (debug/trace).
 
-In setter mode: C<$self> (to allow chaining).
+In setter mode: C<$self> (to allow chaining), or C<undef>, after a
+C<Carp::carp>, if the level name is not recognised; the level is then
+unchanged.  A false argument (C<undef>, C<''> or C<0>) is a get, not a set,
+so levels are set by name.
 
 =head3 Side Effects
 
@@ -2180,7 +2193,7 @@ When setting, updates C<$self-E<gt>{level}>.
   # Method chaining
   $logger->level('info')->info('Now at info level');
 
-=head3 API Specification
+=head3 API SPECIFICATION
 
 =head4 Input
 
@@ -2288,7 +2301,7 @@ C<1> if messages at that level would be emitted; C<0> otherwise.
   $logger->is_warn();    # 1
   $logger->is_info();    # 0
 
-=head3 API Specification
+=head3 API SPECIFICATION
 
 =head4 Input
 
@@ -2339,7 +2352,7 @@ internal history.
   my $msgs = $logger->messages();
   # $msgs->[0] = { level => 'info', message => 'hello' }
 
-=head3 API Specification
+=head3 API SPECIFICATION
 
 =head4 Input
 
@@ -2394,7 +2407,7 @@ Appends to the internal message history and dispatches to configured backends.
   # Chaining
   $logger->trace('start')->debug('details')->info('summary');
 
-=head3 API Specification
+=head3 API SPECIFICATION
 
 =head4 Input
 
@@ -2447,7 +2460,7 @@ Appends to the internal message history and dispatches to configured backends.
 
   $logger->debug('Query took ', $elapsed, 'ms');
 
-=head3 API Specification
+=head3 API SPECIFICATION
 
 =head4 Input
 
@@ -2500,7 +2513,7 @@ Appends to the internal message history and dispatches to configured backends.
 
   $logger->info('Server started on port ', $port);
 
-=head3 API Specification
+=head3 API SPECIFICATION
 
 =head4 Input
 
@@ -2554,7 +2567,7 @@ Appends to the internal message history and dispatches to configured backends.
 
   $logger->notice('Configuration reloaded');
 
-=head3 API Specification
+=head3 API SPECIFICATION
 
 =head4 Input
 
@@ -2625,7 +2638,7 @@ May call C<Carp::carp> if C<carp_on_warn> is set or no backend is active.
   $logger->warn(warning => 'Connection reset', ' retrying');
   $logger->warn({ warning => ['Part A', 'Part B'] });
 
-=head3 API Specification
+=head3 API SPECIFICATION
 
 =head4 Input
 
@@ -2689,7 +2702,7 @@ Same as C<warn()> plus optional C<Carp::croak> escalation.
 
   $logger->error('Fatal: database unavailable');
 
-=head3 API Specification
+=head3 API SPECIFICATION
 
 =head4 Input
 
@@ -2744,7 +2757,7 @@ Same as C<error()>.
 
   $logger->fatal('Unrecoverable state; aborting');
 
-=head3 API Specification
+=head3 API SPECIFICATION
 
 =head4 Input
 
@@ -2766,25 +2779,29 @@ sub fatal {
 	return $self;
 }
 
-=head2 critical
+=head2 Methods above error
+
+=over 4
+
+=item critical
+
+=item alert
+
+=item emergency
+
+=back
 
   $logger->critical(@messages);
-  $logger->critical(warning => $text);
-  $logger->critical($text, \%fields);
+  $logger->alert(warning => $text);
+  $logger->emergency($text, \%fields);
 
-Logs a message at C<critical> level (syslog C<crit>, priority 2).
+Log a message at a level more severe than C<error>:
 
-=head2 alert
-
-  $logger->alert(@messages);
-
-Logs a message at C<alert> level (syslog C<alert>, priority 1).
-
-=head2 emergency
-
-  $logger->emergency(@messages);
-
-Logs a message at C<emergency> level (syslog C<emerg>, priority 0).
+  Method      Level       syslog   Priority
+  ----------  ----------  -------  --------
+  critical    critical    crit     2
+  alert       alert       alert    1
+  emergency   emergency   emerg    0
 
 =head3 Arguments
 
@@ -2811,7 +2828,7 @@ C<fatal>, or C<error> if it has no C<fatal> either.
   $logger->alert('Primary database unreachable');
   $logger->emergency('Data corruption detected; shutting down');
 
-=head3 API Specification
+=head3 API SPECIFICATION
 
 =head4 Input
 
@@ -2974,7 +2991,7 @@ callback as described above.
 =item B<Syslog hash mutation>
 
 The C<syslog> sub-hash passed to C<new()> is mutated in-place on the first
-log call: C<facility> and C<level> are temporarily removed before
+log call: C<facility>, C<level> and C<format> are temporarily removed before
 C<setlogsock()> is called, then restored; C<server> is permanently renamed
 to C<host>.  Sharing a syslog hashref between two C<Log::Abstraction>
 instances is not supported and produces undefined behaviour on the second
@@ -3021,9 +3038,8 @@ Monitor L<https://metacpan.org/pod/OpenTelemetry::SDK> for progress.
 =item B<Log::Log4perl is a de-facto required dependency>
 
 When no C<logger>, C<file>, C<fd> or C<array> backend is configured, C<new()>
-loads L<Log::Log4perl> and uses it as the default backend.  Although listed
-as an optional runtime dependency, it is required in that default-backend
-path.
+loads L<Log::Log4perl> and uses it as the default backend, so it is a
+required dependency even for applications that never use it.
 
 =back
 
@@ -3086,10 +3102,19 @@ L<http://deps.cpantesters.org/?module=Log::Abstraction>
 
 =head2 new
 
+  FIELDS == STRING ⇸ VALUE          structured fields (see Structured fields)
+  ENTRY  == { level : STRING; message : STRING; fields : FIELDS }
+
+  entry(l, m, f) == {level ↦ l, message ↦ m} ∪ (if f = ∅ then ∅ else {fields ↦ f})
+
   ┌─ LogState ──────────────────────────────────────────────────
-  │ level    : ℤ
-  │ messages : seq { level : STRING; message : STRING }
-  │ logger   : LOGGER
+  │ level        : ℤ
+  │ messages     : seq ENTRY
+  │ max_messages : ℕ ∪ {∞}
+  │ logger       : LOGGER
+  ├─────────────────────────────────────────────────────────────
+  │ 0 ≤ level ≤ 7
+  │ #messages ≤ max_messages
   └─────────────────────────────────────────────────────────────
 
   ┌─ New ───────────────────────────────────────────────────────
@@ -3098,8 +3123,9 @@ L<http://deps.cpantesters.org/?module=Log::Abstraction>
   ├─────────────────────────────────────────────────────────────
   │ result!.level = syslog_values(args?.level ∨ 'warning')
   │ result!.messages = ⟨⟩
+  │ result!.max_messages = args?.max_messages ∨ ∞
   │ args?.logger ≠ ∅ ⟹ result!.logger = args?.logger
-  │ args?.logger = ∅ ∧ args?.file = ∅ ∧ args?.array = ∅
+  │ args?.logger = ∅ ∧ args?.file = ∅ ∧ args?.fd = ∅ ∧ args?.array = ∅
   │   ⟹ result!.logger = Log4perl
   └─────────────────────────────────────────────────────────────
 
@@ -3132,6 +3158,18 @@ L<http://deps.cpantesters.org/?module=Log::Abstraction>
   │ level' = syslog_values(new_level?)
   └─────────────────────────────────────────────────────────────
 
+  ┌─ LevelSetInvalid ──────────────────────────────────────────
+  │ ΞLogState
+  │ new_level? : STRING
+  │ result! : undef
+  ├─────────────────────────────────────────────────────────────
+  │ new_level? ≠ ''
+  │ new_level? ∉ dom(syslog_values)
+  │ carp("invalid syslog level")
+  └─────────────────────────────────────────────────────────────
+
+  level(new_level?) ≡ LevelSet ∨ LevelSetInvalid
+
 =head2 is_trace, is_debug, is_info, is_notice, is_warn, is_error, is_critical, is_alert, is_emergency
 
   ┌─ IsLevel ──────────────────────────────────────────────────
@@ -3148,7 +3186,7 @@ L<http://deps.cpantesters.org/?module=Log::Abstraction>
 
   ┌─ Messages ─────────────────────────────────────────────────
   │ ΞLogState
-  │ result! : seq { level : STRING; message : STRING }
+  │ result! : seq ENTRY
   ├─────────────────────────────────────────────────────────────
   │ result! = messages
   └─────────────────────────────────────────────────────────────
@@ -3158,9 +3196,10 @@ L<http://deps.cpantesters.org/?module=Log::Abstraction>
   ┌─ Trace ────────────────────────────────────────────────────
   │ ΔLogState
   │ msg? : seq STRING
+  │ fields? : FIELDS
   ├─────────────────────────────────────────────────────────────
   │ syslog_values('trace') ≤ level
-  │ messages' = messages ⌢ ⟨{level ↦ 'trace', message ↦ ⊕(msg?)}⟩
+  │ messages' = messages ⌢ ⟨entry('trace', ⊕(msg?), fields?)⟩
   └─────────────────────────────────────────────────────────────
 
 =head2 debug
@@ -3168,9 +3207,10 @@ L<http://deps.cpantesters.org/?module=Log::Abstraction>
   ┌─ Debug ────────────────────────────────────────────────────
   │ ΔLogState
   │ msg? : seq STRING
+  │ fields? : FIELDS
   ├─────────────────────────────────────────────────────────────
   │ syslog_values('debug') ≤ level
-  │ messages' = messages ⌢ ⟨{level ↦ 'debug', message ↦ ⊕(msg?)}⟩
+  │ messages' = messages ⌢ ⟨entry('debug', ⊕(msg?), fields?)⟩
   └─────────────────────────────────────────────────────────────
 
 =head2 info
@@ -3178,9 +3218,10 @@ L<http://deps.cpantesters.org/?module=Log::Abstraction>
   ┌─ Info ─────────────────────────────────────────────────────
   │ ΔLogState
   │ msg? : seq STRING
+  │ fields? : FIELDS
   ├─────────────────────────────────────────────────────────────
   │ syslog_values('info') ≤ level
-  │ messages' = messages ⌢ ⟨{level ↦ 'info', message ↦ ⊕(msg?)}⟩
+  │ messages' = messages ⌢ ⟨entry('info', ⊕(msg?), fields?)⟩
   └─────────────────────────────────────────────────────────────
 
 =head2 notice
@@ -3188,9 +3229,10 @@ L<http://deps.cpantesters.org/?module=Log::Abstraction>
   ┌─ Notice ───────────────────────────────────────────────────
   │ ΔLogState
   │ msg? : seq STRING
+  │ fields? : FIELDS
   ├─────────────────────────────────────────────────────────────
   │ syslog_values('notice') ≤ level
-  │ messages' = messages ⌢ ⟨{level ↦ 'notice', message ↦ ⊕(msg?)}⟩
+  │ messages' = messages ⌢ ⟨entry('notice', ⊕(msg?), fields?)⟩
   └─────────────────────────────────────────────────────────────
 
 =head2 warn
@@ -3198,10 +3240,11 @@ L<http://deps.cpantesters.org/?module=Log::Abstraction>
   ┌─ Warn ─────────────────────────────────────────────────────
   │ ΔLogState
   │ msg? : seq STRING | { warning : STRING | seq STRING }
+  │ fields? : FIELDS
   ├─────────────────────────────────────────────────────────────
   │ msg? ≠ ∅ ∧ join(msg?) ≠ ''
   │ syslog_values('warn') ≤ level
-  │ messages' = messages ⌢ ⟨{level ↦ 'warn', message ↦ join(msg?)}⟩
+  │ messages' = messages ⌢ ⟨entry('warn', join(msg?), fields?)⟩
   │ (carp_on_warn ∨ no_backend) ⟹ carp(join(msg?))
   └─────────────────────────────────────────────────────────────
 
@@ -3215,10 +3258,11 @@ L<http://deps.cpantesters.org/?module=Log::Abstraction>
   ┌─ Error ────────────────────────────────────────────────────
   │ ΔLogState
   │ msg? : seq STRING | { warning : STRING | seq STRING }
+  │ fields? : FIELDS
   ├─────────────────────────────────────────────────────────────
   │ msg? ≠ ∅ ∧ join(msg?) ≠ ''
   │ syslog_values('error') ≤ level
-  │ messages' = messages ⌢ ⟨{level ↦ 'error', message ↦ join(msg?)}⟩
+  │ messages' = messages ⌢ ⟨entry('error', join(msg?), fields?)⟩
   │ (croak_on_error ∨ no_backend) ⟹ execution_continues = false
   └─────────────────────────────────────────────────────────────
 
@@ -3232,6 +3276,11 @@ L<http://deps.cpantesters.org/?module=Log::Abstraction>
 
   The Error schema, with 'error' replaced by 'critical', 'alert' or
   'emergency' respectively.
+
+  In every logging schema, when #messages' would exceed max_messages
+  the oldest entries are dropped: messages' = the last max_messages
+  entries.  fields? is a hashref given after the message (see
+  Structured fields); fields? = ∅ when there is none.
 
 =head1 COPYRIGHT AND LICENSE
 

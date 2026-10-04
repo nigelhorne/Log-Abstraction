@@ -192,7 +192,7 @@ subtest 'object backend gets the fields as text' => sub {
 
 subtest 'syslog gets the fields as text' => sub {
 	my @sent;
-	my $g1 = Test::Mockingbird::mock_scoped('Log::Abstraction::openlog' => sub { 1 });
+	my $g1 = Test::Mockingbird::mock_scoped('Sys::Syslog::openlog' => sub { 1 });
 	my $g2 = Test::Mockingbird::mock_scoped('Sys::Syslog::syslog' => sub { push @sent, [@_] });
 	my $g3 = Test::Mockingbird::mock_scoped('Sys::Syslog::closelog' => sub { 1 });
 

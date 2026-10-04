@@ -134,7 +134,7 @@ subtest 'format: array' => sub {
 
 subtest 'level and format: syslog' => sub {
 	my (@sent, @socks);
-	my $g1 = Test::Mockingbird::mock_scoped('Log::Abstraction::openlog' => sub { 1 });
+	my $g1 = Test::Mockingbird::mock_scoped('Sys::Syslog::openlog' => sub { 1 });
 	my $g2 = Test::Mockingbird::mock_scoped('Sys::Syslog::syslog' => sub { push @sent, $_[2] });
 	my $g3 = Test::Mockingbird::mock_scoped('Sys::Syslog::closelog' => sub { 1 });
 	my $g4 = Test::Mockingbird::mock_scoped('Sys::Syslog::setlogsock' => sub { push @socks, { %{$_[0]} } });

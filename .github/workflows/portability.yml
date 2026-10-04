@@ -1,0 +1,73 @@
+---
+# Portability checks that the other workflows can't make:
+#   crlf    - the suite with every handle writing CRLF line endings, as on
+#             Windows (catches byte-count and line-ending bugs on Linux)
+#   ivsize4 - the suite on a 32-bit perl without 64-bit integers, a CPAN
+#             Testers target where pack('Q') dies (RT#181461)
+name: Portability
+permissions:
+  contents: read
+
+on:
+  push:
+    branches:
+      - '*'
+    tags-ignore:
+      - '*'
+  pull_request:
+  schedule:
+    - cron: '12 23 9 * *'
+  workflow_dispatch:
+
+jobs:
+  crlf:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Set up Perl
+        uses: shogo82148/actions-setup-perl@v1.44.0
+        with:
+          perl-version: '5.40'
+
+      - name: Install dependencies
+        run: |
+          cpanm --notest --installdeps .
+          cpanm --notest Test::Most
+
+      - name: Run tests with CRLF line endings
+        env:
+          PERLIO: ':unix:crlf'
+        run: prove -l t/
+
+  ivsize4:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      # Distributions may build their 32-bit perl with 64-bit integers, so
+      # build one without them (-Uuse64bitint) and check that it really
+      # has 32-bit integers before testing with it
+      - name: Build a 32-bit perl and run the tests
+        run: |
+          docker run --rm --platform linux/386 -v "$PWD":/src -w /src i386/debian:bookworm bash -euxc '
+            apt-get update
+            apt-get install -y --no-install-recommends ca-certificates curl gcc libc6-dev make libyaml-dev
+            curl -fsSL https://www.cpan.org/src/5.0/perl-5.40.0.tar.gz | tar -xz -C /tmp
+            cd /tmp/perl-5.40.0
+            ./Configure -des -Dprefix=/opt/perl -Uuse64bitint -Uuse64bitall -Dman1dir=none -Dman3dir=none
+            make -j"$(nproc)"
+            make install
+            export PATH=/opt/perl/bin:$PATH
+            perl -V:ivsize
+            perl -e "exit(length(pack(q{j}, 0)) == 4 ? 0 : 1)" || { echo "perl has 64-bit integers" >&2; exit 1; }
+            curl -fsSL https://cpanmin.us | perl - --notest App::cpanminus
+            cd /src
+            cpanm --notest --installdeps .
+            cpanm --notest Test::Most
+            prove -l t/
+          '

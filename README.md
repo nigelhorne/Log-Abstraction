@@ -4,14 +4,15 @@ Log::Abstraction - Logging Abstraction Layer
 
 ## Version
 
-0.35
+0.36
 
 ## Synopsis
 
 ```perl
 use Log::Abstraction;
 
-my $logger = Log::Abstraction->new(logger => 'logfile.log');
+# The default level is 'warning'; 'trace' lets every example through
+my $logger = Log::Abstraction->new(logger => 'logfile.log', level => 'trace');
 
 $logger->debug('This is a debug message');
 $logger->info('This is an info message');
@@ -189,7 +190,9 @@ called on an object.  It may also be called as a plain function,
 
     Format string for the file, fd and scalar-path backends; a backend's own
     `format` (see ["Per-backend level and format"](#per-backend-level-and-format)) overrides it for that
-    backend.  Tokens expanded at log time:
+    backend.  Unset or an empty string means the default,
+    `%level%> [%timestamp%] %class% %callstack% %message%`.  Tokens expanded
+    at log time:
 
     ```
     %callstack%   caller file and line number
@@ -217,8 +220,10 @@ called on an object.  It may also be called as a plain function,
     of `Log::Abstraction`, and `fields` when the call has ["Structured fields"](#structured-fields).
     Keys are emitted in sorted order.
 
-    **Security note:** because `format` may contain `%env_*%` tokens, avoid
-    granting untrusted sources write access to config files that set this key.
+    **Security note:** because a format may contain `%env_*%` tokens, which
+    expand to environment variables, avoid granting untrusted sources write
+    access to config files that set `format` or any backend's `format` (see
+    ["Per-backend level and format"](#per-backend-level-and-format)).
 
 - `level`
 
@@ -226,13 +231,14 @@ called on an object.  It may also be called as a plain function,
     Valid values (case-insensitive): `trace`, `debug`, `info`/`informational`,
     `notice`, `warn`/`warning`, `error`/`err`, `crit`/`critical`/`fatal`,
     `alert`, `emerg`/`emergency`/`panic`.  `trace` and `debug` are the same
-    threshold (see ["LIMITATIONS"](#limitations)).
+    threshold (see ["LIMITATIONS"](#limitations)).  It may also be an array reference, whose
+    first element is used, as some configuration-file formats produce.
 
 - `max_messages`
 
     The most entries to keep in the in-memory history returned by
     ["messages"](#messages); when it is full, the oldest entry is discarded.  Must be a
-    non-negative integer.  Unlimited by default, which in a long-running process
+    non-negative integer; `0` keeps no history at all.  Unlimited by default, which in a long-running process
     means the history grows without bound.
 
 - `logger`
@@ -259,7 +265,9 @@ called on an object.  It may also be called as a plain function,
     delivery fails, `Carp::carp` is called and the other backends still receive
     the message.
 
-    The `syslog` sub-hash supports:
+    The `syslog` sub-hash supports the keys below.  The message is passed to
+    `syslog()` through a `%s` format, so `%` sequences in it, such as `%m`,
+    are logged literally.
 
     - `facility` -- the syslog facility (default: `local0`)
     - `level` -- only messages at this level or more severe are sent; a level name or a syslog number (0-7)
@@ -374,7 +382,7 @@ my $logger = Log::Abstraction->new(
 my $clone = $logger->new(level => 'info');
 ```
 
-#### API Specification
+#### Api Specification
 
 ##### Input
 
@@ -574,7 +582,10 @@ integer (per the syslog numeric scale; lower numbers are higher priority).
 
 In getter mode: an integer in the range 0 (emergency) to 7 (debug/trace).
 
-In setter mode: `$self` (to allow chaining).
+In setter mode: `$self` (to allow chaining), or `undef`, after a
+`Carp::carp`, if the level name is not recognised; the level is then
+unchanged.  A false argument (`undef`, `''` or `0`) is a get, not a set,
+so levels are set by name.
 
 #### Side Effects
 
@@ -590,7 +601,7 @@ my $n = $logger->level();   # e.g. 7
 $logger->level('info')->info('Now at info level');
 ```
 
-#### API Specification
+#### Api Specification
 
 ##### Input
 
@@ -675,7 +686,7 @@ $logger->is_warn();    # 1
 $logger->is_info();    # 0
 ```
 
-#### API Specification
+#### Api Specification
 
 ##### Input
 
@@ -721,7 +732,7 @@ my $msgs = $logger->messages();
 # $msgs->[0] = { level => 'info', message => 'hello' }
 ```
 
-#### API Specification
+#### Api Specification
 
 ##### Input
 
@@ -772,7 +783,7 @@ $logger->trace('entering sub foo, args=', join(',', @args));
 $logger->trace('start')->debug('details')->info('summary');
 ```
 
-#### API Specification
+#### Api Specification
 
 ##### Input
 
@@ -821,7 +832,7 @@ Appends to the internal message history and dispatches to configured backends.
 $logger->debug('Query took ', $elapsed, 'ms');
 ```
 
-#### API Specification
+#### Api Specification
 
 ##### Input
 
@@ -870,7 +881,7 @@ Appends to the internal message history and dispatches to configured backends.
 $logger->info('Server started on port ', $port);
 ```
 
-#### API Specification
+#### Api Specification
 
 ##### Input
 
@@ -920,7 +931,7 @@ Appends to the internal message history and dispatches to configured backends.
 $logger->notice('Configuration reloaded');
 ```
 
-#### API Specification
+#### Api Specification
 
 ##### Input
 
@@ -987,7 +998,7 @@ $logger->warn(warning => 'Connection reset', ' retrying');
 $logger->warn({ warning => ['Part A', 'Part B'] });
 ```
 
-#### API Specification
+#### Api Specification
 
 ##### Input
 
@@ -1049,7 +1060,7 @@ Same as `warn()` plus optional `Carp::croak` escalation.
 $logger->error('Fatal: database unavailable');
 ```
 
-#### API Specification
+#### Api Specification
 
 ##### Input
 
@@ -1106,7 +1117,7 @@ Same as `error()`.
 $logger->fatal('Unrecoverable state; aborting');
 ```
 
-#### API Specification
+#### Api Specification
 
 ##### Input
 
@@ -1124,31 +1135,27 @@ $logger->fatal('Unrecoverable state; aborting');
 
 Same as `error()`.
 
-### Critical
+### Methods Above Error
+
+- critical
+- alert
+- emergency
 
 ```perl
 $logger->critical(@messages);
-$logger->critical(warning => $text);
-$logger->critical($text, \%fields);
+$logger->alert(warning => $text);
+$logger->emergency($text, \%fields);
 ```
 
-Logs a message at `critical` level (syslog `crit`, priority 2).
-
-### Alert
+Log a message at a level more severe than `error`:
 
 ```
-$logger->alert(@messages);
+Method      Level       syslog   Priority
+----------  ----------  -------  --------
+critical    critical    crit     2
+alert       alert       alert    1
+emergency   emergency   emerg    0
 ```
-
-Logs a message at `alert` level (syslog `alert`, priority 1).
-
-### Emergency
-
-```
-$logger->emergency(@messages);
-```
-
-Logs a message at `emergency` level (syslog `emerg`, priority 0).
 
 #### Arguments
 
@@ -1177,7 +1184,7 @@ $logger->alert('Primary database unreachable');
 $logger->emergency('Data corruption detected; shutting down');
 ```
 
-#### API Specification
+#### Api Specification
 
 ##### Input
 
@@ -1303,7 +1310,7 @@ callback as described above.
 - **Syslog hash mutation**
 
     The `syslog` sub-hash passed to `new()` is mutated in-place on the first
-    log call: `facility` and `level` are temporarily removed before
+    log call: `facility`, `level` and `format` are temporarily removed before
     `setlogsock()` is called, then restored; `server` is permanently renamed
     to `host`.  Sharing a syslog hashref between two `Log::Abstraction`
     instances is not supported and produces undefined behaviour on the second
@@ -1350,9 +1357,8 @@ callback as described above.
 - **Log::Log4perl is a de-facto required dependency**
 
     When no `logger`, `file`, `fd` or `array` backend is configured, `new()`
-    loads [Log::Log4perl](https://metacpan.org/pod/Log%3A%3ALog4perl) and uses it as the default backend.  Although listed
-    as an optional runtime dependency, it is required in that default-backend
-    path.
+    loads [Log::Log4perl](https://metacpan.org/pod/Log%3A%3ALog4perl) and uses it as the default backend, so it is a
+    required dependency even for applications that never use it.
 
 ## Author
 
@@ -1406,10 +1412,19 @@ You can also look for information at:
 ### New
 
 ```
+FIELDS == STRING ⇸ VALUE          structured fields (see Structured fields)
+ENTRY  == { level : STRING; message : STRING; fields : FIELDS }
+
+entry(l, m, f) == {level ↦ l, message ↦ m} ∪ (if f = ∅ then ∅ else {fields ↦ f})
+
 ┌─ LogState ──────────────────────────────────────────────────
-│ level    : ℤ
-│ messages : seq { level : STRING; message : STRING }
-│ logger   : LOGGER
+│ level        : ℤ
+│ messages     : seq ENTRY
+│ max_messages : ℕ ∪ {∞}
+│ logger       : LOGGER
+├─────────────────────────────────────────────────────────────
+│ 0 ≤ level ≤ 7
+│ #messages ≤ max_messages
 └─────────────────────────────────────────────────────────────
 
 ┌─ New ───────────────────────────────────────────────────────
@@ -1418,8 +1433,9 @@ You can also look for information at:
 ├─────────────────────────────────────────────────────────────
 │ result!.level = syslog_values(args?.level ∨ 'warning')
 │ result!.messages = ⟨⟩
+│ result!.max_messages = args?.max_messages ∨ ∞
 │ args?.logger ≠ ∅ ⟹ result!.logger = args?.logger
-│ args?.logger = ∅ ∧ args?.file = ∅ ∧ args?.array = ∅
+│ args?.logger = ∅ ∧ args?.file = ∅ ∧ args?.fd = ∅ ∧ args?.array = ∅
 │   ⟹ result!.logger = Log4perl
 └─────────────────────────────────────────────────────────────
 
@@ -1453,6 +1469,18 @@ Clone operation (called on an existing object):
 │ new_level? ∈ dom(syslog_values)
 │ level' = syslog_values(new_level?)
 └─────────────────────────────────────────────────────────────
+
+┌─ LevelSetInvalid ──────────────────────────────────────────
+│ ΞLogState
+│ new_level? : STRING
+│ result! : undef
+├─────────────────────────────────────────────────────────────
+│ new_level? ≠ ''
+│ new_level? ∉ dom(syslog_values)
+│ carp("invalid syslog level")
+└─────────────────────────────────────────────────────────────
+
+level(new_level?) ≡ LevelSet ∨ LevelSetInvalid
 ```
 
 ### Is\_Trace, Is\_Debug, Is\_Info, Is\_Notice, Is\_Warn, Is\_Error, Is\_Critical, Is\_Alert, Is\_Emergency
@@ -1474,7 +1502,7 @@ is_<lvl> ≡ IsLevel[lvl? := lvl]
 ```
 ┌─ Messages ─────────────────────────────────────────────────
 │ ΞLogState
-│ result! : seq { level : STRING; message : STRING }
+│ result! : seq ENTRY
 ├─────────────────────────────────────────────────────────────
 │ result! = messages
 └─────────────────────────────────────────────────────────────
@@ -1486,9 +1514,10 @@ is_<lvl> ≡ IsLevel[lvl? := lvl]
 ┌─ Trace ────────────────────────────────────────────────────
 │ ΔLogState
 │ msg? : seq STRING
+│ fields? : FIELDS
 ├─────────────────────────────────────────────────────────────
 │ syslog_values('trace') ≤ level
-│ messages' = messages ⌢ ⟨{level ↦ 'trace', message ↦ ⊕(msg?)}⟩
+│ messages' = messages ⌢ ⟨entry('trace', ⊕(msg?), fields?)⟩
 └─────────────────────────────────────────────────────────────
 ```
 
@@ -1498,9 +1527,10 @@ is_<lvl> ≡ IsLevel[lvl? := lvl]
 ┌─ Debug ────────────────────────────────────────────────────
 │ ΔLogState
 │ msg? : seq STRING
+│ fields? : FIELDS
 ├─────────────────────────────────────────────────────────────
 │ syslog_values('debug') ≤ level
-│ messages' = messages ⌢ ⟨{level ↦ 'debug', message ↦ ⊕(msg?)}⟩
+│ messages' = messages ⌢ ⟨entry('debug', ⊕(msg?), fields?)⟩
 └─────────────────────────────────────────────────────────────
 ```
 
@@ -1510,9 +1540,10 @@ is_<lvl> ≡ IsLevel[lvl? := lvl]
 ┌─ Info ─────────────────────────────────────────────────────
 │ ΔLogState
 │ msg? : seq STRING
+│ fields? : FIELDS
 ├─────────────────────────────────────────────────────────────
 │ syslog_values('info') ≤ level
-│ messages' = messages ⌢ ⟨{level ↦ 'info', message ↦ ⊕(msg?)}⟩
+│ messages' = messages ⌢ ⟨entry('info', ⊕(msg?), fields?)⟩
 └─────────────────────────────────────────────────────────────
 ```
 
@@ -1522,9 +1553,10 @@ is_<lvl> ≡ IsLevel[lvl? := lvl]
 ┌─ Notice ───────────────────────────────────────────────────
 │ ΔLogState
 │ msg? : seq STRING
+│ fields? : FIELDS
 ├─────────────────────────────────────────────────────────────
 │ syslog_values('notice') ≤ level
-│ messages' = messages ⌢ ⟨{level ↦ 'notice', message ↦ ⊕(msg?)}⟩
+│ messages' = messages ⌢ ⟨entry('notice', ⊕(msg?), fields?)⟩
 └─────────────────────────────────────────────────────────────
 ```
 
@@ -1534,10 +1566,11 @@ is_<lvl> ≡ IsLevel[lvl? := lvl]
 ┌─ Warn ─────────────────────────────────────────────────────
 │ ΔLogState
 │ msg? : seq STRING | { warning : STRING | seq STRING }
+│ fields? : FIELDS
 ├─────────────────────────────────────────────────────────────
 │ msg? ≠ ∅ ∧ join(msg?) ≠ ''
 │ syslog_values('warn') ≤ level
-│ messages' = messages ⌢ ⟨{level ↦ 'warn', message ↦ join(msg?)}⟩
+│ messages' = messages ⌢ ⟨entry('warn', join(msg?), fields?)⟩
 │ (carp_on_warn ∨ no_backend) ⟹ carp(join(msg?))
 └─────────────────────────────────────────────────────────────
 
@@ -1553,10 +1586,11 @@ messages is not touched.
 ┌─ Error ────────────────────────────────────────────────────
 │ ΔLogState
 │ msg? : seq STRING | { warning : STRING | seq STRING }
+│ fields? : FIELDS
 ├─────────────────────────────────────────────────────────────
 │ msg? ≠ ∅ ∧ join(msg?) ≠ ''
 │ syslog_values('error') ≤ level
-│ messages' = messages ⌢ ⟨{level ↦ 'error', message ↦ join(msg?)}⟩
+│ messages' = messages ⌢ ⟨entry('error', join(msg?), fields?)⟩
 │ (croak_on_error ∨ no_backend) ⟹ execution_continues = false
 └─────────────────────────────────────────────────────────────
 
@@ -1574,6 +1608,11 @@ fatal ≡ error   (identical operation schema)
 ```
 The Error schema, with 'error' replaced by 'critical', 'alert' or
 'emergency' respectively.
+
+In every logging schema, when #messages' would exceed max_messages
+the oldest entries are dropped: messages' = the last max_messages
+entries.  fields? is a hashref given after the message (see
+Structured fields); fields? = ∅ when there is none.
 ```
 
 ## Copyright and License

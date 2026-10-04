@@ -6,11 +6,11 @@ use warnings;
 
 use parent 'Log::Any::Adapter::Base';
 
-use Carp;
+use Carp ();
 use Log::Abstraction;
-use Scalar::Util 'blessed';
+use Scalar::Util ();
 
-our $VERSION = '0.35';
+our $VERSION = '0.36';
 
 =head1 NAME
 
@@ -18,7 +18,7 @@ Log::Any::Adapter::Abstraction - Log::Any adapter backed by Log::Abstraction
 
 =head1 VERSION
 
-0.35
+0.36
 
 =head1 SYNOPSIS
 
@@ -100,7 +100,7 @@ instance when C<instance> is not supplied.
       file   => '/var/log/myapp.log',
   );
 
-=head3 API Specification
+=head3 API SPECIFICATION
 
 =head4 Input
 
@@ -170,7 +170,7 @@ sub init {
 	# Reuse a caller-supplied Log::Abstraction instance if one was provided;
 	# anything else is a mistake, not a request for a default logger
 	if(defined(my $inst = $self->{instance})) {
-		if(!blessed($inst) || !$inst->isa('Log::Abstraction')) {
+		if(!Scalar::Util::blessed($inst) || !$inst->isa('Log::Abstraction')) {
 			Carp::croak(__PACKAGE__, ': instance must be a Log::Abstraction object');
 		}
 		$self->{_logger} = $inst;
@@ -219,7 +219,7 @@ matching L<Log::Abstraction> method (see L</Level mapping>).  These methods
 are generated when the module loads.  A croak from Log::Abstraction (e.g.
 C<croak_on_error>) is turned into a C<Carp::carp>, so logging never dies.
 
-=head3 API Specification
+=head3 API SPECIFICATION
 
 =head4 Input
 
@@ -245,7 +245,7 @@ reaches Log::Abstraction as C<info('login', { user_id =E<gt> 42 })>.  See
 L<Log::Abstraction/Structured fields> for where the fields go.  As with the
 logging methods, a croak is turned into a C<Carp::carp>.
 
-=head3 API Specification
+=head3 API SPECIFICATION
 
 =head4 Input
 
@@ -291,7 +291,7 @@ L<Log::Abstraction> instance's level threshold, otherwise 0.  Each calls the
 L<Log::Abstraction> method of the same name (C<is_warning> calls
 C<is_warn>).  As in Log::Abstraction, C<is_trace> equals C<is_debug>.
 
-=head3 API Specification
+=head3 API SPECIFICATION
 
 =head4 Input
 

@@ -27,9 +27,12 @@ recommends 'Email::Simple';   # sendmail backend
 recommends 'Log::Any';   # Log::Any::Adapter::Abstraction
 
 on 'test' => sub {
+	requires 'Config';
 	requires 'Data::Dumper';
+	requires 'File::Path';
 	requires 'File::Spec';
 	requires 'File::Temp';
+	requires 'IPC::Open3';
 	requires 'POSIX';
 	requires 'Test::DescribeMe';
 	requires 'Test::Mockingbird', '0.10';
@@ -46,8 +49,10 @@ on 'develop' => sub {
 	requires 'Test::Carp';
 	requires 'Test::CheckManifest', '0.9';
 	requires 'Test::Compile';
+	requires 'Test::CPAN::Changes', '0.4';
 	requires 'Test::EOF';
 	requires 'Test::EOL';
+	requires 'Test::Kwalitee';
 	requires 'Test::Pod', '1.22';
 	requires 'Test::Pod::Coverage', '1.08';
 	requires 'Test::Pod::Spelling::CommonMistakes';
