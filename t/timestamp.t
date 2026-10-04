@@ -27,20 +27,25 @@ sub stamp {
 	return $out;
 }
 
+# Apply a change to $ENV{TZ}.  POSIX::tzset dies on Windows ("not
+# implemented on this architecture"); with_tz then sees that localtime is
+# unchanged and skips
+sub tzset { eval { POSIX::tzset(); 1 }; return }
+
 # Run $code with TZ set, or skip if this system ignores that TZ value.
 # $want_hour is the local hour expected at $EPOCH
 sub with_tz {
 	my ($tz, $want_hour, $code) = @_;
 
 	local $ENV{TZ} = $tz;
-	POSIX::tzset();
+	tzset();
 	SKIP: {
 		skip("TZ '$tz' is not supported here", 1) if((localtime($EPOCH))[2] != $want_hour);
 		$code->();
 	}
 	return;
 }
-END { POSIX::tzset() }
+END { tzset() }
 
 subtest 'default format is unchanged' => sub {
 	like(stamp($EPOCH + 0.5), qr/^\d{4}-\d\d-\d\d \d\d:\d\d:\d\d$/, 'YYYY-MM-DD HH:MM:SS');

@@ -35,6 +35,8 @@ sub run_script {
 	my $pid = open3(my $in, my $out, undef, @cmd);
 	close $in;
 	my $output = do { local $/; <$out> } // '';
+	# A Windows child writes CRLF line endings, which would stop /^...$/m matching
+	$output =~ s/\r\n/\n/g;
 	waitpid($pid, 0);
 	return ($? >> 8, $output);
 }
