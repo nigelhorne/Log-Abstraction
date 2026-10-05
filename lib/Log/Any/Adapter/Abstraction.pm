@@ -10,7 +10,7 @@ use Carp ();
 use Log::Abstraction;
 use Scalar::Util ();
 
-our $VERSION = '0.36';
+our $VERSION = '0.37';
 
 =head1 NAME
 
@@ -18,7 +18,7 @@ Log::Any::Adapter::Abstraction - Log::Any adapter backed by Log::Abstraction
 
 =head1 VERSION
 
-0.36
+0.37
 
 =head1 SYNOPSIS
 

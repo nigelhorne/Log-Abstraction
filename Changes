@@ -1,6 +1,6 @@
 Revision history for Log-Abstraction
 
-0.37	Not Released
+0.37	Sun Oct  4 09:43:19 PM EDT 2026
 	[ Bug Fixes ]
 	- journald: a datagram bigger than the system's Unix-socket send
 	  buffer failed with "Message too long" (EMSGSIZE) and the message
