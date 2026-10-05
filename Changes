@@ -1,5 +1,18 @@
 Revision history for Log-Abstraction
 
+0.37	Not Released
+	[ Bug Fixes ]
+	- journald: a datagram bigger than the system's Unix-socket send
+	  buffer failed with "Message too long" (EMSGSIZE) and the message
+	  was lost.  The send buffer is now raised where the kernel allows,
+	  and on EMSGSIZE the message is truncated to half the size and the
+	  send retried, down to 4,096 bytes.  Found by a CPAN smoker whose
+	  buffer was under 200,000 bytes, failing t/regressions.t:
+	  https://matrix.perl-magpie.org/results/3720262e-c005-11f1-a083-8730a1ea2842
+	[ Tests ]
+	- New t/journald_emsgsize.t fakes a small send buffer by overriding
+	  send().
+
 0.36	Sat Oct  3 09:35:44 PM EDT 2026
 	[ Enhancements ]
 	- Structured fields: every logging method accepts a hashref of
