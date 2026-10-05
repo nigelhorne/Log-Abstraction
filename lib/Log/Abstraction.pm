@@ -72,7 +72,10 @@ package Log::Abstraction;
 #   - Keep file handles open (re-open on inode change) instead of
 #     open/print/close for every message.  logrotate then needs the file
 #     reopened: add a reopen() method (and document hooking it to SIGHUP),
-#     and have _rotate close the handle before renaming.
+#     and have _rotate close the handle before renaming.  Not every log
+#     rotation tool sends SIGHUP, so also close and reopen on a write when more
+#     than a configurable time (default 5 minutes) has passed since the
+#     last reopen.  Not needed while files are opened per message.
 #   - Reuse the journald socket rather than creating one per message.
 #   - Optional asynchronous/non-blocking delivery for the sendmail backend;
 #     a blocking SMTP conversation inside a log call is a latency hazard.
@@ -181,8 +184,9 @@ Readonly::Hash my %LEVEL_TO_SYSLOG_PRIORITY => (
 	emergency => 'emerg',
 );
 
-# Regex: characters forbidden in a log-file path (prevents command injection)
-Readonly::Scalar my $RE_SAFE_PATH => qr/^([^<>|*?;!`\$"\x00-\x1F]+)$/;
+# Regex: characters forbidden in a log-file path (prevents command injection).
+# Anchored with \z, not $, which would accept a trailing newline
+Readonly::Scalar my $RE_SAFE_PATH => qr/^([^<>|*?;!`\$"\x00-\x1F]+)\z/;
 
 # Regex: path component that would escape the intended directory
 Readonly::Scalar my $RE_DOTDOT => qr/\.\./;
@@ -1723,6 +1727,11 @@ sub _log :Private {
 		Carp::croak('Illegal Operation: _log is a private method');
 	}
 
+	# Logging must not disturb the caller's error state: code such as
+	# eval { ... }; if($@) { $log->debug(...); die $@ } relies on it, and
+	# the backends' own evals and I/O would otherwise reset $@ and $!
+	local ($@, $!);
+
 	# Sanity-check the level (should not be reachable in normal use)
 	if(!defined($syslog_values{$level})) {
 		Carp::croak(ref($self), ": Invalid level '$level'");
@@ -2118,6 +2127,10 @@ sub _log :Private {
 sub _high_priority :Private {
 	my $self  = shift;
 	my $level = shift;    # 'warn', 'error', 'critical', 'alert' or 'emergency'
+
+	# Preserve the caller's $@ and $! (see _log); a croak from here still
+	# reaches the caller, as die sets $@ after the stack has unwound
+	local ($@, $!);
 
 	# Nothing to log if no arguments supplied
 	return if(scalar(@_) == 0);
@@ -2906,6 +2919,10 @@ sub emergency {
 # ---------------------------------------------------------------------------
 sub DESTROY {
 	my $self = $_[0];
+
+	# Destructors run at unpredictable times, e.g. while an exception is
+	# propagating, so don't let closelog() change the error variables
+	local ($@, $!, $?);
 
 	# openlog/closelog are process-global, so only close the connection
 	# when the last instance using it goes away
