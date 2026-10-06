@@ -1,6 +1,6 @@
 Revision history for Log-Abstraction
 
-0.38	Not Released
+0.38	Tue Oct  6 02:15:21 PM EDT 2026
 	[ Enhancements ]
 	- sendmail digest: with digest => 1, messages that min_interval holds
 	  back are sent, oldest first, with the next email instead of being
