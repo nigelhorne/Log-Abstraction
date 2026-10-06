@@ -77,6 +77,37 @@ When logging through [Log::Any](https://metacpan.org/pod/Log%3A%3AAny), a hash r
 together with the proxy's `context`, arrives here as fields; see
 ["structured" in Log::Any::Adapter::Abstraction](https://metacpan.org/pod/Log%3A%3AAny%3A%3AAdapter%3A%3AAbstraction#structured).
 
+### Redaction
+
+The `redact` option removes secrets before a message reaches the history
+or any backend.  Each match of any of its patterns is replaced with
+`[REDACTED]`:
+
+```perl
+my $log = Log::Abstraction->new(
+    logger => '/var/log/myapp.log',
+    redact => [qr/password=\S+/, qr/\b\d{4}(?:[ -]?\d{4}){3}\b/],
+);
+$log->warn('Login failed: user=fred password=hunter2');
+# Login failed: user=fred [REDACTED]
+```
+
+To keep the start of a match, end it with `\K`: `qr/password=\K\S+/` logs
+`password=[REDACTED]`.  The patterns run over the whole message, after its
+arguments are joined, so a match may span them, as in
+`$log->info('password=', $password)`; a CODE or object logger then gets
+the joined message as one argument.  The text given to `carp` or `croak`
+(see ["warn"](#warn) and ["error"](#error)) is redacted too.
+
+["Structured fields"](#structured-fields) are redacted as well: string values, including those
+inside plain hashes and arrays, and objects whose stringification matches
+(they become the redacted string).  Field names aren't redacted, nor are
+the format string, `%env_*%` values or `ctx`.
+
+Redaction is applied only to messages that pass the logger's `level`, so
+it costs nothing for messages that are dropped.  A pattern that can match
+the empty string, such as `qr/x*/`, is rejected by ["new"](#new).
+
 ### Per-Backend Level and Format
 
 Every backend can have its own `level` and `format`, as well as the
@@ -292,6 +323,12 @@ called on an object.  It may also be called as a plain function,
     after a later send has succeeded); the application is never crashed by a
     journald error.
 
+- `redact`
+
+    Patterns to remove from every message before it is logged: a `qr//`, a
+    string (compiled as a regular expression; a config file can't hold a
+    `qr//`), or an array reference of them.  See ["Redaction"](#redaction).
+
 - `rotate_interval`
 
     Rotate log files by time: `hourly`, `daily`, `weekly` (weeks start on
@@ -396,6 +433,7 @@ my $clone = $logger->new(level => 'info');
     level          => { type => 'string',  regex => qr/^(trace|debug|info(?:rmational)?|notice|warn(?:ing)?|err(?:or)?|crit(?:ical)?|fatal|alert|emerg(?:ency)?|panic)$/i, optional => 1 },
     logger         => { optional => 1 },
     max_messages   => { type => 'integer', min => 0, optional => 1 },
+    redact         => { optional => 1 },    # regex, string, or arrayref of them
     rotate_interval => { type => 'string', regex => qr/^(hourly|daily|weekly|monthly)$/i, optional => 1 },
     rotate_keep    => { type => 'integer', min => 0, optional => 1 },
     rotate_size    => { type => 'string',  regex => qr/^\s*[1-9]\d*\s*[kmg]?b?\s*$/i, optional => 1 },
@@ -444,6 +482,14 @@ Error                                     Meaning / Action
   non-empty string"                       reference.
 "<class>: timestamp_precision must be     timestamp_precision is not a whole
   an integer from 0 to 9, not '<v>'"      number of digits from 0 to 9.
+"<class>: redact patterns must be         A redact entry is a reference other than
+  regular expressions or non-empty        a qr//, or an empty string.
+  strings"
+"<class>: invalid redact pattern '<p>':   A redact string is not a valid regular
+  <error>"                                expression.
+"<class>: redact pattern <p> matches the  The pattern can match nothing at all
+  empty string"                           (e.g. qr/x*/), which would put a marker
+                                          between every character.
 "<class>: invalid <backend> level '<l>'"  A backend's 'level' (file, fd, array,
                                           sendmail, journald) is neither a level
                                           name nor 0-7.  (A bad syslog 'level'
@@ -514,6 +560,7 @@ FUNCTION new(class_or_obj, args...)
     CROAK on an invalid timestamp_format or timestamp_precision
     CROAK on an invalid rotate_size, rotate_interval or rotate_keep, and
       normalise rotate_size to bytes
+    CROAK on an invalid redact pattern; compile redact to one regex
     shallow-clone self merged with override args
     validate and store new level integer if level given in args
     copy message history list
@@ -544,6 +591,8 @@ FUNCTION new(class_or_obj, args...)
   CROAK if rotate_size is not a positive size, rotate_interval is not
     hourly/daily/weekly/monthly, or rotate_keep is not a non-negative
     integer; normalise rotate_size to bytes
+  CROAK if a redact pattern is not a regex or non-empty string, doesn't
+    compile, or matches the empty string; compile redact to one regex
 
   FOR each backend (top-level file/fd/array, and the logger hash's
   file/fd/array/syslog/sendmail/journald) given as a hash:
@@ -1415,13 +1464,18 @@ You can also look for information at:
 FIELDS == STRING ⇸ VALUE          structured fields (see Structured fields)
 ENTRY  == { level : STRING; message : STRING; fields : FIELDS }
 
-entry(l, m, f) == {level ↦ l, message ↦ m} ∪ (if f = ∅ then ∅ else {fields ↦ f})
+entry(l, m, f) == {level ↦ l, message ↦ ρ(m)} ∪ (if f = ∅ then ∅ else {fields ↦ ρ(f)})
+
+ρ(x) == if redact = ∅ then x
+        else x with each match of redact replaced by '[REDACTED]'
+             (in strings, recursively in plain hashes and arrays)
 
 ┌─ LogState ──────────────────────────────────────────────────
 │ level        : ℤ
 │ messages     : seq ENTRY
 │ max_messages : ℕ ∪ {∞}
 │ logger       : LOGGER
+│ redact       : REGEX ∪ {∅}
 ├─────────────────────────────────────────────────────────────
 │ 0 ≤ level ≤ 7
 │ #messages ≤ max_messages
@@ -1434,6 +1488,8 @@ entry(l, m, f) == {level ↦ l, message ↦ m} ∪ (if f = ∅ then ∅ else {fi
 │ result!.level = syslog_values(args?.level ∨ 'warning')
 │ result!.messages = ⟨⟩
 │ result!.max_messages = args?.max_messages ∨ ∞
+│ result!.redact = ⋃ args?.redact   {one regex matching any; ∅ if none}
+│ args?.redact ≠ ∅ ⟹ ¬('' ∈ L(result!.redact))
 │ args?.logger ≠ ∅ ⟹ result!.logger = args?.logger
 │ args?.logger = ∅ ∧ args?.file = ∅ ∧ args?.fd = ∅ ∧ args?.array = ∅
 │   ⟹ result!.logger = Log4perl

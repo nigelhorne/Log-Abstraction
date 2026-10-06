@@ -87,7 +87,7 @@ C<Log::Abstraction> object (or subclass) is a fatal error.
 
 C<logger>, C<level>, C<file>, C<fd>, C<array>, C<format>, C<ctx>,
 C<script_name>, C<verbose>, C<carp_on_warn>, C<croak_on_error>,
-C<config_file>, C<max_messages>.  Used to build a fresh C<Log::Abstraction>
+C<config_file>, C<max_messages>, C<redact>.  Used to build a fresh C<Log::Abstraction>
 instance when C<instance> is not supplied.
 
 =back
@@ -119,6 +119,7 @@ instance when C<instance> is not supplied.
       croak_on_error => { type => BOOLEAN, optional => 1 },
       config_file    => { type => SCALAR, optional => 1 },
       max_messages   => { type => INTEGER, min => 0, optional => 1 },
+      redact         => { optional => 1 },
   }
 
 =head4 Output
@@ -181,7 +182,7 @@ sub init {
 	my %new_args;
 	for my $key (qw(
 		logger level file fd array format ctx script_name verbose
-		carp_on_warn croak_on_error config_file max_messages
+		carp_on_warn croak_on_error config_file max_messages redact
 	)) {
 		$new_args{$key} = $self->{$key} if exists $self->{$key};
 	}

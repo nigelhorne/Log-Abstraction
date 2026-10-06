@@ -2,11 +2,18 @@ Revision history for Log-Abstraction
 
 0.38	Not Released
 	[ Enhancements ]
+	- New redact option: a qr//, a string or a list of them.  Each match
+	  is replaced with [REDACTED] before the message reaches the history
+	  or any backend, in structured-field values too, and in the text
+	  given to carp/croak.  Strings make it usable from config files, and
+	  \K keeps a prefix: redact => qr/password=\K\S+/.  The Log::Any
+	  adapter passes it on.
 	- Require Sub::Private 0.06.  Before it, the private subs were not
 	  protected when Log::Abstraction was loaded at run time (require,
 	  string eval, Log::Any::Adapter->set), and "Too late to run CHECK
 	  block" was printed.
 	[ Tests ]
+	- New t/redact.t.
 	- New t/private_runtime.t checks that private subs can't be called
 	  from outside when the module is loaded at run time.
 	- t/timestamp.t failed on long-double perls (x86_64-linux-ld): its

@@ -56,7 +56,6 @@ package Log::Abstraction;
 #   - sendmail digests: batch messages suppressed by min_interval into the
 #     next email instead of discarding them.
 #   - Log::Dispatch / Log::Any producer mode.
-#   - Redaction: redact => [qr/password=\S+/] applied before any backend.
 #
 # Roadmap - technical debt:
 #   - Split _log into per-backend classes (Log::Abstraction::Backend::*)
@@ -211,6 +210,9 @@ Readonly::Scalar my $JOURNALD_MAX_FIELD_NAME => 64;
 # Marker appended to a message truncated to fit in a journald datagram
 Readonly::Scalar my $TRUNCATED_MARKER => ' [truncated]';
 
+# What each match of a redact pattern is replaced with
+Readonly::Scalar my $REDACTED_MARKER => '[REDACTED]';
+
 # Number of live instances that have opened the process-global syslog
 # connection; closelog() is only called when the last one is destroyed
 my $syslog_open_count = 0;
@@ -305,6 +307,35 @@ object logger is passed the pairs as an extra argument after the message.
 When logging through L<Log::Any>, a hash reference at the end of the call,
 together with the proxy's C<context>, arrives here as fields; see
 L<Log::Any::Adapter::Abstraction/structured>.
+
+=head2 Redaction
+
+The C<redact> option removes secrets before a message reaches the history
+or any backend.  Each match of any of its patterns is replaced with
+C<[REDACTED]>:
+
+  my $log = Log::Abstraction->new(
+      logger => '/var/log/myapp.log',
+      redact => [qr/password=\S+/, qr/\b\d{4}(?:[ -]?\d{4}){3}\b/],
+  );
+  $log->warn('Login failed: user=fred password=hunter2');
+  # Login failed: user=fred [REDACTED]
+
+To keep the start of a match, end it with C<\K>: C<qr/password=\K\S+/> logs
+C<password=[REDACTED]>.  The patterns run over the whole message, after its
+arguments are joined, so a match may span them, as in
+C<$log-E<gt>info('password=', $password)>; a CODE or object logger then gets
+the joined message as one argument.  The text given to C<carp> or C<croak>
+(see L</warn> and L</error>) is redacted too.
+
+L</Structured fields> are redacted as well: string values, including those
+inside plain hashes and arrays, and objects whose stringification matches
+(they become the redacted string).  Field names aren't redacted, nor are
+the format string, C<%env_*%> values or C<ctx>.
+
+Redaction is applied only to messages that pass the logger's C<level>, so
+it costs nothing for messages that are dropped.  A pattern that can match
+the empty string, such as C<qr/x*/>, is rejected by L</new>.
 
 =head2 Per-backend level and format
 
@@ -539,6 +570,12 @@ Delivery failures are silent apart from a single C<Carp::carp> (repeated only
 after a later send has succeeded); the application is never crashed by a
 journald error.
 
+=item * C<redact>
+
+Patterns to remove from every message before it is logged: a C<qr//>, a
+string (compiled as a regular expression; a config file can't hold a
+C<qr//>), or an array reference of them.  See L</Redaction>.
+
 =item * C<rotate_interval>
 
 Rotate log files by time: C<hourly>, C<daily>, C<weekly> (weeks start on
@@ -636,6 +673,7 @@ specified.
       level          => { type => 'string',  regex => qr/^(trace|debug|info(?:rmational)?|notice|warn(?:ing)?|err(?:or)?|crit(?:ical)?|fatal|alert|emerg(?:ency)?|panic)$/i, optional => 1 },
       logger         => { optional => 1 },
       max_messages   => { type => 'integer', min => 0, optional => 1 },
+      redact         => { optional => 1 },    # regex, string, or arrayref of them
       rotate_interval => { type => 'string', regex => qr/^(hourly|daily|weekly|monthly)$/i, optional => 1 },
       rotate_keep    => { type => 'integer', min => 0, optional => 1 },
       rotate_size    => { type => 'string',  regex => qr/^\s*[1-9]\d*\s*[kmg]?b?\s*$/i, optional => 1 },
@@ -680,6 +718,14 @@ specified.
     non-empty string"                       reference.
   "<class>: timestamp_precision must be     timestamp_precision is not a whole
     an integer from 0 to 9, not '<v>'"      number of digits from 0 to 9.
+  "<class>: redact patterns must be         A redact entry is a reference other than
+    regular expressions or non-empty        a qr//, or an empty string.
+    strings"
+  "<class>: invalid redact pattern '<p>':   A redact string is not a valid regular
+    <error>"                                expression.
+  "<class>: redact pattern <p> matches the  The pattern can match nothing at all
+    empty string"                           (e.g. qr/x*/), which would put a marker
+                                            between every character.
   "<class>: invalid <backend> level '<l>'"  A backend's 'level' (file, fd, array,
                                             sendmail, journald) is neither a level
                                             name nor 0-7.  (A bad syslog 'level'
@@ -746,6 +792,7 @@ logging failure must never crash the application.
       CROAK on an invalid timestamp_format or timestamp_precision
       CROAK on an invalid rotate_size, rotate_interval or rotate_keep, and
         normalise rotate_size to bytes
+      CROAK on an invalid redact pattern; compile redact to one regex
       shallow-clone self merged with override args
       validate and store new level integer if level given in args
       copy message history list
@@ -776,6 +823,8 @@ logging failure must never crash the application.
     CROAK if rotate_size is not a positive size, rotate_interval is not
       hourly/daily/weekly/monthly, or rotate_keep is not a non-negative
       integer; normalise rotate_size to bytes
+    CROAK if a redact pattern is not a regex or non-empty string, doesn't
+      compile, or matches the empty string; compile redact to one regex
 
     FOR each backend (top-level file/fd/array, and the logger hash's
     file/fd/array/syslog/sendmail/journald) given as a hash:
@@ -837,6 +886,7 @@ sub new {
 		# Called on an existing instance -- return a shallow clone
 		_check_timestamp_args(ref($class), \%args);
 		_check_rotate_args(ref($class), \%args);
+		_check_redact_args(ref($class), \%args);
 		my $clone = bless { %{$class}, %args }, ref($class);
 		if(my $level = $args{'level'}) {
 			$level = lc($level);
@@ -906,6 +956,7 @@ sub new {
 
 	_check_timestamp_args($class, \%args);
 	_check_rotate_args($class, \%args);
+	_check_redact_args($class, \%args);
 
 	# Validate the backends' own 'level' and 'format' keys now, rather than
 	# have a bad value silently drop messages at log time: the top-level
@@ -1198,6 +1249,118 @@ sub _check_rotate_args :Private {
 		}
 	}
 	return;
+}
+
+# ---------------------------------------------------------------------------
+# _check_redact_args -- validate the redact option and compile it
+#
+# Purpose:      Croak in new() (and when cloning) on a bad redact pattern,
+#               rather than leave a secret in the log.
+# Entry:        $class -- the class name, for the error message.
+#               $args  -- hashref of constructor arguments; changed in place.
+# Exit:         Returns nothing.  redact, a regex, a string or an arrayref of
+#               them, becomes one regex that matches any of them, or undef
+#               when there are none.  Croaks on a pattern that isn't a regex
+#               or non-empty string, doesn't compile, or matches ''.
+# Notes:        A pure function (no $self), called as
+#               _check_redact_args($class, \%args).  Strings are allowed
+#               because a config file can't hold a qr//.  One combined regex
+#               means one pass, so a replacement is never matched again.
+#
+# Pseudocode:
+#   FUNCTION _check_redact_args(class, args)
+#     RETURN unless args has a redact key
+#     patterns = the defined elements of redact (an arrayref) or redact itself
+#     FOR each pattern that isn't already a regex:
+#       CROAK if it is a reference or ''
+#       compile it (in eval); CROAK with the error, less its location, if
+#         it doesn't compile
+#     IF no patterns: set redact to undef; RETURN
+#     CROAK if any pattern matches ''
+#     set redact to qr/(?:p1)|(?:p2)|.../
+#   END FUNCTION
+# ---------------------------------------------------------------------------
+sub _check_redact_args :Private {
+	my ($class, $args) = @_;
+
+	return if(!exists($args->{'redact'}));
+	my $redact = $args->{'redact'};
+	my @patterns = grep { defined } ((ref($redact) eq 'ARRAY') ? @{$redact} : ($redact));
+	for my $pattern (@patterns) {
+		next if(re::is_regexp($pattern));
+		if(ref($pattern) || ($pattern eq '')) {
+			Carp::croak("$class: redact patterns must be regular expressions or non-empty strings");
+		}
+		my $re = eval { qr/$pattern/ };
+		if(!$re) {
+			(my $error = $@) =~ s/ at \S+ line \d+\.?\n\z//;
+			Carp::croak("$class: invalid redact pattern '$pattern': $error");
+		}
+		$pattern = $re;
+	}
+	if(!@patterns) {
+		$args->{'redact'} = undef;
+		return;
+	}
+	for my $pattern (@patterns) {
+		# It would put a marker between every character
+		if('' =~ $pattern) {
+			Carp::croak("$class: redact pattern $pattern matches the empty string");
+		}
+	}
+	my $any = join('|', map { "(?:$_)" } @patterns);
+	$args->{'redact'} = qr/$any/;
+	return;
+}
+
+# ---------------------------------------------------------------------------
+# _redact -- replace whatever matches the redact regex with [REDACTED]
+#
+# Purpose:      Remove secrets from a message or a structured-field value
+#               before it reaches the history or any backend.
+# Entry:        $re    -- the regex built by _check_redact_args.
+#               $value -- a string, or a field value of any kind.
+#               $seen  -- (recursion only) the references being walked.
+# Exit:         Returns the redacted copy; the value itself is unchanged.
+#               Plain hashes and arrays are copied with their contents
+#               redacted; a blessed object whose stringification matches
+#               becomes the redacted string; any other value is returned
+#               as it is.  A reference that contains itself is replaced by
+#               the marker where it recurs.
+# Notes:        A pure function (no $self), called as _redact($re, $value).
+#
+# Pseudocode:
+#   FUNCTION _redact(re, value, seen)
+#     RETURN value if undef
+#     IF blessed: RETURN _redact(re, "value") if "value" matches re, else value
+#     IF a reference:
+#       RETURN value unless a plain HASH or ARRAY
+#       RETURN the marker if value is in seen (it contains itself)
+#       add value to seen while walking it (local, so siblings may share it)
+#       RETURN a copy with each element/value passed through _redact
+#     replace every match of re in (a copy of) value with the marker
+#     RETURN it
+#   END FUNCTION
+# ---------------------------------------------------------------------------
+sub _redact :Private {
+	my ($re, $value, $seen) = @_;
+
+	return $value if(!defined($value));
+	if(Scalar::Util::blessed($value)) {
+		my $string = "$value";
+		return ($string =~ $re) ? _redact($re, $string) : $value;
+	}
+	if(my $type = ref($value)) {
+		return $value if(($type ne 'HASH') && ($type ne 'ARRAY'));
+		$seen ||= {};
+		return $REDACTED_MARKER if($seen->{$value});
+		local $seen->{$value} = 1;
+		return ($type eq 'HASH')
+			? { map { $_ => _redact($re, $value->{$_}, $seen) } keys %{$value} }
+			: [ map { _redact($re, $_, $seen) } @{$value} ];
+	}
+	$value =~ s/$re/$REDACTED_MARKER/g;
+	return $value;
 }
 
 # ---------------------------------------------------------------------------
@@ -1639,6 +1802,7 @@ sub _format_message :Private {
 #     IF more than one argument AND the last is an unblessed hashref:
 #       Pop it as the structured fields (a shallow copy; undef if empty)
 #     Flatten single-arrayref argument to a list; filter out undefs; join to $str
+#     IF redact: _redact $str (the parts become just $str) and the fields
 #     $text = $str plus the fields as logfmt key=value pairs (for backends
 #       with no field support: syslog, email, objects)
 #     Push { level, message, fields? } onto self->{messages} (always recorded);
@@ -1754,6 +1918,15 @@ sub _log :Private {
 	@messages = grep { defined } @messages;
 	my $str = join('', @messages);
 	chomp($str);
+
+	# Redact before the message reaches the history or any backend.  The
+	# regex runs over the joined message, so a match may span arguments;
+	# the CODE and object backends then get the one redacted string
+	if(my $redact = $self->{'redact'}) {
+		$str = _redact($redact, $str);
+		@messages = ($str);
+		$fields = _redact($redact, $fields) if($fields);
+	}
 
 	# Backends with no notion of fields get them appended as text
 	my $fields_text = $fields ? _fields_text($fields) : undef;
@@ -2107,6 +2280,7 @@ sub _log :Private {
 #       CARP with warning text; RETURN
 #
 #     Call self->_log(level, warning, fields?)
+#     IF redact: _redact the warning text, for Carp below
 #
 #     no_backend = no logger, array, file or fd configured
 #
@@ -2168,6 +2342,9 @@ sub _high_priority :Private {
 
 	# Log the message through the normal dispatch path
 	$self->_log($level, $warning, @fields);
+
+	# What Carp shows must be redacted too (_log redacts its own copy)
+	$warning = _redact($self->{'redact'}, $warning) if($self->{'redact'});
 
 	# A top-level file or fd counts as a backend, as do logger and array
 	my $no_backend = !defined($self->{'logger'}) && !defined($self->{'array'})
@@ -3145,13 +3322,18 @@ L<http://deps.cpantesters.org/?module=Log::Abstraction>
   FIELDS == STRING ⇸ VALUE          structured fields (see Structured fields)
   ENTRY  == { level : STRING; message : STRING; fields : FIELDS }
 
-  entry(l, m, f) == {level ↦ l, message ↦ m} ∪ (if f = ∅ then ∅ else {fields ↦ f})
+  entry(l, m, f) == {level ↦ l, message ↦ ρ(m)} ∪ (if f = ∅ then ∅ else {fields ↦ ρ(f)})
+
+  ρ(x) == if redact = ∅ then x
+          else x with each match of redact replaced by '[REDACTED]'
+               (in strings, recursively in plain hashes and arrays)
 
   ┌─ LogState ──────────────────────────────────────────────────
   │ level        : ℤ
   │ messages     : seq ENTRY
   │ max_messages : ℕ ∪ {∞}
   │ logger       : LOGGER
+  │ redact       : REGEX ∪ {∅}
   ├─────────────────────────────────────────────────────────────
   │ 0 ≤ level ≤ 7
   │ #messages ≤ max_messages
@@ -3164,6 +3346,8 @@ L<http://deps.cpantesters.org/?module=Log::Abstraction>
   │ result!.level = syslog_values(args?.level ∨ 'warning')
   │ result!.messages = ⟨⟩
   │ result!.max_messages = args?.max_messages ∨ ∞
+  │ result!.redact = ⋃ args?.redact   {one regex matching any; ∅ if none}
+  │ args?.redact ≠ ∅ ⟹ ¬('' ∈ L(result!.redact))
   │ args?.logger ≠ ∅ ⟹ result!.logger = args?.logger
   │ args?.logger = ∅ ∧ args?.file = ∅ ∧ args?.fd = ∅ ∧ args?.array = ∅
   │   ⟹ result!.logger = Log4perl
