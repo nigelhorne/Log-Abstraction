@@ -27,14 +27,14 @@ https://pjcj.net
 <tr><th>line</th><th>stmt</th><th>bran</th><th>cond</th><th>sub</th><th>time</th><th>code</th></tr>
 <tr><td class="h">1</td><td></td><td></td><td></td><td></td><td></td><td class="s">package Log::Any::Adapter::Abstraction;</td></tr>
 <tr><td class="h">2</td><td colspan="6"></td></tr><tr><td class="h">3</td><td></td><td></td><td></td><td></td><td></td><td class="s"># Route Log::Any log calls through a Log::Abstraction backend</td></tr>
-<tr><td class="h">4</td><td><div class="c3">3</div><div class="c3">3</div><div class="c3">3</div></td><td></td><td></td><td><div class="c3"><a href="blib-lib-Log-Any-Adapter-Abstraction-pm--subroutine.html#L4">3</a></div></td><td><div>72241</div><div>3</div><div>46</div></td><td class="s">use strict;</td></tr>
-<tr><td class="h">5</td><td><div class="c3">3</div><div class="c3">3</div><div class="c3">3</div></td><td></td><td></td><td><div class="c3"><a href="blib-lib-Log-Any-Adapter-Abstraction-pm--subroutine.html#L5">3</a></div></td><td><div>6</div><div>0</div><div>75</div></td><td class="s">use warnings;</td></tr>
-<tr><td class="h">6</td><td colspan="6"></td></tr><tr><td class="h">7</td><td><div class="c3">3</div><div class="c3">3</div><div class="c3">3</div></td><td></td><td></td><td><div class="c3"><a href="blib-lib-Log-Any-Adapter-Abstraction-pm--subroutine.html#L7">3</a></div></td><td><div>5</div><div>2</div><div>8</div></td><td class="s">use parent &#39;Log::Any::Adapter::Base&#39;;</td></tr>
+<tr><td class="h">4</td><td><div class="c3">3</div><div class="c3">3</div><div class="c3">3</div></td><td></td><td></td><td><div class="c3"><a href="blib-lib-Log-Any-Adapter-Abstraction-pm--subroutine.html#L4">3</a></div></td><td><div>72351</div><div>1</div><div>50</div></td><td class="s">use strict;</td></tr>
+<tr><td class="h">5</td><td><div class="c3">3</div><div class="c3">3</div><div class="c3">3</div></td><td></td><td></td><td><div class="c3"><a href="blib-lib-Log-Any-Adapter-Abstraction-pm--subroutine.html#L5">3</a></div></td><td><div>6</div><div>1</div><div>111</div></td><td class="s">use warnings;</td></tr>
+<tr><td class="h">6</td><td colspan="6"></td></tr><tr><td class="h">7</td><td><div class="c3">3</div><div class="c3">3</div><div class="c3">3</div></td><td></td><td></td><td><div class="c3"><a href="blib-lib-Log-Any-Adapter-Abstraction-pm--subroutine.html#L7">3</a></div></td><td><div>7</div><div>2</div><div>12</div></td><td class="s">use parent &#39;Log::Any::Adapter::Base&#39;;</td></tr>
 <tr><td class="h">8</td><td colspan="6"></td></tr><tr><td class="h">9</td><td></td><td></td><td></td><td></td><td></td><td class="s">use Carp ();</td></tr>
 <tr><td class="h">10</td><td></td><td></td><td></td><td></td><td></td><td class="s">use Log::Abstraction;</td></tr>
 <tr><td class="h">11</td><td></td><td></td><td></td><td></td><td></td><td class="s">use Scalar::Util ();</td></tr>
 <tr><td class="h">12</td><td colspan="6"></td></tr><tr><td class="h">13</td><td></td><td></td><td></td><td></td><td></td><td class="s">our $VERSION = &#39;0.37&#39;;</td></tr>
-<tr><td class="h">14</td><td colspan="6"></td></tr><tr><td class="h">15 - 138</td><td colspan="5"></td><td class="s"><pre>=head1 NAME
+<tr><td class="h">14</td><td colspan="6"></td></tr><tr><td class="h">15 - 146</td><td colspan="5"></td><td class="s"><pre>=head1 NAME
 
 Log::Any::Adapter::Abstraction - Log::Any adapter backed by Log::Abstraction
 
@@ -109,7 +109,9 @@ C&lt;Log::Abstraction&gt; object (or subclass) is a fatal error.
 
 C&lt;logger&gt;, C&lt;level&gt;, C&lt;file&gt;, C&lt;fd&gt;, C&lt;array&gt;, C&lt;format&gt;, C&lt;ctx&gt;,
 C&lt;script_name&gt;, C&lt;verbose&gt;, C&lt;carp_on_warn&gt;, C&lt;croak_on_error&gt;,
-C&lt;config_file&gt;, C&lt;max_messages&gt;, C&lt;redact&gt;.&nbsp;&nbsp;Used to build a fresh C&lt;Log::Abstraction&gt;
+C&lt;config_file&gt;, C&lt;max_messages&gt;, C&lt;redact&gt;, C&lt;timestamp_format&gt;,
+C&lt;timestamp_precision&gt;, C&lt;utc&gt;, C&lt;rotate_size&gt;, C&lt;rotate_interval&gt;,
+C&lt;rotate_keep&gt;.&nbsp;&nbsp;Used to build a fresh C&lt;Log::Abstraction&gt;
 instance when C&lt;instance&gt; is not supplied.
 
 =back
@@ -142,6 +144,12 @@ instance when C&lt;instance&gt; is not supplied.
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;config_file&nbsp;&nbsp;&nbsp;&nbsp;=&gt; { type =&gt; SCALAR, optional =&gt; 1 },
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;max_messages&nbsp;&nbsp;&nbsp;=&gt; { type =&gt; INTEGER, min =&gt; 0, optional =&gt; 1 },
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;redact&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&gt; { optional =&gt; 1 },
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;timestamp_format&nbsp;&nbsp;&nbsp;&nbsp;=&gt; { type =&gt; SCALAR, optional =&gt; 1 },
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;timestamp_precision =&gt; { type =&gt; INTEGER, min =&gt; 0, max =&gt; 9, optional =&gt; 1 },
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;utc&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&gt; { type =&gt; BOOLEAN, optional =&gt; 1 },
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;rotate_size&nbsp;&nbsp;&nbsp;&nbsp;=&gt; { type =&gt; SCALAR, optional =&gt; 1 },
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;rotate_interval =&gt; { type =&gt; SCALAR, optional =&gt; 1 },
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;rotate_keep&nbsp;&nbsp;&nbsp;&nbsp;=&gt; { type =&gt; INTEGER, min =&gt; 0, optional =&gt; 1 },
 &nbsp;&nbsp;}
 
 =head4 Output
@@ -158,55 +166,57 @@ instance when C&lt;instance&gt; is not supplied.
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;See Log::Abstraction for detail.
 
 =cut</pre></td></tr>
-<tr><td class="h">139</td><td colspan="6"></td></tr><tr><td class="h">140</td><td></td><td></td><td></td><td></td><td></td><td class="s"># ---------------------------------------------------------------------------</td></tr>
-<tr><td class="h">141</td><td></td><td></td><td></td><td></td><td></td><td class="s"># Map Log::Any level names to Log::Abstraction method names, which are also</td></tr>
-<tr><td class="h">142</td><td></td><td></td><td></td><td></td><td></td><td class="s"># its level names (for the is_* threshold checks).&nbsp;&nbsp;Only &#39;warning&#39; differs.</td></tr>
-<tr><td class="h">143</td><td></td><td></td><td></td><td></td><td></td><td class="s"># ---------------------------------------------------------------------------</td></tr>
-<tr><td class="h">144</td><td></td><td></td><td></td><td></td><td></td><td class="s">my %LA_TO_METHOD = (</td></tr>
-<tr><td class="h">145</td><td></td><td></td><td></td><td></td><td></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;trace&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&gt; &#39;trace&#39;,</td></tr>
-<tr><td class="h">146</td><td></td><td></td><td></td><td></td><td></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;debug&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&gt; &#39;debug&#39;,</td></tr>
-<tr><td class="h">147</td><td></td><td></td><td></td><td></td><td></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;info&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&gt; &#39;info&#39;,</td></tr>
-<tr><td class="h">148</td><td></td><td></td><td></td><td></td><td></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;notice&nbsp;&nbsp;&nbsp;&nbsp;=&gt; &#39;notice&#39;,</td></tr>
-<tr><td class="h">149</td><td></td><td></td><td></td><td></td><td></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;warning&nbsp;&nbsp;&nbsp;=&gt; &#39;warn&#39;,</td></tr>
-<tr><td class="h">150</td><td></td><td></td><td></td><td></td><td></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;error&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&gt; &#39;error&#39;,</td></tr>
-<tr><td class="h">151</td><td></td><td></td><td></td><td></td><td></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;critical&nbsp;&nbsp;=&gt; &#39;critical&#39;,</td></tr>
-<tr><td class="h">152</td><td></td><td></td><td></td><td></td><td></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;alert&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&gt; &#39;alert&#39;,</td></tr>
-<tr><td class="h">153</td><td></td><td></td><td></td><td></td><td></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;emergency =&gt; &#39;emergency&#39;,</td></tr>
-<tr><td class="h">154</td><td></td><td></td><td></td><td></td><td></td><td class="s">);</td></tr>
-<tr><td class="h">155</td><td colspan="6"></td></tr><tr><td class="h">156</td><td></td><td></td><td></td><td></td><td></td><td class="s"># ---------------------------------------------------------------------------</td></tr>
-<tr><td class="h">157</td><td></td><td></td><td></td><td></td><td></td><td class="s"># init -- create or store the Log::Abstraction instance backing this adapter</td></tr>
-<tr><td class="h">158</td><td></td><td></td><td></td><td></td><td></td><td class="s">#</td></tr>
-<tr><td class="h">159</td><td></td><td></td><td></td><td></td><td></td><td class="s"># Purpose:&nbsp;&nbsp;Called by Log::Any::Adapter::Base::new() after blessing the</td></tr>
-<tr><td class="h">160</td><td></td><td></td><td></td><td></td><td></td><td class="s">#&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;adapter hash.&nbsp;&nbsp;Either wraps an existing Log::Abstraction object</td></tr>
-<tr><td class="h">161</td><td></td><td></td><td></td><td></td><td></td><td class="s">#&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(from the &#39;instance&#39; key) or builds a new one from the remaining</td></tr>
-<tr><td class="h">162</td><td></td><td></td><td></td><td></td><td></td><td class="s">#&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;adapter constructor arguments.</td></tr>
-<tr><td class="h">163</td><td></td><td></td><td></td><td></td><td></td><td class="s"># Entry:&nbsp;&nbsp;&nbsp;&nbsp;$self -- adapter hash blessed into this class.</td></tr>
-<tr><td class="h">164</td><td></td><td></td><td></td><td></td><td></td><td class="s"># Exit:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Sets $self-&gt;{_logger}; returns nothing.</td></tr>
-<tr><td class="h">165</td><td></td><td></td><td></td><td></td><td></td><td class="s"># Side effects: May construct a Log::Abstraction object (which may open</td></tr>
-<tr><td class="h">166</td><td></td><td></td><td></td><td></td><td></td><td class="s">#&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;file handles, start syslog, etc.).</td></tr>
-<tr><td class="h">167</td><td></td><td></td><td></td><td></td><td></td><td class="s"># ---------------------------------------------------------------------------</td></tr>
-<tr><td class="h">168</td><td></td><td></td><td></td><td></td><td></td><td class="s">sub init {</td></tr>
-<tr><td class="h">169</td><td></td><td></td><td></td><td></td><td></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;my $self = shift;</td></tr>
-<tr><td class="h">170</td><td colspan="6"></td></tr><tr><td class="h">171</td><td></td><td></td><td></td><td></td><td></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;# Reuse a caller-supplied Log::Abstraction instance if one was provided;</td></tr>
-<tr><td class="h">172</td><td></td><td></td><td></td><td></td><td></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;# anything else is a mistake, not a request for a default logger</td></tr>
-<tr><td class="h">173</td><td></td><td></td><td></td><td></td><td></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if(defined(my $inst = $self-&gt;{instance})) {</td></tr>
-<tr><td class="h">174</td><td></td><td></td><td></td><td></td><td></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if(!Scalar::Util::blessed($inst) || !$inst-&gt;isa(&#39;Log::Abstraction&#39;)) {</td></tr>
-<tr><td class="h">175</td><td></td><td></td><td></td><td></td><td></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Carp::croak(__PACKAGE__, &#39;: instance must be a Log::Abstraction object&#39;);</td></tr>
-<tr><td class="h">176</td><td></td><td></td><td></td><td></td><td></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}</td></tr>
-<tr><td class="h">177</td><td></td><td></td><td></td><td></td><td></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;$self-&gt;{_logger} = $inst;</td></tr>
-<tr><td class="h">178</td><td></td><td></td><td></td><td></td><td></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return;</td></tr>
-<tr><td class="h">179</td><td></td><td></td><td></td><td></td><td></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}</td></tr>
-<tr><td class="h">180</td><td colspan="6"></td></tr><tr><td class="h">181</td><td></td><td></td><td></td><td></td><td></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;# Build a fresh Log::Abstraction from the constructor key=value pairs</td></tr>
-<tr><td class="h">182</td><td></td><td></td><td></td><td></td><td></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;my %new_args;</td></tr>
-<tr><td class="h">183</td><td></td><td></td><td></td><td></td><td></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;for my $key (qw(</td></tr>
-<tr><td class="h">184</td><td></td><td></td><td></td><td></td><td></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;logger level file fd array format ctx script_name verbose</td></tr>
-<tr><td class="h">185</td><td></td><td></td><td></td><td></td><td></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;carp_on_warn croak_on_error config_file max_messages redact</td></tr>
-<tr><td class="h">186</td><td></td><td></td><td></td><td></td><td></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;)) {</td></tr>
-<tr><td class="h">187</td><td></td><td></td><td></td><td></td><td></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;$new_args{$key} = $self-&gt;{$key} if exists $self-&gt;{$key};</td></tr>
-<tr><td class="h">188</td><td></td><td></td><td></td><td></td><td></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}</td></tr>
-<tr><td class="h">189</td><td></td><td></td><td></td><td></td><td></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;$self-&gt;{_logger} = Log::Abstraction-&gt;new(%new_args);</td></tr>
-<tr><td class="h">190</td><td></td><td></td><td></td><td></td><td></td><td class="s">}</td></tr>
-<tr><td class="h">191</td><td colspan="6"></td></tr><tr><td class="h">192 - 305</td><td colspan="5"></td><td class="s"><pre>=head2 Logging methods
+<tr><td class="h">147</td><td colspan="6"></td></tr><tr><td class="h">148</td><td></td><td></td><td></td><td></td><td></td><td class="s"># ---------------------------------------------------------------------------</td></tr>
+<tr><td class="h">149</td><td></td><td></td><td></td><td></td><td></td><td class="s"># Map Log::Any level names to Log::Abstraction method names, which are also</td></tr>
+<tr><td class="h">150</td><td></td><td></td><td></td><td></td><td></td><td class="s"># its level names (for the is_* threshold checks).&nbsp;&nbsp;Only &#39;warning&#39; differs.</td></tr>
+<tr><td class="h">151</td><td></td><td></td><td></td><td></td><td></td><td class="s"># ---------------------------------------------------------------------------</td></tr>
+<tr><td class="h">152</td><td></td><td></td><td></td><td></td><td></td><td class="s">my %LA_TO_METHOD = (</td></tr>
+<tr><td class="h">153</td><td></td><td></td><td></td><td></td><td></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;trace&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&gt; &#39;trace&#39;,</td></tr>
+<tr><td class="h">154</td><td></td><td></td><td></td><td></td><td></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;debug&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&gt; &#39;debug&#39;,</td></tr>
+<tr><td class="h">155</td><td></td><td></td><td></td><td></td><td></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;info&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&gt; &#39;info&#39;,</td></tr>
+<tr><td class="h">156</td><td></td><td></td><td></td><td></td><td></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;notice&nbsp;&nbsp;&nbsp;&nbsp;=&gt; &#39;notice&#39;,</td></tr>
+<tr><td class="h">157</td><td></td><td></td><td></td><td></td><td></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;warning&nbsp;&nbsp;&nbsp;=&gt; &#39;warn&#39;,</td></tr>
+<tr><td class="h">158</td><td></td><td></td><td></td><td></td><td></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;error&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&gt; &#39;error&#39;,</td></tr>
+<tr><td class="h">159</td><td></td><td></td><td></td><td></td><td></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;critical&nbsp;&nbsp;=&gt; &#39;critical&#39;,</td></tr>
+<tr><td class="h">160</td><td></td><td></td><td></td><td></td><td></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;alert&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&gt; &#39;alert&#39;,</td></tr>
+<tr><td class="h">161</td><td></td><td></td><td></td><td></td><td></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;emergency =&gt; &#39;emergency&#39;,</td></tr>
+<tr><td class="h">162</td><td></td><td></td><td></td><td></td><td></td><td class="s">);</td></tr>
+<tr><td class="h">163</td><td colspan="6"></td></tr><tr><td class="h">164</td><td></td><td></td><td></td><td></td><td></td><td class="s"># ---------------------------------------------------------------------------</td></tr>
+<tr><td class="h">165</td><td></td><td></td><td></td><td></td><td></td><td class="s"># init -- create or store the Log::Abstraction instance backing this adapter</td></tr>
+<tr><td class="h">166</td><td></td><td></td><td></td><td></td><td></td><td class="s">#</td></tr>
+<tr><td class="h">167</td><td></td><td></td><td></td><td></td><td></td><td class="s"># Purpose:&nbsp;&nbsp;Called by Log::Any::Adapter::Base::new() after blessing the</td></tr>
+<tr><td class="h">168</td><td></td><td></td><td></td><td></td><td></td><td class="s">#&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;adapter hash.&nbsp;&nbsp;Either wraps an existing Log::Abstraction object</td></tr>
+<tr><td class="h">169</td><td></td><td></td><td></td><td></td><td></td><td class="s">#&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(from the &#39;instance&#39; key) or builds a new one from the remaining</td></tr>
+<tr><td class="h">170</td><td></td><td></td><td></td><td></td><td></td><td class="s">#&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;adapter constructor arguments.</td></tr>
+<tr><td class="h">171</td><td></td><td></td><td></td><td></td><td></td><td class="s"># Entry:&nbsp;&nbsp;&nbsp;&nbsp;$self -- adapter hash blessed into this class.</td></tr>
+<tr><td class="h">172</td><td></td><td></td><td></td><td></td><td></td><td class="s"># Exit:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Sets $self-&gt;{_logger}; returns nothing.</td></tr>
+<tr><td class="h">173</td><td></td><td></td><td></td><td></td><td></td><td class="s"># Side effects: May construct a Log::Abstraction object (which may open</td></tr>
+<tr><td class="h">174</td><td></td><td></td><td></td><td></td><td></td><td class="s">#&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;file handles, start syslog, etc.).</td></tr>
+<tr><td class="h">175</td><td></td><td></td><td></td><td></td><td></td><td class="s"># ---------------------------------------------------------------------------</td></tr>
+<tr><td class="h">176</td><td></td><td></td><td></td><td></td><td></td><td class="s">sub init {</td></tr>
+<tr><td class="h">177</td><td></td><td></td><td></td><td></td><td></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;my $self = shift;</td></tr>
+<tr><td class="h">178</td><td colspan="6"></td></tr><tr><td class="h">179</td><td></td><td></td><td></td><td></td><td></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;# Reuse a caller-supplied Log::Abstraction instance if one was provided;</td></tr>
+<tr><td class="h">180</td><td></td><td></td><td></td><td></td><td></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;# anything else is a mistake, not a request for a default logger</td></tr>
+<tr><td class="h">181</td><td></td><td></td><td></td><td></td><td></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if(defined(my $inst = $self-&gt;{instance})) {</td></tr>
+<tr><td class="h">182</td><td></td><td></td><td></td><td></td><td></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if(!Scalar::Util::blessed($inst) || !$inst-&gt;isa(&#39;Log::Abstraction&#39;)) {</td></tr>
+<tr><td class="h">183</td><td></td><td></td><td></td><td></td><td></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Carp::croak(__PACKAGE__, &#39;: instance must be a Log::Abstraction object&#39;);</td></tr>
+<tr><td class="h">184</td><td></td><td></td><td></td><td></td><td></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}</td></tr>
+<tr><td class="h">185</td><td></td><td></td><td></td><td></td><td></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;$self-&gt;{_logger} = $inst;</td></tr>
+<tr><td class="h">186</td><td></td><td></td><td></td><td></td><td></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return;</td></tr>
+<tr><td class="h">187</td><td></td><td></td><td></td><td></td><td></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}</td></tr>
+<tr><td class="h">188</td><td colspan="6"></td></tr><tr><td class="h">189</td><td></td><td></td><td></td><td></td><td></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;# Build a fresh Log::Abstraction from the constructor key=value pairs</td></tr>
+<tr><td class="h">190</td><td></td><td></td><td></td><td></td><td></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;my %new_args;</td></tr>
+<tr><td class="h">191</td><td></td><td></td><td></td><td></td><td></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;for my $key (qw(</td></tr>
+<tr><td class="h">192</td><td></td><td></td><td></td><td></td><td></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;logger level file fd array format ctx script_name verbose</td></tr>
+<tr><td class="h">193</td><td></td><td></td><td></td><td></td><td></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;carp_on_warn croak_on_error config_file max_messages redact</td></tr>
+<tr><td class="h">194</td><td></td><td></td><td></td><td></td><td></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;timestamp_format timestamp_precision utc</td></tr>
+<tr><td class="h">195</td><td></td><td></td><td></td><td></td><td></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;rotate_size rotate_interval rotate_keep</td></tr>
+<tr><td class="h">196</td><td></td><td></td><td></td><td></td><td></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;)) {</td></tr>
+<tr><td class="h">197</td><td></td><td></td><td></td><td></td><td></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;$new_args{$key} = $self-&gt;{$key} if exists $self-&gt;{$key};</td></tr>
+<tr><td class="h">198</td><td></td><td></td><td></td><td></td><td></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}</td></tr>
+<tr><td class="h">199</td><td></td><td></td><td></td><td></td><td></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;$self-&gt;{_logger} = Log::Abstraction-&gt;new(%new_args);</td></tr>
+<tr><td class="h">200</td><td></td><td></td><td></td><td></td><td></td><td class="s">}</td></tr>
+<tr><td class="h">201</td><td colspan="6"></td></tr><tr><td class="h">202 - 315</td><td colspan="5"></td><td class="s"><pre>=head2 Logging methods
 
 =over 4
 
@@ -320,61 +330,61 @@ C&lt;is_warn&gt;).&nbsp;&nbsp;As in Log::Abstraction, C&lt;is_trace&gt; equals C
 &nbsp;&nbsp;{ type =&gt; &#39;boolean&#39; }
 
 =cut</pre></td></tr>
-<tr><td class="h">306</td><td colspan="6"></td></tr><tr><td class="h">307</td><td></td><td></td><td></td><td></td><td></td><td class="s"># ---------------------------------------------------------------------------</td></tr>
-<tr><td class="h">308</td><td></td><td></td><td></td><td></td><td></td><td class="s"># Build logging methods for every Log::Any level name.</td></tr>
-<tr><td class="h">309</td><td></td><td></td><td></td><td></td><td></td><td class="s"># Each method delegates to the corresponding Log::Abstraction dispatch method.</td></tr>
-<tr><td class="h">310</td><td></td><td></td><td></td><td></td><td></td><td class="s"># Logging through Log::Any must never kill the module doing the logging, so</td></tr>
-<tr><td class="h">311</td><td></td><td></td><td></td><td></td><td></td><td class="s"># a croak from Log::Abstraction (e.g. croak_on_error) is turned into a carp.</td></tr>
-<tr><td class="h">312</td><td></td><td></td><td></td><td></td><td></td><td class="s"># ---------------------------------------------------------------------------</td></tr>
-<tr><td class="h">313</td><td></td><td></td><td></td><td></td><td></td><td class="s">for my $la_level (keys %LA_TO_METHOD) {</td></tr>
-<tr><td class="h">314</td><td></td><td></td><td></td><td></td><td></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;my $method = $LA_TO_METHOD{$la_level};</td></tr>
-<tr><td class="h">315</td><td></td><td></td><td></td><td></td><td></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;no strict &#39;refs&#39;;</td></tr>
-<tr><td class="h">316</td><td></td><td></td><td></td><td></td><td></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*{$la_level} = sub {</td></tr>
-<tr><td class="h">317</td><td></td><td></td><td></td><td></td><td></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;my ($self, $msg) = @_;</td></tr>
-<tr><td class="h">318</td><td></td><td></td><td></td><td></td><td></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;# The eval would otherwise reset the calling module&#39;s $@</td></tr>
-<tr><td class="h">319</td><td></td><td></td><td></td><td></td><td></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;local ($@, $!);</td></tr>
-<tr><td class="h">320</td><td></td><td></td><td></td><td></td><td></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;eval { $self-&gt;{_logger}-&gt;$method($msg); 1 } or Carp::carp($@);</td></tr>
-<tr><td class="h">321</td><td></td><td></td><td></td><td></td><td></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return;</td></tr>
-<tr><td class="h">322</td><td></td><td></td><td></td><td></td><td></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;};</td></tr>
-<tr><td class="h">323</td><td></td><td></td><td></td><td></td><td></td><td class="s">}</td></tr>
-<tr><td class="h">324</td><td colspan="6"></td></tr><tr><td class="h">325</td><td></td><td></td><td></td><td></td><td></td><td class="s"># ---------------------------------------------------------------------------</td></tr>
-<tr><td class="h">326</td><td></td><td></td><td></td><td></td><td></td><td class="s"># structured -- receive a log call with its structured fields from Log::Any</td></tr>
-<tr><td class="h">327</td><td></td><td></td><td></td><td></td><td></td><td class="s">#</td></tr>
-<tr><td class="h">328</td><td></td><td></td><td></td><td></td><td></td><td class="s"># Purpose:&nbsp;&nbsp;Log::Any calls this instead of the per-level methods when the</td></tr>
-<tr><td class="h">329</td><td></td><td></td><td></td><td></td><td></td><td class="s">#&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;adapter can(&#39;structured&#39;), passing the parts as given and the</td></tr>
-<tr><td class="h">330</td><td></td><td></td><td></td><td></td><td></td><td class="s">#&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;merged context and fields as a final hashref (only when there are</td></tr>
-<tr><td class="h">331</td><td></td><td></td><td></td><td></td><td></td><td class="s">#&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;any), so the fields reach Log::Abstraction as data, not text.</td></tr>
-<tr><td class="h">332</td><td></td><td></td><td></td><td></td><td></td><td class="s"># Entry:&nbsp;&nbsp;&nbsp;&nbsp;$self&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-- the adapter.</td></tr>
-<tr><td class="h">333</td><td></td><td></td><td></td><td></td><td></td><td class="s">#&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;$level&nbsp;&nbsp;&nbsp;&nbsp;-- a Log::Any level name.</td></tr>
-<tr><td class="h">334</td><td></td><td></td><td></td><td></td><td></td><td class="s">#&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;$category -- the Log::Any category (unused).</td></tr>
-<tr><td class="h">335</td><td></td><td></td><td></td><td></td><td></td><td class="s">#&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;@parts&nbsp;&nbsp;&nbsp;&nbsp;-- message parts, then optionally a hashref of fields.</td></tr>
-<tr><td class="h">336</td><td></td><td></td><td></td><td></td><td></td><td class="s"># Exit:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Returns nothing.</td></tr>
-<tr><td class="h">337</td><td></td><td></td><td></td><td></td><td></td><td class="s"># Side effects: Logs through the wrapped Log::Abstraction instance.</td></tr>
-<tr><td class="h">338</td><td></td><td></td><td></td><td></td><td></td><td class="s"># ---------------------------------------------------------------------------</td></tr>
-<tr><td class="h">339</td><td></td><td></td><td></td><td></td><td></td><td class="s">sub structured {</td></tr>
-<tr><td class="h">340</td><td></td><td></td><td></td><td></td><td></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;my ($self, $level, $category, @parts) = @_;</td></tr>
-<tr><td class="h">341</td><td colspan="6"></td></tr><tr><td class="h">342</td><td></td><td></td><td></td><td></td><td></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;my $fields = (@parts &amp;&amp; (ref($parts[-1]) eq &#39;HASH&#39;)) ? pop(@parts) : undef;</td></tr>
-<tr><td class="h">343</td><td></td><td></td><td></td><td></td><td></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;my $msg = join(&#39; &#39;, grep { defined($_) &amp;&amp; length($_) } @parts);</td></tr>
-<tr><td class="h">344</td><td></td><td></td><td></td><td></td><td></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;my $method = $LA_TO_METHOD{$level} or return;</td></tr>
-<tr><td class="h">345</td><td colspan="6"></td></tr><tr><td class="h">346</td><td></td><td></td><td></td><td></td><td></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;# The eval would otherwise reset the calling module&#39;s $@</td></tr>
-<tr><td class="h">347</td><td></td><td></td><td></td><td></td><td></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;local ($@, $!);</td></tr>
-<tr><td class="h">348</td><td></td><td></td><td></td><td></td><td></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;eval { $self-&gt;{_logger}-&gt;$method($msg, ($fields ? $fields : ())); 1 } or Carp::carp($@);</td></tr>
-<tr><td class="h">349</td><td></td><td></td><td></td><td></td><td></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return;</td></tr>
-<tr><td class="h">350</td><td></td><td></td><td></td><td></td><td></td><td class="s">}</td></tr>
-<tr><td class="h">351</td><td colspan="6"></td></tr><tr><td class="h">352</td><td></td><td></td><td></td><td></td><td></td><td class="s"># ---------------------------------------------------------------------------</td></tr>
-<tr><td class="h">353</td><td></td><td></td><td></td><td></td><td></td><td class="s"># Build is_* detection methods for every Log::Any level name.</td></tr>
-<tr><td class="h">354</td><td></td><td></td><td></td><td></td><td></td><td class="s"># Each delegates to the matching Log::Abstraction is_* method (is_warning to</td></tr>
-<tr><td class="h">355</td><td></td><td></td><td></td><td></td><td></td><td class="s"># is_warn), which returns 1 when messages at that level would not be dropped.</td></tr>
-<tr><td class="h">356</td><td></td><td></td><td></td><td></td><td></td><td class="s"># ---------------------------------------------------------------------------</td></tr>
-<tr><td class="h">357</td><td></td><td></td><td></td><td></td><td></td><td class="s">for my $la_level (keys %LA_TO_METHOD) {</td></tr>
-<tr><td class="h">358</td><td></td><td></td><td></td><td></td><td></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;my $detector = &quot;is_$LA_TO_METHOD{$la_level}&quot;;</td></tr>
-<tr><td class="h">359</td><td></td><td></td><td></td><td></td><td></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;no strict &#39;refs&#39;;</td></tr>
-<tr><td class="h">360</td><td></td><td></td><td></td><td></td><td></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*{&quot;is_$la_level&quot;} = sub {</td></tr>
-<tr><td class="h">361</td><td></td><td></td><td></td><td></td><td></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;my $self = $_[0];</td></tr>
-<tr><td class="h">362</td><td></td><td></td><td></td><td></td><td></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return $self-&gt;{_logger}-&gt;$detector();</td></tr>
-<tr><td class="h">363</td><td></td><td></td><td></td><td></td><td></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;};</td></tr>
-<tr><td class="h">364</td><td></td><td></td><td></td><td></td><td></td><td class="s">}</td></tr>
-<tr><td class="h">365</td><td colspan="6"></td></tr><tr><td class="h">366 - 431</td><td colspan="5"></td><td class="s"><pre>=head1 LIMITATIONS
+<tr><td class="h">316</td><td colspan="6"></td></tr><tr><td class="h">317</td><td></td><td></td><td></td><td></td><td></td><td class="s"># ---------------------------------------------------------------------------</td></tr>
+<tr><td class="h">318</td><td></td><td></td><td></td><td></td><td></td><td class="s"># Build logging methods for every Log::Any level name.</td></tr>
+<tr><td class="h">319</td><td></td><td></td><td></td><td></td><td></td><td class="s"># Each method delegates to the corresponding Log::Abstraction dispatch method.</td></tr>
+<tr><td class="h">320</td><td></td><td></td><td></td><td></td><td></td><td class="s"># Logging through Log::Any must never kill the module doing the logging, so</td></tr>
+<tr><td class="h">321</td><td></td><td></td><td></td><td></td><td></td><td class="s"># a croak from Log::Abstraction (e.g. croak_on_error) is turned into a carp.</td></tr>
+<tr><td class="h">322</td><td></td><td></td><td></td><td></td><td></td><td class="s"># ---------------------------------------------------------------------------</td></tr>
+<tr><td class="h">323</td><td></td><td></td><td></td><td></td><td></td><td class="s">for my $la_level (keys %LA_TO_METHOD) {</td></tr>
+<tr><td class="h">324</td><td></td><td></td><td></td><td></td><td></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;my $method = $LA_TO_METHOD{$la_level};</td></tr>
+<tr><td class="h">325</td><td></td><td></td><td></td><td></td><td></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;no strict &#39;refs&#39;;</td></tr>
+<tr><td class="h">326</td><td></td><td></td><td></td><td></td><td></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*{$la_level} = sub {</td></tr>
+<tr><td class="h">327</td><td></td><td></td><td></td><td></td><td></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;my ($self, $msg) = @_;</td></tr>
+<tr><td class="h">328</td><td></td><td></td><td></td><td></td><td></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;# The eval would otherwise reset the calling module&#39;s $@</td></tr>
+<tr><td class="h">329</td><td></td><td></td><td></td><td></td><td></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;local ($@, $!);</td></tr>
+<tr><td class="h">330</td><td></td><td></td><td></td><td></td><td></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;eval { $self-&gt;{_logger}-&gt;$method($msg); 1 } or Carp::carp($@);</td></tr>
+<tr><td class="h">331</td><td></td><td></td><td></td><td></td><td></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return;</td></tr>
+<tr><td class="h">332</td><td></td><td></td><td></td><td></td><td></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;};</td></tr>
+<tr><td class="h">333</td><td></td><td></td><td></td><td></td><td></td><td class="s">}</td></tr>
+<tr><td class="h">334</td><td colspan="6"></td></tr><tr><td class="h">335</td><td></td><td></td><td></td><td></td><td></td><td class="s"># ---------------------------------------------------------------------------</td></tr>
+<tr><td class="h">336</td><td></td><td></td><td></td><td></td><td></td><td class="s"># structured -- receive a log call with its structured fields from Log::Any</td></tr>
+<tr><td class="h">337</td><td></td><td></td><td></td><td></td><td></td><td class="s">#</td></tr>
+<tr><td class="h">338</td><td></td><td></td><td></td><td></td><td></td><td class="s"># Purpose:&nbsp;&nbsp;Log::Any calls this instead of the per-level methods when the</td></tr>
+<tr><td class="h">339</td><td></td><td></td><td></td><td></td><td></td><td class="s">#&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;adapter can(&#39;structured&#39;), passing the parts as given and the</td></tr>
+<tr><td class="h">340</td><td></td><td></td><td></td><td></td><td></td><td class="s">#&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;merged context and fields as a final hashref (only when there are</td></tr>
+<tr><td class="h">341</td><td></td><td></td><td></td><td></td><td></td><td class="s">#&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;any), so the fields reach Log::Abstraction as data, not text.</td></tr>
+<tr><td class="h">342</td><td></td><td></td><td></td><td></td><td></td><td class="s"># Entry:&nbsp;&nbsp;&nbsp;&nbsp;$self&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-- the adapter.</td></tr>
+<tr><td class="h">343</td><td></td><td></td><td></td><td></td><td></td><td class="s">#&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;$level&nbsp;&nbsp;&nbsp;&nbsp;-- a Log::Any level name.</td></tr>
+<tr><td class="h">344</td><td></td><td></td><td></td><td></td><td></td><td class="s">#&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;$category -- the Log::Any category (unused).</td></tr>
+<tr><td class="h">345</td><td></td><td></td><td></td><td></td><td></td><td class="s">#&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;@parts&nbsp;&nbsp;&nbsp;&nbsp;-- message parts, then optionally a hashref of fields.</td></tr>
+<tr><td class="h">346</td><td></td><td></td><td></td><td></td><td></td><td class="s"># Exit:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Returns nothing.</td></tr>
+<tr><td class="h">347</td><td></td><td></td><td></td><td></td><td></td><td class="s"># Side effects: Logs through the wrapped Log::Abstraction instance.</td></tr>
+<tr><td class="h">348</td><td></td><td></td><td></td><td></td><td></td><td class="s"># ---------------------------------------------------------------------------</td></tr>
+<tr><td class="h">349</td><td></td><td></td><td></td><td></td><td></td><td class="s">sub structured {</td></tr>
+<tr><td class="h">350</td><td></td><td></td><td></td><td></td><td></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;my ($self, $level, $category, @parts) = @_;</td></tr>
+<tr><td class="h">351</td><td colspan="6"></td></tr><tr><td class="h">352</td><td></td><td></td><td></td><td></td><td></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;my $fields = (@parts &amp;&amp; (ref($parts[-1]) eq &#39;HASH&#39;)) ? pop(@parts) : undef;</td></tr>
+<tr><td class="h">353</td><td></td><td></td><td></td><td></td><td></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;my $msg = join(&#39; &#39;, grep { defined($_) &amp;&amp; length($_) } @parts);</td></tr>
+<tr><td class="h">354</td><td></td><td></td><td></td><td></td><td></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;my $method = $LA_TO_METHOD{$level} or return;</td></tr>
+<tr><td class="h">355</td><td colspan="6"></td></tr><tr><td class="h">356</td><td></td><td></td><td></td><td></td><td></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;# The eval would otherwise reset the calling module&#39;s $@</td></tr>
+<tr><td class="h">357</td><td></td><td></td><td></td><td></td><td></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;local ($@, $!);</td></tr>
+<tr><td class="h">358</td><td></td><td></td><td></td><td></td><td></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;eval { $self-&gt;{_logger}-&gt;$method($msg, ($fields ? $fields : ())); 1 } or Carp::carp($@);</td></tr>
+<tr><td class="h">359</td><td></td><td></td><td></td><td></td><td></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return;</td></tr>
+<tr><td class="h">360</td><td></td><td></td><td></td><td></td><td></td><td class="s">}</td></tr>
+<tr><td class="h">361</td><td colspan="6"></td></tr><tr><td class="h">362</td><td></td><td></td><td></td><td></td><td></td><td class="s"># ---------------------------------------------------------------------------</td></tr>
+<tr><td class="h">363</td><td></td><td></td><td></td><td></td><td></td><td class="s"># Build is_* detection methods for every Log::Any level name.</td></tr>
+<tr><td class="h">364</td><td></td><td></td><td></td><td></td><td></td><td class="s"># Each delegates to the matching Log::Abstraction is_* method (is_warning to</td></tr>
+<tr><td class="h">365</td><td></td><td></td><td></td><td></td><td></td><td class="s"># is_warn), which returns 1 when messages at that level would not be dropped.</td></tr>
+<tr><td class="h">366</td><td></td><td></td><td></td><td></td><td></td><td class="s"># ---------------------------------------------------------------------------</td></tr>
+<tr><td class="h">367</td><td></td><td></td><td></td><td></td><td></td><td class="s">for my $la_level (keys %LA_TO_METHOD) {</td></tr>
+<tr><td class="h">368</td><td></td><td></td><td></td><td></td><td></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;my $detector = &quot;is_$LA_TO_METHOD{$la_level}&quot;;</td></tr>
+<tr><td class="h">369</td><td></td><td></td><td></td><td></td><td></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;no strict &#39;refs&#39;;</td></tr>
+<tr><td class="h">370</td><td></td><td></td><td></td><td></td><td></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*{&quot;is_$la_level&quot;} = sub {</td></tr>
+<tr><td class="h">371</td><td></td><td></td><td></td><td></td><td></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;my $self = $_[0];</td></tr>
+<tr><td class="h">372</td><td></td><td></td><td></td><td></td><td></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return $self-&gt;{_logger}-&gt;$detector();</td></tr>
+<tr><td class="h">373</td><td></td><td></td><td></td><td></td><td></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;};</td></tr>
+<tr><td class="h">374</td><td></td><td></td><td></td><td></td><td></td><td class="s">}</td></tr>
+<tr><td class="h">375</td><td colspan="6"></td></tr><tr><td class="h">376 - 441</td><td colspan="5"></td><td class="s"><pre>=head1 LIMITATIONS
 
 =over 4
 
@@ -440,7 +450,7 @@ If you use it,
 please let me know.
 
 =cut</pre></td></tr>
-<tr><td class="h">432</td><td colspan="6"></td></tr><tr><td class="h">433</td><td></td><td></td><td></td><td></td><td></td><td class="s">1;</td></tr>
+<tr><td class="h">442</td><td colspan="6"></td></tr><tr><td class="h">443</td><td></td><td></td><td></td><td></td><td></td><td class="s">1;</td></tr>
 </table>
 </body>
 </html>
