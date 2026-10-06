@@ -1,5 +1,15 @@
 Revision history for Log-Abstraction
 
+0.38	Not Released
+	[ Enhancements ]
+	- Require Sub::Private 0.06.  Before it, the private subs were not
+	  protected when Log::Abstraction was loaded at run time (require,
+	  string eval, Log::Any::Adapter->set), and "Too late to run CHECK
+	  block" was printed.
+	[ Tests ]
+	- New t/private_runtime.t checks that private subs can't be called
+	  from outside when the module is loaded at run time.
+
 0.37	Sun Oct  4 09:43:19 PM EDT 2026
 	[ Bug Fixes ]
 	- journald: a datagram bigger than the system's Unix-socket send

@@ -52,13 +52,6 @@ package Log::Abstraction;
 #   - Store the provider reference, not a cached Logger, to survive
 #     provider swaps (workaround for blocker 3 above).
 
-# TODO: Outstanding items from the 0.35 gap analysis (2026-09-30).
-#
-#   - Sub::Private enforcement is silently disabled when this module is
-#     loaded at run time (require, use_ok, Log::Any::Adapter->set), and
-#     "Too late to run CHECK block" is emitted to the user.  Needs a fix in
-#     Sub::Private (e.g. wrap immediately or use INIT when CHECK has passed).
-#
 # Roadmap - features:
 #   - sendmail digests: batch messages suppressed by min_interval into the
 #     next email instead of discarding them.
@@ -106,9 +99,10 @@ use Time::Local ();
 
 # Sub::Private in enforce mode: _-prefixed subs decorated :Private croak when
 # called from outside this package.  HARNESS_ACTIVE bypasses checks during
-# make test so white-box tests can still reach private methods.
+# make test so white-box tests can still reach private methods.  0.06 also
+# enforces when this module is loaded at run time (require, Log::Any).
 BEGIN { $Sub::Private::config{mode} = 'enforce' }
-use Sub::Private 0.05;
+use Sub::Private 0.06;
 
 # Sys::Syslog, called as Sys::Syslog::openlog() etc. in _log and DESTROY
 use Sys::Syslog 0.28 ();
