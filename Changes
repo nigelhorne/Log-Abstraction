@@ -12,6 +12,10 @@ Revision history for Log-Abstraction
 	  protected when Log::Abstraction was loaded at run time (require,
 	  string eval, Log::Any::Adapter->set), and "Too late to run CHECK
 	  block" was printed.
+	[ Bug Fixes ]
+	- The Log::Any adapter ignored timestamp_format, timestamp_precision,
+	  utc, rotate_size, rotate_interval and rotate_keep; it now passes
+	  them to Log::Abstraction->new().
 	[ Tests ]
 	- New t/redact.t.
 	- New t/private_runtime.t checks that private subs can't be called
