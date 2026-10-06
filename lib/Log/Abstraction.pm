@@ -53,8 +53,6 @@ package Log::Abstraction;
 #     provider swaps (workaround for blocker 3 above).
 
 # Roadmap - features:
-#   - sendmail digests: batch messages suppressed by min_interval into the
-#     next email instead of discarding them.
 #   - Log::Dispatch / Log::Any producer mode.
 #
 # Roadmap - technical debt:
@@ -207,6 +205,10 @@ Readonly::Scalar my $JOURNALD_MIN_PAYLOAD => 4_096;
 # Longest journald field name; journald ignores fields with longer names
 Readonly::Scalar my $JOURNALD_MAX_FIELD_NAME => 64;
 
+# Most messages a sendmail digest holds, unless digest_max says otherwise;
+# beyond it they are only counted
+Readonly::Scalar my $DEFAULT_DIGEST_MAX => 100;
+
 # Marker appended to a message truncated to fit in a journald datagram
 Readonly::Scalar my $TRUNCATED_MARKER => ' [truncated]';
 
@@ -336,6 +338,37 @@ the format string, C<%env_*%> values or C<ctx>.
 Redaction is applied only to messages that pass the logger's C<level>, so
 it costs nothing for messages that are dropped.  A pattern that can match
 the empty string, such as C<qr/x*/>, is rejected by L</new>.
+
+=head2 Email digests
+
+C<min_interval> limits the C<sendmail> backend to one email per interval,
+dropping the messages in between.  With C<digest>, they are held instead,
+and sent ahead of the next message in the first email after the interval:
+
+  my $log = Log::Abstraction->new(
+      logger => {
+          file     => '/var/log/myapp.log',
+          sendmail => {
+              to           => 'ops@example.com',
+              level        => 'error',
+              min_interval => 300,
+              digest       => 1,
+              format       => '%level%> [%timestamp%] %message%',
+          },
+      },
+  );
+
+Each message is one line of the email, oldest first, as its own email body
+would be: formatted with the C<sendmail> C<format> if there is one (as
+above, so that each line has its time), else the message.  At most
+C<digest_max> messages (default 100) are held; later ones are only
+counted, and the email says C<... and N more messages> after the held ones.
+Messages held when an email fails to send stay held, and the new one is
+held with them.
+
+Nothing is sent on a timer: held messages go out with the next email,
+when L</flush> is called, or when the logger is destroyed (which calls
+L</flush>).  A clone made with L</new> starts with none held.
 
 =head2 Per-backend level and format
 
@@ -521,12 +554,13 @@ When not supplied, L<Log::Log4perl> is initialised as the default backend.
 
 The C<sendmail> sub-hash supports:
 C<host>, C<port>, C<to>, C<from>, C<subject>, C<level>, C<format>,
-C<min_interval>.  C<to> is required.  With C<format>, the email body is the
+C<min_interval>, C<digest>, C<digest_max>.  C<to> is required.  With C<format>, the email body is the
 formatted line rather than the message.  C<level> may be a level name or a syslog number (0-7);
 without it, every message is emailed.
-At most one email is sent per C<min_interval> seconds per instance.  If
-delivery fails, C<Carp::carp> is called and the other backends still receive
-the message.
+At most one email is sent per C<min_interval> seconds per instance; the
+messages in between are dropped, unless C<digest> is set, which sends them
+with the next email (see L</Email digests>).  If delivery fails,
+C<Carp::carp> is called and the other backends still receive the message.
 
 The C<syslog> sub-hash supports the keys below.  The message is passed to
 C<syslog()> through a C<%s> format, so C<%> sequences in it, such as C<%m>,
@@ -737,6 +771,8 @@ specified.
                                             'info' } without a 'file' key).
   "<class>: the sendmail backend needs      The sendmail sub-hash has no 'to' key.
     a 'to' address"
+  "<class>: sendmail digest_max must be a   digest_max is zero, negative or not a
+    positive integer, not '<v>'"            number.
   "<class>: invalid journald field name     An extra journald key, upper-cased, is not
     '<k>'"                                  [A-Z0-9_] or starts with '_'.
 
@@ -796,6 +832,7 @@ logging failure must never crash the application.
       shallow-clone self merged with override args
       validate and store new level integer if level given in args
       copy message history list
+      start the clone with no held email digest
       count the clone as a user of an open syslog connection
       RETURN clone
 
@@ -833,7 +870,8 @@ logging failure must never crash the application.
       CROAK if its 'format' is undef, empty or not a string
 
     IF logger is a hash:
-      CROAK if a sendmail sub-hash has no 'to' address
+      CROAK if a sendmail sub-hash has no 'to' address, or a digest_max
+        that isn't a positive integer
       CROAK if an extra journald key is not a valid journald field name
 
     RETURN bless { messages => [], merged args, level => numeric } as class
@@ -897,6 +935,8 @@ sub new {
 		}
 		# Copy the message history so parent and clone diverge independently
 		$clone->{messages} = [ @{$class->{messages}} ];
+		# A clone has its own digest, or held messages would be sent twice
+		delete @{$clone}{qw(_email_digest _email_digest_dropped)};
 		# The clone shares the parent's open syslog connection
 		$syslog_open_count++ if($clone->{_syslog_opened});
 		return $clone;
@@ -991,6 +1031,11 @@ sub new {
 		if(exists($hash->{'sendmail'})
 		   && ((ref($hash->{'sendmail'}) ne 'HASH') || !$hash->{'sendmail'}->{'to'})) {
 			Carp::croak("$class: the sendmail backend needs a 'to' address");
+		}
+		if((ref($hash->{'sendmail'}) eq 'HASH') && defined(my $max = $hash->{'sendmail'}->{'digest_max'})) {
+			if($max !~ /^[1-9]\d*$/) {
+				Carp::croak("$class: sendmail digest_max must be a positive integer, not '$max'");
+			}
 		}
 
 		if(ref($hash->{'journald'}) eq 'HASH') {
@@ -1531,6 +1576,118 @@ sub _write_line :Private {
 }
 
 # ---------------------------------------------------------------------------
+# _send_email -- send one email: any held digest, then the new lines
+#
+# Purpose:      The sendmail backend's delivery, shared by _log and flush().
+# Entry:        $self  -- the logger object (the digest and throttle state).
+#               $sm    -- the sendmail hash (to, from, subject, host, port,
+#                         digest).
+#               @lines -- the bodies of the new messages (none from flush).
+# Exit:         Returns 1 if the email was sent or there was nothing to
+#               send, 0 if delivery failed.
+# Side effects: Croaks on an invalid host or port, before the eval so that
+#               the misconfiguration isn't hidden.  On success, clears the
+#               digest and starts the min_interval throttle.  On failure,
+#               carps, and with digest holds @lines for the next email (the
+#               digest already held stays held).
+# Notes:        The body is the held lines, a "... and N more" line if some
+#               were dropped, then @lines, one per line; a single message
+#               with nothing held is sent exactly as it is.
+#
+# Pseudocode:
+#   FUNCTION _send_email(self, sm, lines...)
+#     CROAK if host contains unsafe characters, or port isn't 1-65535
+#     body = held digest, "... and N more" if N were dropped, lines
+#     RETURN 1 if body is empty
+#     (eval) load Email::* modules; build email with sanitised headers and
+#            body joined with newlines; send via SMTP transport
+#     IF it failed:
+#       CARP; IF sm->{digest}: hold each of lines; RETURN 0
+#     clear the digest; record the time for the throttle; RETURN 1
+#   END FUNCTION
+# ---------------------------------------------------------------------------
+sub _send_email :Private {
+	my ($self, $sm, @lines) = @_;
+
+	# Validate host and port before any eval so bad config croaks immediately
+	my $host = $sm->{'host'} || $DEFAULT_SMTP_HOST;
+	Carp::croak(ref($self), ": Invalid SMTP host: $host")
+		if $host =~ $RE_SAFE_HOST;
+	my $port = $sm->{'port'} || $DEFAULT_SMTP_PORT;
+	Carp::croak(ref($self), ": Invalid SMTP port: $port")
+		unless $port =~ $RE_PORT
+			&& $port >= $MIN_PORT
+			&& $port <= $MAX_PORT;
+
+	my $dropped = $self->{_email_digest_dropped};
+	my @body = (
+		@{$self->{_email_digest} || []},
+		($dropped ? ("... and $dropped more " . (($dropped == 1) ? 'message' : 'messages')) : ()),
+		@lines,
+	);
+	return 1 if(!@body);
+
+	# Load mail modules lazily; wrap only I/O in eval to handle delivery failures
+	eval {
+		require Email::Simple;
+		require Email::Sender::Simple;
+		require Email::Sender::Transport::SMTP;
+
+		# Build the email object with sanitised headers
+		my $email = Email::Simple->new('');
+		$email->header_set('to', _sanitize_email_header($sm->{'to'}));
+		$email->header_set('from', _sanitize_email_header($sm->{'from'} || $DEFAULT_FROM_ADDR));
+		if(my $subject = $sm->{'subject'}) {
+			$email->header_set('subject', _sanitize_email_header($subject));
+		}
+		$email->body_set(join("\n", @body));
+
+		my $transport = Email::Sender::Transport::SMTP->new({
+			host => $host,
+			port => $port,
+		});
+		# A class method, rather than the exported sendmail(), so that
+		# nothing is imported into this package
+		Email::Sender::Simple->send($email, { transport => $transport });
+	};
+	if($@) {
+		Carp::carp("Failed to send email: $@");
+		if($sm->{'digest'}) {
+			$self->_hold_email($sm, $_) for @lines;
+		}
+		return 0;
+	}
+
+	# Record send time for the throttle on success
+	delete @{$self}{qw(_email_digest _email_digest_dropped)};
+	$self->{_last_email_sent} = time();
+	return 1;
+}
+
+# ---------------------------------------------------------------------------
+# _hold_email -- keep a message body for the next email (sendmail digest)
+#
+# Purpose:      With digest, messages that min_interval (or a failed send)
+#               would lose are sent with the next email instead.
+# Entry:        $self -- the logger object.
+#               $sm   -- the sendmail hash (digest_max).
+#               $line -- the message's email body.
+# Exit:         Returns nothing.  Holds $line, or once digest_max are held,
+#               only counts it, so a burst can't use unbounded memory.
+# ---------------------------------------------------------------------------
+sub _hold_email :Private {
+	my ($self, $sm, $line) = @_;
+
+	my $held = $self->{_email_digest} ||= [];
+	if(scalar(@{$held}) < ($sm->{'digest_max'} // $DEFAULT_DIGEST_MAX)) {
+		push @{$held}, $line;
+	} else {
+		$self->{_email_digest_dropped}++;
+	}
+	return;
+}
+
+# ---------------------------------------------------------------------------
 # _validate_file_path -- validate and untaint a filesystem path
 #
 # Purpose:      Ensure a caller-supplied path does not contain dangerous
@@ -1830,14 +1987,12 @@ sub _format_message :Private {
 #         push { level, message, fields? }, message = render(its format)
 #           if it has one
 #       IF 'sendmail' key present with a 'to' address:
-#         IF level passes threshold AND not throttled:
-#           CROAK if host contains unsafe characters
-#           CROAK if port is out of 1-65535 range
-#           (eval) load Email::* modules; build email with sanitised headers
-#                  and as the body render(its format) if it has one,
-#                  else $text; send via SMTP transport
-#           Record timestamp for throttle on success; a failure is carped
-#           and the remaining backends still run
+#         IF level passes threshold:
+#           body = render(its format) if it has one, else $text
+#           IF not throttled: _send_email(sm, body) (with any held digest;
+#             croaks on a bad host/port, carps on a failed delivery, and
+#             the remaining backends still run)
+#           ELSIF sm->{digest}: _hold_email(sm, body)
 #       IF 'syslog' key present:
 #         IF level passes threshold:
 #           Open syslog connection on first use (setlogsock, openlog)
@@ -2023,69 +2178,22 @@ sub _log :Private {
 
 				# Check the level threshold for email (undef means send always)
 				if(_wants($level, $sm->{'level'})) {
+					my $body = defined($sm->{'format'}) ? $render->($sm->{'format'}) : $text;
 
 					# Honour the minimum-interval throttle
 					my $throttled = 0;
 					if(my $interval = $sm->{'min_interval'}) {
-						my $now = time();
 						$throttled = defined($self->{_last_email_sent})
-							&& ($now - $self->{_last_email_sent}) < $interval;
+							&& (time() - $self->{_last_email_sent}) < $interval;
 					}
 
+					# A throttled message is dropped, or with digest held for
+					# the next email.  A failed send doesn't stop the other
+					# backends (_send_email carps)
 					if(!$throttled) {
-						# Validate host and port before any eval so bad config croaks immediately
-						my $host = $sm->{'host'} || $DEFAULT_SMTP_HOST;
-						Carp::croak(ref($self), ": Invalid SMTP host: $host")
-							if $host =~ $RE_SAFE_HOST;
-						my $port = $sm->{'port'} || $DEFAULT_SMTP_PORT;
-						Carp::croak(ref($self), ": Invalid SMTP port: $port")
-							unless $port =~ $RE_PORT
-								&& $port >= $MIN_PORT
-								&& $port <= $MAX_PORT;
-
-						# Load mail modules lazily; wrap only I/O in eval to handle delivery failures
-						eval {
-							require Email::Simple;
-							require Email::Sender::Simple;
-							require Email::Sender::Transport::SMTP;
-
-
-							# Build the email object with sanitised headers
-							my $email = Email::Simple->new('');
-							$email->header_set(
-								'to',
-								_sanitize_email_header($sm->{'to'}),
-							);
-							my $from = $sm->{'from'} || $DEFAULT_FROM_ADDR;
-							$email->header_set(
-								'from',
-								_sanitize_email_header($from),
-							);
-							if(my $subject = $sm->{'subject'}) {
-								$email->header_set(
-									'subject',
-									_sanitize_email_header($subject),
-								);
-							}
-							$email->body_set(defined($sm->{'format'}) ? $render->($sm->{'format'}) : $text);
-
-							my $transport = Email::Sender::Transport::SMTP->new({
-								host => $host,
-								port => $port,
-							});
-							# A class method, rather than the exported sendmail(),
-							# so that nothing is imported into this package
-							Email::Sender::Simple->send($email, { transport => $transport });
-						};
-
-						# A delivery failure must not stop the remaining backends
-						# from receiving this message
-						if($@) {
-							Carp::carp("Failed to send email: $@");
-						} else {
-							# Record send time for the throttle on success
-							$self->{_last_email_sent} = time();
-						}
+						$self->_send_email($sm, $body);
+					} elsif($sm->{'digest'}) {
+						$self->_hold_email($sm, $body);
 					}
 				}
 			}
@@ -2581,6 +2689,60 @@ sub messages {
 	my $self = $_[0];
 
 	return [ @{$self->{messages}} ];
+}
+
+=head2 flush
+
+  $logger->flush();
+
+Sends, now, the messages that a C<sendmail> backend with C<digest> is
+holding back because of C<min_interval> (see L</Email digests>), whether or
+not the interval has passed.  Does nothing if none are held.  Called
+automatically when the logger is destroyed.
+
+=head3 Arguments
+
+None.
+
+=head3 Returns
+
+The logger, for method chaining.
+
+=head3 Side Effects
+
+May send an email, which starts the C<min_interval> interval again.  A
+delivery failure is carped and the messages stay held.  Croaks if the
+C<sendmail> C<host> or C<port> is invalid.
+
+=head3 Example
+
+  $logger->error('disk full');    # emailed
+  $logger->error('disk still full');    # held: within min_interval
+  $logger->flush();                # emailed now
+
+=head3 API SPECIFICATION
+
+=head4 Input
+
+  {} (no arguments)
+
+=head4 Output
+
+  { type => 'object', class => 'Log::Abstraction' }
+
+=cut
+
+sub flush {
+	my $self = $_[0];
+
+	# Preserve the caller's $@ and $! (see _log)
+	local ($@, $!);
+
+	my $sm = (ref($self->{'logger'}) eq 'HASH') ? $self->{'logger'}->{'sendmail'} : undef;
+	if($sm && $self->{_email_digest}) {
+		$self->_send_email($sm);
+	}
+	return $self;
 }
 
 =head2 trace
@@ -3095,6 +3257,9 @@ sub DESTROY {
 	# propagating, so don't let closelog() change the error variables
 	local ($@, $!, $?);
 
+	# Send any messages a sendmail digest is still holding
+	eval { $self->flush() } if($self->{_email_digest});
+
 	# openlog/closelog are process-global, so only close the connection
 	# when the last instance using it goes away
 	if($self->{_syslog_opened}) {
@@ -3241,8 +3406,8 @@ C<format> has no token for them on their own.
 
 =item B<Single-threaded email throttle>
 
-The C<min_interval> throttle for the C<sendmail> backend and the
-C<_syslog_opened> first-open flag are stored on the object without mutex
+The C<min_interval> throttle and C<digest> for the C<sendmail> backend and
+the C<_syslog_opened> first-open flag are stored on the object without mutex
 protection.  Under Perl ithreads or other concurrency models, objects shared
 between threads are not safe.
 
@@ -3413,6 +3578,19 @@ L<http://deps.cpantesters.org/?module=Log::Abstraction>
   │ result! : seq ENTRY
   ├─────────────────────────────────────────────────────────────
   │ result! = messages
+  └─────────────────────────────────────────────────────────────
+
+=head2 flush
+
+  ┌─ Flush ────────────────────────────────────────────────────
+  │ ΔLogState
+  │ result! : LogState
+  ├─────────────────────────────────────────────────────────────
+  │ digest ≠ ⟨⟩ ∧ sent(digest) ⟹ digest' = ⟨⟩ ∧ last_email_sent' = now
+  │ digest ≠ ⟨⟩ ∧ ¬sent(digest) ⟹ digest' = digest
+  │ digest = ⟨⟩ ⟹ digest' = digest
+  │ messages' = messages
+  │ result! = self
   └─────────────────────────────────────────────────────────────
 
 =head2 trace

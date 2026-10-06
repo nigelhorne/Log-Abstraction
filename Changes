@@ -2,6 +2,11 @@ Revision history for Log-Abstraction
 
 0.38	Not Released
 	[ Enhancements ]
+	- sendmail digest: with digest => 1, messages that min_interval holds
+	  back are sent, oldest first, with the next email instead of being
+	  dropped (at most digest_max, default 100; the rest are counted).
+	  New flush() method sends them at once; destroying the logger calls
+	  it.  A failed send keeps them for the next email.
 	- New redact option: a qr//, a string or a list of them.  Each match
 	  is replaced with [REDACTED] before the message reaches the history
 	  or any backend, in structured-field values too, and in the text
@@ -17,7 +22,7 @@ Revision history for Log-Abstraction
 	  utc, rotate_size, rotate_interval and rotate_keep; it now passes
 	  them to Log::Abstraction->new().
 	[ Tests ]
-	- New t/redact.t.
+	- New t/redact.t and t/sendmail_digest.t.
 	- New t/private_runtime.t checks that private subs can't be called
 	  from outside when the module is loaded at run time.
 	- t/timestamp.t failed on long-double perls (x86_64-linux-ld): its

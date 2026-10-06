@@ -108,6 +108,39 @@ Redaction is applied only to messages that pass the logger's `level`, so
 it costs nothing for messages that are dropped.  A pattern that can match
 the empty string, such as `qr/x*/`, is rejected by ["new"](#new).
 
+### Email Digests
+
+`min_interval` limits the `sendmail` backend to one email per interval,
+dropping the messages in between.  With `digest`, they are held instead,
+and sent ahead of the next message in the first email after the interval:
+
+```perl
+my $log = Log::Abstraction->new(
+    logger => {
+        file     => '/var/log/myapp.log',
+        sendmail => {
+            to           => 'ops@example.com',
+            level        => 'error',
+            min_interval => 300,
+            digest       => 1,
+            format       => '%level%> [%timestamp%] %message%',
+        },
+    },
+);
+```
+
+Each message is one line of the email, oldest first, as its own email body
+would be: formatted with the `sendmail` `format` if there is one (as
+above, so that each line has its time), else the message.  At most
+`digest_max` messages (default 100) are held; later ones are only
+counted, and the email says `... and N more messages` after the held ones.
+Messages held when an email fails to send stay held, and the new one is
+held with them.
+
+Nothing is sent on a timer: held messages go out with the next email,
+when ["flush"](#flush) is called, or when the logger is destroyed (which calls
+["flush"](#flush)).  A clone made with ["new"](#new) starts with none held.
+
 ### Per-Backend Level and Format
 
 Every backend can have its own `level` and `format`, as well as the
@@ -289,12 +322,13 @@ called on an object.  It may also be called as a plain function,
 
     The `sendmail` sub-hash supports:
     `host`, `port`, `to`, `from`, `subject`, `level`, `format`,
-    `min_interval`.  `to` is required.  With `format`, the email body is the
+    `min_interval`, `digest`, `digest_max`.  `to` is required.  With `format`, the email body is the
     formatted line rather than the message.  `level` may be a level name or a syslog number (0-7);
     without it, every message is emailed.
-    At most one email is sent per `min_interval` seconds per instance.  If
-    delivery fails, `Carp::carp` is called and the other backends still receive
-    the message.
+    At most one email is sent per `min_interval` seconds per instance; the
+    messages in between are dropped, unless `digest` is set, which sends them
+    with the next email (see ["Email digests"](#email-digests)).  If delivery fails,
+    `Carp::carp` is called and the other backends still receive the message.
 
     The `syslog` sub-hash supports the keys below.  The message is passed to
     `syslog()` through a `%s` format, so `%` sequences in it, such as `%m`,
@@ -501,6 +535,8 @@ Error                                     Meaning / Action
                                           'info' } without a 'file' key).
 "<class>: the sendmail backend needs      The sendmail sub-hash has no 'to' key.
   a 'to' address"
+"<class>: sendmail digest_max must be a   digest_max is zero, negative or not a
+  positive integer, not '<v>'"            number.
 "<class>: invalid journald field name     An extra journald key, upper-cased, is not
   '<k>'"                                  [A-Z0-9_] or starts with '_'.
 ```
@@ -564,6 +600,7 @@ FUNCTION new(class_or_obj, args...)
     shallow-clone self merged with override args
     validate and store new level integer if level given in args
     copy message history list
+    start the clone with no held email digest
     count the clone as a user of an open syslog connection
     RETURN clone
 
@@ -601,7 +638,8 @@ FUNCTION new(class_or_obj, args...)
     CROAK if its 'format' is undef, empty or not a string
 
   IF logger is a hash:
-    CROAK if a sendmail sub-hash has no 'to' address
+    CROAK if a sendmail sub-hash has no 'to' address, or a digest_max
+      that isn't a positive integer
     CROAK if an extra journald key is not a valid journald field name
 
   RETURN bless { messages => [], merged args, level => numeric } as class
@@ -793,6 +831,53 @@ my $msgs = $logger->messages();
 
 ```perl
 { type => 'arrayref', element_type => { level => 'string', message => 'string', fields => 'hashref?' } }
+```
+
+### Flush
+
+```
+$logger->flush();
+```
+
+Sends, now, the messages that a `sendmail` backend with `digest` is
+holding back because of `min_interval` (see ["Email digests"](#email-digests)), whether or
+not the interval has passed.  Does nothing if none are held.  Called
+automatically when the logger is destroyed.
+
+#### Arguments
+
+None.
+
+#### Returns
+
+The logger, for method chaining.
+
+#### Side Effects
+
+May send an email, which starts the `min_interval` interval again.  A
+delivery failure is carped and the messages stay held.  Croaks if the
+`sendmail` `host` or `port` is invalid.
+
+#### Example
+
+```
+$logger->error('disk full');    # emailed
+$logger->error('disk still full');    # held: within min_interval
+$logger->flush();                # emailed now
+```
+
+#### Api Specification
+
+##### Input
+
+```
+{} (no arguments)
+```
+
+##### Output
+
+```perl
+{ type => 'object', class => 'Log::Abstraction' }
 ```
 
 ### Trace
@@ -1392,8 +1477,8 @@ callback as described above.
 
 - **Single-threaded email throttle**
 
-    The `min_interval` throttle for the `sendmail` backend and the
-    `_syslog_opened` first-open flag are stored on the object without mutex
+    The `min_interval` throttle and `digest` for the `sendmail` backend and
+    the `_syslog_opened` first-open flag are stored on the object without mutex
     protection.  Under Perl ithreads or other concurrency models, objects shared
     between threads are not safe.
 
@@ -1561,6 +1646,21 @@ is_<lvl> ≡ IsLevel[lvl? := lvl]
 │ result! : seq ENTRY
 ├─────────────────────────────────────────────────────────────
 │ result! = messages
+└─────────────────────────────────────────────────────────────
+```
+
+### Flush
+
+```
+┌─ Flush ────────────────────────────────────────────────────
+│ ΔLogState
+│ result! : LogState
+├─────────────────────────────────────────────────────────────
+│ digest ≠ ⟨⟩ ∧ sent(digest) ⟹ digest' = ⟨⟩ ∧ last_email_sent' = now
+│ digest ≠ ⟨⟩ ∧ ¬sent(digest) ⟹ digest' = digest
+│ digest = ⟨⟩ ⟹ digest' = digest
+│ messages' = messages
+│ result! = self
 └─────────────────────────────────────────────────────────────
 ```
 
