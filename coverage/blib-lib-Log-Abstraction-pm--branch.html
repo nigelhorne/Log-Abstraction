@@ -20,188 +20,52 @@ https://pjcj.net
 <h1>Branch Coverage</h1>
 <table>
 <tr><td class="h" align="right">File:</td><td align="left">blib/lib/Log/Abstraction.pm</td></tr>
-<tr><td class="h" align="right">Coverage:</td><td align="left" class="c0">58.4%</td></tr>
+<tr><td class="h" align="right">Coverage:</td><td align="left" class="c2">97.6%</td></tr>
 </table>
 <div><br/></div>
 <table>
 <tr><th>line</th><th>%</th><th colspan="2">coverage</th><th>branch</th></tr>
-<tr><td class="h"><a id="L800">800</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if (scalar @_ == 1 and ref $_[0] ne &#39;HASH&#39;) { }</td></tr>
+<tr><td class="h"><a id="L807">807</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if (scalar @_ == 1 and ref $_[0] ne &#39;HASH&#39;) { }</td></tr>
 <tr><td class="h"></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">elsif (my $params = Params::Get::get_params(undef, \@_)) { }</td></tr>
-<tr><td class="h"><a id="L807">807</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if (exists $args{&#39;config_file&#39;})</td></tr>
-<tr><td class="h"><a id="L808">808</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">unless (-r $args{&#39;config_file&#39;})</td></tr>
-<tr><td class="h"><a id="L811">811</a></td><td class="c0">50</td><td class="c3">T</td><td class="c0">F</td><td class="s">if (my $config = &#39;Config::Abstraction&#39;-&gt;new(&#39;config_dirs&#39;, [&#39;&#39;], &#39;config_file&#39;, $args{&#39;config_file&#39;}, &#39;env_prefix&#39;, &quot;${class}::&quot;)) { }</td></tr>
-<tr><td class="h"><a id="L818">818</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if ($config-&gt;{$class})</td></tr>
-<tr><td class="h"><a id="L824">824</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if ($array)</td></tr>
-<tr><td class="h"><a id="L833">833</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if (not defined $class) { }</td></tr>
+<tr><td class="h"><a id="L814">814</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if (exists $args{&#39;config_file&#39;})</td></tr>
+<tr><td class="h"><a id="L815">815</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">unless (-r $args{&#39;config_file&#39;})</td></tr>
+<tr><td class="h"><a id="L818">818</a></td><td class="c0">50</td><td class="c3">T</td><td class="c0">F</td><td class="s">if (my $config = &#39;Config::Abstraction&#39;-&gt;new(&#39;config_dirs&#39;, [&#39;&#39;], &#39;config_file&#39;, $args{&#39;config_file&#39;}, &#39;env_prefix&#39;, &quot;${class}::&quot;)) { }</td></tr>
+<tr><td class="h"><a id="L825">825</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if ($config-&gt;{$class})</td></tr>
+<tr><td class="h"><a id="L831">831</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if ($array)</td></tr>
+<tr><td class="h"><a id="L840">840</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if (not defined $class) { }</td></tr>
 <tr><td class="h"></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">elsif (&amp;Scalar::Util::blessed($class)) { }</td></tr>
-<tr><td class="h"><a id="L840">840</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if (my $level = $args{&#39;level&#39;})</td></tr>
-<tr><td class="h"><a id="L842">842</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">unless (defined $Log::Abstraction::syslog_values{$level})</td></tr>
-<tr><td class="h"><a id="L850">850</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if $clone-&gt;{&#39;_syslog_opened&#39;}</td></tr>
-<tr><td class="h"><a id="L858">858</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if ($wants_syslog and not $args{&#39;script_name&#39;})</td></tr>
-<tr><td class="h"><a id="L862">862</a></td><td class="c0">50</td><td class="c0">T</td><td class="c3">F</td><td class="s">unless defined $args{&#39;script_name&#39;}</td></tr>
-<tr><td class="h"><a id="L866">866</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if (defined(my $logger = $args{&#39;logger&#39;})) { }</td></tr>
+<tr><td class="h"><a id="L847">847</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if (my $level = $args{&#39;level&#39;})</td></tr>
+<tr><td class="h"><a id="L849">849</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">unless (defined $Log::Abstraction::syslog_values{$level})</td></tr>
+<tr><td class="h"><a id="L857">857</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if $clone-&gt;{&#39;_syslog_opened&#39;}</td></tr>
+<tr><td class="h"><a id="L865">865</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if ($wants_syslog and not $args{&#39;script_name&#39;})</td></tr>
+<tr><td class="h"><a id="L869">869</a></td><td class="c0">50</td><td class="c0">T</td><td class="c3">F</td><td class="s">unless defined $args{&#39;script_name&#39;}</td></tr>
+<tr><td class="h"><a id="L873">873</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if (defined(my $logger = $args{&#39;logger&#39;})) { }</td></tr>
 <tr><td class="h"></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">elsif (not $args{&#39;file&#39;} || $args{&#39;fd&#39;} || $args{&#39;array&#39;}) { }</td></tr>
-<tr><td class="h"><a id="L867">867</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if (&amp;Scalar::Util::blessed($logger) and ref $logger eq __PACKAGE__)</td></tr>
-<tr><td class="h"><a id="L879">879</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">$args{&#39;verbose&#39;} ? :</td></tr>
-<tr><td class="h"><a id="L886">886</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if ($level) { }</td></tr>
-<tr><td class="h"><a id="L887">887</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if (ref $level eq &quot;ARRAY&quot;)</td></tr>
-<tr><td class="h"><a id="L891">891</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">unless (defined $Log::Abstraction::syslog_values{$level})</td></tr>
-<tr><td class="h"><a id="L900">900</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if (defined(my $max = $args{&#39;max_messages&#39;}))</td></tr>
-<tr><td class="h"><a id="L901">901</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">unless ($max =~ /^\d+$/)</td></tr>
-<tr><td class="h"><a id="L913">913</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if (ref $args{&#39;logger&#39;} eq &quot;HASH&quot;)</td></tr>
-<tr><td class="h"><a id="L920">920</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if ref $value ne &quot;HASH&quot;</td></tr>
-<tr><td class="h"><a id="L921">921</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if ($name =~ /^(?:file|fd|array)$/ and not $value-&gt;{$name})</td></tr>
-<tr><td class="h"><a id="L925">925</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if (defined $sub_level and not defined _level_number($sub_level))</td></tr>
-<tr><td class="h"><a id="L928">928</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if (exists $value-&gt;{&#39;format&#39;})</td></tr>
-<tr><td class="h"><a id="L930">930</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if (not defined $format or ref $format or $format eq &quot;&quot;)</td></tr>
-<tr><td class="h"><a id="L936">936</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if (ref $args{&#39;logger&#39;} eq &quot;HASH&quot;)</td></tr>
-<tr><td class="h"><a id="L939">939</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if (exists $hash-&gt;{&#39;sendmail&#39;} and ref $hash-&gt;{&#39;sendmail&#39;} ne &#39;HASH&#39; || !$hash-&gt;{&#39;sendmail&#39;}{&#39;to&#39;})</td></tr>
-<tr><td class="h"><a id="L944">944</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if (ref $hash-&gt;{&#39;journald&#39;} eq &quot;HASH&quot;)</td></tr>
-<tr><td class="h"><a id="L946">946</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if lc($key) =~ /^(?:socket|identifier|level|format)$/</td></tr>
-<tr><td class="h"><a id="L947">947</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">unless (uc($key) =~ /$RE_JOURNALD_FIELD/)</td></tr>
-<tr><td class="h"><a id="L974">974</a></td><td class="c0">0</td><td class="c0">T</td><td class="c0">F</td><td class="s">unless defined $value</td></tr>
-<tr><td class="h"><a id="L999">999</a></td><td class="c0">0</td><td class="c0">T</td><td class="c0">F</td><td class="s">unless defined $value</td></tr>
-<tr><td class="h"><a id="L1001">1001</a></td><td class="c0">0</td><td class="c0">T</td><td class="c0">F</td><td class="s">if ($value =~ /^\d+$/)</td></tr>
-<tr><td class="h"><a id="L1002">1002</a></td><td class="c0">0</td><td class="c0">T</td><td class="c0">F</td><td class="s">$value &lt;= $Log::Abstraction::DEBUG ? :</td></tr>
-<tr><td class="h"><a id="L1022">1022</a></td><td class="c0">50</td><td class="c3">T</td><td class="c0">F</td><td class="s">unless defined $backend_level</td></tr>
-<tr><td class="h"><a id="L1043">1043</a></td><td class="c0">50</td><td class="c3">T</td><td class="c0">F</td><td class="s">unless ref $value eq &quot;HASH&quot;</td></tr>
-<tr><td class="h"><a id="L1082">1082</a></td><td class="c0">0</td><td class="c0">T</td><td class="c0">F</td><td class="s">unless defined $value</td></tr>
-<tr><td class="h"><a id="L1083">1083</a></td><td class="c0">0</td><td class="c0">T</td><td class="c0">F</td><td class="s">if not ref $value or &amp;Scalar::Util::blessed($value)</td></tr>
-<tr><td class="h"><a id="L1109">1109</a></td><td class="c0">0</td><td class="c0">T</td><td class="c0">F</td><td class="s">if ($value eq &quot;&quot; or $value =~ /[\s&quot;=\\\x00-\x1F\x7F]/)</td></tr>
-<tr><td class="h"><a id="L1133">1133</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if (exists $args-&gt;{&#39;timestamp_format&#39;})</td></tr>
-<tr><td class="h"><a id="L1135">1135</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if (not defined $format or ref $format or $format eq &quot;&quot;)</td></tr>
-<tr><td class="h"><a id="L1139">1139</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if (defined(my $precision = $args-&gt;{&#39;timestamp_precision&#39;}))</td></tr>
-<tr><td class="h"><a id="L1140">1140</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if (not $precision =~ /^\d+$/ or $precision &gt; $MAX_TIMESTAMP_PRECISION)</td></tr>
-<tr><td class="h"><a id="L1162">1162</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if $utc</td></tr>
-<tr><td class="h"><a id="L1182">1182</a></td><td class="c0">50</td><td class="c0">T</td><td class="c3">F</td><td class="s">if (defined(my $size = $args-&gt;{&#39;rotate_size&#39;}))</td></tr>
-<tr><td class="h"><a id="L1183">1183</a></td><td class="c0">0</td><td class="c0">T</td><td class="c0">F</td><td class="s">if (not $size =~ /^\s*(\d+)\s*([kmg]?)b?\s*$/i or $1 == 0)</td></tr>
-<tr><td class="h"><a id="L1188">1188</a></td><td class="c0">50</td><td class="c0">T</td><td class="c3">F</td><td class="s">if (defined(my $interval = $args-&gt;{&#39;rotate_interval&#39;}))</td></tr>
-<tr><td class="h"><a id="L1189">1189</a></td><td class="c0">0</td><td class="c0">T</td><td class="c0">F</td><td class="s">unless ($ROTATE_PERIOD{lc $interval})</td></tr>
-<tr><td class="h"><a id="L1194">1194</a></td><td class="c0">50</td><td class="c0">T</td><td class="c3">F</td><td class="s">if (defined(my $keep = $args-&gt;{&#39;rotate_keep&#39;}))</td></tr>
-<tr><td class="h"><a id="L1195">1195</a></td><td class="c0">0</td><td class="c0">T</td><td class="c0">F</td><td class="s">unless ($keep =~ /^\d+$/)</td></tr>
-<tr><td class="h"><a id="L1238">1238</a></td><td class="c0">0</td><td class="c0">T</td><td class="c0">F</td><td class="s">unless my(@st) = stat $path</td></tr>
-<tr><td class="h"><a id="L1242">1242</a></td><td class="c0">0</td><td class="c0">T</td><td class="c0">F</td><td class="s">if (not $due and my $interval = $self-&gt;{&#39;rotate_interval&#39;})</td></tr>
-<tr><td class="h"><a id="L1248">1248</a></td><td class="c0">0</td><td class="c0">T</td><td class="c0">F</td><td class="s">unless $due</td></tr>
-<tr><td class="h"><a id="L1251">1251</a></td><td class="c0">0</td><td class="c0">T</td><td class="c0">F</td><td class="s">if ($keep == 0)</td></tr>
-<tr><td class="h"><a id="L1256">1256</a></td><td class="c0">0</td><td class="c0">T</td><td class="c0">F</td><td class="s">if -e &quot;$path.$keep&quot;</td></tr>
-<tr><td class="h"><a id="L1258">1258</a></td><td class="c0">0</td><td class="c0">T</td><td class="c0">F</td><td class="s">if -e &quot;$path.$i&quot;</td></tr>
-<tr><td class="h"><a id="L1300">1300</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">$utc ? :</td></tr>
-<tr><td class="h"><a id="L1303">1303</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if ($format =~ /^(?:iso8601|rfc3339)$/i)</td></tr>
-<tr><td class="h"><a id="L1304">1304</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">$utc ? :</td></tr>
-<tr><td class="h"><a id="L1306">1306</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if (my $precision = $self-&gt;{&#39;timestamp_precision&#39;})</td></tr>
-<tr><td class="h"><a id="L1307">1307</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">$1 eq &#39;S&#39; ? :</td></tr>
-<tr><td class="h"><a id="L1313">1313</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">$diff &lt; 0 ? :</td></tr>
-<tr><td class="h"><a id="L1319">1319</a></td><td class="c0">50</td><td class="c3">T</td><td class="c0">F</td><td class="s">$utc ? :</td></tr>
-<tr><td class="h"></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">$1 eq &#39;z&#39; ? :</td></tr>
-<tr><td class="h"></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">$1 eq &#39;:z&#39; ? :</td></tr>
-<tr><td class="h"></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">defined $2 ? :</td></tr>
-<tr><td class="h"></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">$1 eq &#39;%&#39; ? :</td></tr>
-<tr><td class="h"><a id="L1346">1346</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if (ref $target)</td></tr>
-<tr><td class="h"><a id="L1347">1347</a></td><td class="c0">50</td><td class="c0">T</td><td class="c3">F</td><td class="s">if (utf8::is_utf8($line) and not grep({/^(?:utf8|encoding)/;} &amp;PerlIO::get_layers($target)))</td></tr>
-<tr><td class="h"><a id="L1355">1355</a></td><td class="c0">50</td><td class="c0">T</td><td class="c3">F</td><td class="s">if utf8::is_utf8($line)</td></tr>
-<tr><td class="h"><a id="L1358">1358</a></td><td class="c0">50</td><td class="c0">T</td><td class="c3">F</td><td class="s">if ($self-&gt;{&#39;rotate_size&#39;} or $self-&gt;{&#39;rotate_interval&#39;})</td></tr>
-<tr><td class="h"><a id="L1386">1386</a></td><td class="c0">50</td><td class="c3">T</td><td class="c0">F</td><td class="s">if ($path =~ /$RE_SAFE_PATH/ and not $path =~ /$RE_DOTDOT/)</td></tr>
-<tr><td class="h"><a id="L1417">1417</a></td><td class="c0">50</td><td class="c3">T</td><td class="c0">F</td><td class="s">defined $fields{$key} ? :</td></tr>
-<tr><td class="h"><a id="L1418">1418</a></td><td class="c0">50</td><td class="c0">T</td><td class="c3">F</td><td class="s">if utf8::is_utf8($value)</td></tr>
-<tr><td class="h"><a id="L1427">1427</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if ($value =~ /[\n\0]/) { }</td></tr>
-<tr><td class="h"><a id="L1447">1447</a></td><td class="c0">50</td><td class="c0">T</td><td class="c3">F</td><td class="s">if ($excess &gt; 0 and defined $fields{&#39;MESSAGE&#39;})</td></tr>
-<tr><td class="h"><a id="L1449">1449</a></td><td class="c0">0</td><td class="c0">T</td><td class="c0">F</td><td class="s">$keep &gt; 0 ? :</td></tr>
-<tr><td class="h"><a id="L1533">1533</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if (defined $format and $format eq &quot;json&quot;)</td></tr>
-<tr><td class="h"><a id="L1535">1535</a></td><td class="c0">50</td><td class="c0">T</td><td class="c3">F</td><td class="s">$bclass &amp;&amp; $bclass ne __PACKAGE__ ? :</td></tr>
-<tr><td class="h"><a id="L1543">1543</a></td><td class="c0">50</td><td class="c0">T</td><td class="c3">F</td><td class="s">if defined $class</td></tr>
-<tr><td class="h"><a id="L1544">1544</a></td><td class="c0">50</td><td class="c0">T</td><td class="c3">F</td><td class="s">if ($fields)</td></tr>
-<tr><td class="h"><a id="L1547">1547</a></td><td class="c0">0</td><td class="c0">T</td><td class="c0">F</td><td class="s">&amp;Scalar::Util::blessed($fields-&gt;{$_}) ? :</td></tr>
-<tr><td class="h"><a id="L1555">1555</a></td><td class="c0">50</td><td class="c0">T</td><td class="c3">F</td><td class="s">$use_class ? :</td></tr>
-<tr><td class="h"><a id="L1562">1562</a></td><td class="c0">50</td><td class="c0">T</td><td class="c3">F</td><td class="s">$bclass &amp;&amp; $bclass ne __PACKAGE__ ? :</td></tr>
-<tr><td class="h"><a id="L1566">1566</a></td><td class="c0">50</td><td class="c0">T</td><td class="c3">F</td><td class="s">$fields ? :</td></tr>
-<tr><td class="h"><a id="L1583">1583</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">defined $1 ? :</td></tr>
-<tr><td class="h"><a id="L1693">1693</a></td><td class="c0">50</td><td class="c0">T</td><td class="c3">F</td><td class="s">unless ((&amp;CORE::GLOBAL::caller())[0]-&gt;isa(__PACKAGE__))</td></tr>
-<tr><td class="h"><a id="L1698">1698</a></td><td class="c0">50</td><td class="c0">T</td><td class="c3">F</td><td class="s">unless (defined $Log::Abstraction::syslog_values{$level})</td></tr>
-<tr><td class="h"><a id="L1703">1703</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if ($Log::Abstraction::syslog_values{$level} &gt; $self-&gt;{&#39;level&#39;})</td></tr>
-<tr><td class="h"><a id="L1711">1711</a></td><td class="c0">50</td><td class="c0">T</td><td class="c3">F</td><td class="s">if (scalar @messages &gt; 1 and ref $messages[-1] eq &quot;HASH&quot;)</td></tr>
-<tr><td class="h"><a id="L1713">1713</a></td><td class="c0">0</td><td class="c0">T</td><td class="c0">F</td><td class="s">%{$fields;} ? :</td></tr>
-<tr><td class="h"><a id="L1717">1717</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if (scalar @messages == 1 and ref $messages[0] eq &quot;ARRAY&quot;)</td></tr>
-<tr><td class="h"><a id="L1727">1727</a></td><td class="c0">50</td><td class="c0">T</td><td class="c3">F</td><td class="s">$fields ? :</td></tr>
-<tr><td class="h"><a id="L1728">1728</a></td><td class="c0">50</td><td class="c0">T</td><td class="c3">F</td><td class="s">$fields ? :</td></tr>
-<tr><td class="h"><a id="L1731">1731</a></td><td class="c0">50</td><td class="c0">T</td><td class="c3">F</td><td class="s">$fields ? :</td></tr>
-<tr><td class="h"><a id="L1737">1737</a></td><td class="c0">50</td><td class="c0">T</td><td class="c3">F</td><td class="s">if (defined(my $max = $self-&gt;{&#39;max_messages&#39;}))</td></tr>
-<tr><td class="h"><a id="L1738">1738</a></td><td class="c0">0</td><td class="c0">T</td><td class="c0">F</td><td class="s">if scalar @{$history;} &gt; $max</td></tr>
-<tr><td class="h"><a id="L1743">1743</a></td><td class="c0">50</td><td class="c3">T</td><td class="c0">F</td><td class="s">if ($class eq __PACKAGE__)</td></tr>
-<tr><td class="h"><a id="L1752">1752</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">((&amp;CORE::GLOBAL::caller(1))[3] // &#39;&#39;) =~ /::_high_priority$/ ? :</td></tr>
-<tr><td class="h"><a id="L1764">1764</a></td><td class="c0">50</td><td class="c0">T</td><td class="c3">F</td><td class="s">$class ne &#39;&#39; ? :</td></tr>
-<tr><td class="h"><a id="L1776">1776</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if (my $logger = $self-&gt;{&#39;logger&#39;}) { }</td></tr>
-<tr><td class="h"></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">elsif ($self-&gt;{&#39;array&#39;}) { }</td></tr>
-<tr><td class="h"><a id="L1777">1777</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if (ref $logger eq &#39;CODE&#39;) { }</td></tr>
-<tr><td class="h"></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">elsif (ref $logger eq &#39;ARRAY&#39;) { }</td></tr>
-<tr><td class="h"></td><td class="c0">50</td><td class="c3">T</td><td class="c0">F</td><td class="s">elsif (ref $logger eq &#39;HASH&#39;) { }</td></tr>
-<tr><td class="h"></td><td class="c0">0</td><td class="c0">T</td><td class="c0">F</td><td class="s">elsif (not ref $logger) { }</td></tr>
-<tr><td class="h"></td><td class="c0">0</td><td class="c0">T</td><td class="c0">F</td><td class="s">elsif (&amp;Scalar::Util::blessed($logger)) { }</td></tr>
-<tr><td class="h"><a id="L1786">1786</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if (my $ctx = $self-&gt;{&#39;ctx&#39;})</td></tr>
-<tr><td class="h"><a id="L1789">1789</a></td><td class="c0">50</td><td class="c0">T</td><td class="c3">F</td><td class="s">if $fields</td></tr>
-<tr><td class="h"><a id="L1802">1802</a></td><td class="c0">50</td><td class="c0">T</td><td class="c3">F</td><td class="s">if ($raw_file and _wants($level, $file_level))</td></tr>
-<tr><td class="h"><a id="L1810">1810</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if ($array and _wants($level, $array_level))</td></tr>
-<tr><td class="h"><a id="L1811">1811</a></td><td class="c0">50</td><td class="c0">T</td><td class="c3">F</td><td class="s">defined $array_format ? :</td></tr>
-<tr><td class="h"><a id="L1816">1816</a></td><td class="c0">0</td><td class="c0">T</td><td class="c0">F</td><td class="s">if (exists $logger-&gt;{&#39;sendmail&#39;} and exists $logger-&gt;{&#39;sendmail&#39;}{&#39;to&#39;})</td></tr>
-<tr><td class="h"><a id="L1820">1820</a></td><td class="c0">0</td><td class="c0">T</td><td class="c0">F</td><td class="s">if (_wants($level, $sm-&gt;{&#39;level&#39;}))</td></tr>
-<tr><td class="h"><a id="L1824">1824</a></td><td class="c0">0</td><td class="c0">T</td><td class="c0">F</td><td class="s">if (my $interval = $sm-&gt;{&#39;min_interval&#39;})</td></tr>
-<tr><td class="h"><a id="L1830">1830</a></td><td class="c0">0</td><td class="c0">T</td><td class="c0">F</td><td class="s">unless ($throttled)</td></tr>
-<tr><td class="h"><a id="L1833">1833</a></td><td class="c0">0</td><td class="c0">T</td><td class="c0">F</td><td class="s">if $host =~ /$RE_SAFE_HOST/</td></tr>
-<tr><td class="h"><a id="L1836">1836</a></td><td class="c0">0</td><td class="c0">T</td><td class="c0">F</td><td class="s">unless $port =~ /$RE_PORT/ and $port &gt;= $MIN_PORT and $port &lt;= $MAX_PORT</td></tr>
-<tr><td class="h"><a id="L1859">1859</a></td><td class="c0">0</td><td class="c0">T</td><td class="c0">F</td><td class="s">if (my $subject = $sm-&gt;{&#39;subject&#39;})</td></tr>
-<tr><td class="h"><a id="L1865">1865</a></td><td class="c0">0</td><td class="c0">T</td><td class="c0">F</td><td class="s">defined $sm-&gt;{&#39;format&#39;} ? :</td></tr>
-<tr><td class="h"><a id="L1878">1878</a></td><td class="c0">0</td><td class="c0">T</td><td class="c0">F</td><td class="s">if ($@) { }</td></tr>
-<tr><td class="h"><a id="L1889">1889</a></td><td class="c0">50</td><td class="c0">T</td><td class="c3">F</td><td class="s">if (my $syslog = $logger-&gt;{&#39;syslog&#39;})</td></tr>
-<tr><td class="h"><a id="L1890">1890</a></td><td class="c0">0</td><td class="c0">T</td><td class="c0">F</td><td class="s">if (_wants($level, $syslog-&gt;{&#39;level&#39;}))</td></tr>
-<tr><td class="h"><a id="L1893">1893</a></td><td class="c0">0</td><td class="c0">T</td><td class="c0">F</td><td class="s">unless ($self-&gt;{&#39;_syslog_opened&#39;})</td></tr>
-<tr><td class="h"><a id="L1899">1899</a></td><td class="c0">0</td><td class="c0">T</td><td class="c0">F</td><td class="s">if ($syslog-&gt;{&#39;server&#39;})</td></tr>
-<tr><td class="h"><a id="L1902">1902</a></td><td class="c0">0</td><td class="c0">T</td><td class="c0">F</td><td class="s">if scalar keys %{$syslog;}</td></tr>
-<tr><td class="h"><a id="L1904">1904</a></td><td class="c0">0</td><td class="c0">T</td><td class="c0">F</td><td class="s">if defined $min_level</td></tr>
-<tr><td class="h"><a id="L1905">1905</a></td><td class="c0">0</td><td class="c0">T</td><td class="c0">F</td><td class="s">if defined $format</td></tr>
-<tr><td class="h"><a id="L1918">1918</a></td><td class="c0">0</td><td class="c0">T</td><td class="c0">F</td><td class="s">defined $syslog-&gt;{&#39;format&#39;} ? :</td></tr>
-<tr><td class="h"><a id="L1921">1921</a></td><td class="c0">0</td><td class="c0">T</td><td class="c0">F</td><td class="s">if ($@)</td></tr>
-<tr><td class="h"><a id="L1930">1930</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if ($jd and _wants($level, $jd-&gt;{&#39;level&#39;}))</td></tr>
-<tr><td class="h"><a id="L1943">1943</a></td><td class="c0">50</td><td class="c0">T</td><td class="c3">F</td><td class="s">defined $jd-&gt;{&#39;format&#39;} ? :</td></tr>
-<tr><td class="h"><a id="L1950">1950</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if lc($key) =~ /^(?:socket|identifier|level|format)$/</td></tr>
-<tr><td class="h"><a id="L1958">1958</a></td><td class="c0">50</td><td class="c3">T</td><td class="c0">F</td><td class="s">unless $fields</td></tr>
-<tr><td class="h"><a id="L1962">1962</a></td><td class="c0">0</td><td class="c0">T</td><td class="c0">F</td><td class="s">if $name eq &quot;&quot; or $name =~ /^(?:MESSAGE|PRIORITY|SYSLOG_IDENTIFIER)$/</td></tr>
-<tr><td class="h"><a id="L1970">1970</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if (eval {
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;do {
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;$self-&gt;_journald_send($sock_path, %entry);
-1
-}
-}) { }</td></tr>
-<tr><td class="h"></td><td class="c0">50</td><td class="c3">T</td><td class="c0">F</td><td class="s">elsif (not $self-&gt;{&#39;_journald_failed&#39;}++) { }</td></tr>
-<tr><td class="h"><a id="L1978">1978</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if ($logger-&gt;{&#39;fd&#39;}) { }</td></tr>
-<tr><td class="h"></td><td class="c0">50</td><td class="c0">T</td><td class="c3">F</td><td class="s">elsif (not $logger-&gt;{&#39;file&#39;} || $logger-&gt;{&#39;array&#39;} || $logger-&gt;{&#39;syslog&#39;} || exists $logger-&gt;{&#39;sendmail&#39;} || $logger-&gt;{&#39;fd&#39;} || $logger-&gt;{&#39;journald&#39;}) { }</td></tr>
-<tr><td class="h"><a id="L1980">1980</a></td><td class="c0">50</td><td class="c3">T</td><td class="c0">F</td><td class="s">if _wants($level, $fd_level)</td></tr>
-<tr><td class="h"><a id="L1996">1996</a></td><td class="c0">0</td><td class="c0">T</td><td class="c0">F</td><td class="s">unless ($logger-&gt;can($level))</td></tr>
-<tr><td class="h"><a id="L1999">1999</a></td><td class="c0">0</td><td class="c0">T</td><td class="c0">F</td><td class="s">$level =~ /^(?:critical|alert|emergency)$/ ? :</td></tr>
-<tr><td class="h"></td><td class="c0">0</td><td class="c0">T</td><td class="c0">F</td><td class="s">$level eq &#39;notice&#39; ? :</td></tr>
-<tr><td class="h"><a id="L2002">2002</a></td><td class="c0">0</td><td class="c0">T</td><td class="c0">F</td><td class="s">if (my($method) = grep({$logger-&gt;can($_);} @fallbacks)) { }</td></tr>
-<tr><td class="h"><a id="L2011">2011</a></td><td class="c0">0</td><td class="c0">T</td><td class="c0">F</td><td class="s">length $str ? :</td></tr>
-<tr><td class="h"></td><td class="c0">0</td><td class="c0">T</td><td class="c0">F</td><td class="s">$fields ? :</td></tr>
-<tr><td class="h"><a id="L2021">2021</a></td><td class="c0">50</td><td class="c3">T</td><td class="c0">F</td><td class="s">if (_wants($level, $array_level))</td></tr>
-<tr><td class="h"><a id="L2022">2022</a></td><td class="c0">50</td><td class="c0">T</td><td class="c3">F</td><td class="s">defined $array_format ? :</td></tr>
-<tr><td class="h"><a id="L2031">2031</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if ($top_file and _wants($level, $top_file_level))</td></tr>
-<tr><td class="h"><a id="L2037">2037</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if ($top_fd and _wants($level, $top_fd_level))</td></tr>
-<tr><td class="h"><a id="L2094">2094</a></td><td class="c0">50</td><td class="c0">T</td><td class="c3">F</td><td class="s">if scalar @_ == 0</td></tr>
-<tr><td class="h"><a id="L2099">2099</a></td><td class="c0">50</td><td class="c0">T</td><td class="c3">F</td><td class="s">if (scalar @_ &gt; 1 and ref $_[-1] eq &quot;HASH&quot;)</td></tr>
-<tr><td class="h"><a id="L2109">2109</a></td><td class="c0">50</td><td class="c3">T</td><td class="c0">F</td><td class="s">if ($params and ref $params eq &#39;HASH&#39; and exists $params-&gt;{&#39;warning&#39;}) { }</td></tr>
-<tr><td class="h"><a id="L2112">2112</a></td><td class="c0">50</td><td class="c0">T</td><td class="c3">F</td><td class="s">unless defined $warning</td></tr>
-<tr><td class="h"><a id="L2113">2113</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if (ref $warning eq &quot;ARRAY&quot;)</td></tr>
-<tr><td class="h"><a id="L2120">2120</a></td><td class="c0">0</td><td class="c0">T</td><td class="c0">F</td><td class="s">unless length $warning</td></tr>
-<tr><td class="h"><a id="L2125">2125</a></td><td class="c0">50</td><td class="c0">T</td><td class="c3">F</td><td class="s">unless (ref $self)</td></tr>
-<tr><td class="h"><a id="L2126">2126</a></td><td class="c0">0</td><td class="c0">T</td><td class="c0">F</td><td class="s">if ($Log::Abstraction::syslog_values{$level} &lt;= $Log::Abstraction::ERROR)</td></tr>
-<tr><td class="h"><a id="L2141">2141</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if ($Log::Abstraction::syslog_values{$level} &lt;= $Log::Abstraction::ERROR)</td></tr>
-<tr><td class="h"><a id="L2142">2142</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if ($self-&gt;{&#39;croak_on_error&#39;} or $no_backend)</td></tr>
-<tr><td class="h"><a id="L2149">2149</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if ($self-&gt;{&#39;carp_on_warn&#39;} || $no_backend and $Log::Abstraction::syslog_values{$level} &lt;= $self-&gt;{&#39;level&#39;})</td></tr>
-<tr><td class="h"><a id="L2235">2235</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if ($level)</td></tr>
-<tr><td class="h"><a id="L2238">2238</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">unless (defined $Log::Abstraction::syslog_values{lc $level})</td></tr>
-<tr><td class="h"><a id="L2323">2323</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">defined $self-&gt;{&#39;level&#39;} &amp;&amp; $self-&gt;{&#39;level&#39;} &gt;= $threshold ? :</td></tr>
-<tr><td class="h"><a id="L2671">2671</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if (scalar @_ &gt; 0)</td></tr>
-<tr><td class="h"><a id="L2883">2883</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if ($self-&gt;{&#39;_syslog_opened&#39;})</td></tr>
-<tr><td class="h"><a id="L2885">2885</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if $syslog_open_count &gt; 0</td></tr>
-<tr><td class="h"><a id="L2886">2886</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if $syslog_open_count == 0</td></tr>
+<tr><td class="h"><a id="L874">874</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if (&amp;Scalar::Util::blessed($logger) and ref $logger eq __PACKAGE__)</td></tr>
+<tr><td class="h"><a id="L886">886</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">$args{&#39;verbose&#39;} ? :</td></tr>
+<tr><td class="h"><a id="L893">893</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if ($level) { }</td></tr>
+<tr><td class="h"><a id="L894">894</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if (ref $level eq &quot;ARRAY&quot;)</td></tr>
+<tr><td class="h"><a id="L898">898</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">unless (defined $Log::Abstraction::syslog_values{$level})</td></tr>
+<tr><td class="h"><a id="L907">907</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if (defined(my $max = $args{&#39;max_messages&#39;}))</td></tr>
+<tr><td class="h"><a id="L908">908</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">unless ($max =~ /^\d+$/)</td></tr>
+<tr><td class="h"><a id="L920">920</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if (ref $args{&#39;logger&#39;} eq &quot;HASH&quot;)</td></tr>
+<tr><td class="h"><a id="L927">927</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if ref $value ne &quot;HASH&quot;</td></tr>
+<tr><td class="h"><a id="L928">928</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if ($name =~ /^(?:file|fd|array)$/ and not $value-&gt;{$name})</td></tr>
+<tr><td class="h"><a id="L932">932</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if (defined $sub_level and not defined _level_number($sub_level))</td></tr>
+<tr><td class="h"><a id="L935">935</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if (exists $value-&gt;{&#39;format&#39;})</td></tr>
+<tr><td class="h"><a id="L937">937</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if (not defined $format or ref $format or $format eq &quot;&quot;)</td></tr>
+<tr><td class="h"><a id="L943">943</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if (ref $args{&#39;logger&#39;} eq &quot;HASH&quot;)</td></tr>
+<tr><td class="h"><a id="L946">946</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if (exists $hash-&gt;{&#39;sendmail&#39;} and ref $hash-&gt;{&#39;sendmail&#39;} ne &#39;HASH&#39; || !$hash-&gt;{&#39;sendmail&#39;}{&#39;to&#39;})</td></tr>
+<tr><td class="h"><a id="L951">951</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if (ref $hash-&gt;{&#39;journald&#39;} eq &quot;HASH&quot;)</td></tr>
+<tr><td class="h"><a id="L953">953</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if lc($key) =~ /^(?:socket|identifier|level|format)$/</td></tr>
+<tr><td class="h"><a id="L954">954</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">unless (uc($key) =~ /$RE_JOURNALD_FIELD/)</td></tr>
+<tr><td class="h"><a id="L2277">2277</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if ($level)</td></tr>
+<tr><td class="h"><a id="L2280">2280</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">unless (defined $Log::Abstraction::syslog_values{lc $level})</td></tr>
+<tr><td class="h"><a id="L2365">2365</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">defined $self-&gt;{&#39;level&#39;} &amp;&amp; $self-&gt;{&#39;level&#39;} &gt;= $threshold ? :</td></tr>
+<tr><td class="h"><a id="L2713">2713</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if (scalar @_ &gt; 0)</td></tr>
+<tr><td class="h"><a id="L2929">2929</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if ($self-&gt;{&#39;_syslog_opened&#39;})</td></tr>
+<tr><td class="h"><a id="L2931">2931</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if $syslog_open_count &gt; 0</td></tr>
+<tr><td class="h"><a id="L2932">2932</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if $syslog_open_count == 0</td></tr>
 </table>
 </body>
 </html>

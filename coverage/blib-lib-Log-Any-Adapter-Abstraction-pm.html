@@ -27,20 +27,20 @@ https://pjcj.net
 <tr><th>line</th><th>stmt</th><th>bran</th><th>cond</th><th>sub</th><th>time</th><th>code</th></tr>
 <tr><td class="h">1</td><td></td><td></td><td></td><td></td><td></td><td class="s">package Log::Any::Adapter::Abstraction;</td></tr>
 <tr><td class="h">2</td><td colspan="6"></td></tr><tr><td class="h">3</td><td></td><td></td><td></td><td></td><td></td><td class="s"># Route Log::Any log calls through a Log::Abstraction backend</td></tr>
-<tr><td class="h">4</td><td><div class="c3">2</div><div class="c3">2</div><div class="c3">2</div></td><td></td><td></td><td><div class="c3"><a href="blib-lib-Log-Any-Adapter-Abstraction-pm--subroutine.html#L4">2</a></div></td><td><div>72956</div><div>2</div><div>30</div></td><td class="s">use strict;</td></tr>
-<tr><td class="h">5</td><td><div class="c3">2</div><div class="c3">2</div><div class="c3">2</div></td><td></td><td></td><td><div class="c3"><a href="blib-lib-Log-Any-Adapter-Abstraction-pm--subroutine.html#L5">2</a></div></td><td><div>3</div><div>2</div><div>45</div></td><td class="s">use warnings;</td></tr>
-<tr><td class="h">6</td><td colspan="6"></td></tr><tr><td class="h">7</td><td><div class="c3">2</div><div class="c3">2</div><div class="c3">2</div></td><td></td><td></td><td><div class="c3"><a href="blib-lib-Log-Any-Adapter-Abstraction-pm--subroutine.html#L7">2</a></div></td><td><div>3</div><div>2</div><div>6</div></td><td class="s">use parent &#39;Log::Any::Adapter::Base&#39;;</td></tr>
+<tr><td class="h">4</td><td><div class="c3">3</div><div class="c3">3</div><div class="c3">3</div></td><td></td><td></td><td><div class="c3"><a href="blib-lib-Log-Any-Adapter-Abstraction-pm--subroutine.html#L4">3</a></div></td><td><div>75186</div><div>3</div><div>51</div></td><td class="s">use strict;</td></tr>
+<tr><td class="h">5</td><td><div class="c3">3</div><div class="c3">3</div><div class="c3">3</div></td><td></td><td></td><td><div class="c3"><a href="blib-lib-Log-Any-Adapter-Abstraction-pm--subroutine.html#L5">3</a></div></td><td><div>6</div><div>3</div><div>111</div></td><td class="s">use warnings;</td></tr>
+<tr><td class="h">6</td><td colspan="6"></td></tr><tr><td class="h">7</td><td><div class="c3">3</div><div class="c3">3</div><div class="c3">3</div></td><td></td><td></td><td><div class="c3"><a href="blib-lib-Log-Any-Adapter-Abstraction-pm--subroutine.html#L7">3</a></div></td><td><div>8</div><div>3</div><div>13</div></td><td class="s">use parent &#39;Log::Any::Adapter::Base&#39;;</td></tr>
 <tr><td class="h">8</td><td colspan="6"></td></tr><tr><td class="h">9</td><td></td><td></td><td></td><td></td><td></td><td class="s">use Carp ();</td></tr>
 <tr><td class="h">10</td><td></td><td></td><td></td><td></td><td></td><td class="s">use Log::Abstraction;</td></tr>
 <tr><td class="h">11</td><td></td><td></td><td></td><td></td><td></td><td class="s">use Scalar::Util ();</td></tr>
-<tr><td class="h">12</td><td colspan="6"></td></tr><tr><td class="h">13</td><td></td><td></td><td></td><td></td><td></td><td class="s">our $VERSION = &#39;0.36&#39;;</td></tr>
+<tr><td class="h">12</td><td colspan="6"></td></tr><tr><td class="h">13</td><td></td><td></td><td></td><td></td><td></td><td class="s">our $VERSION = &#39;0.37&#39;;</td></tr>
 <tr><td class="h">14</td><td colspan="6"></td></tr><tr><td class="h">15 - 137</td><td colspan="5"></td><td class="s"><pre>=head1 NAME
 
 Log::Any::Adapter::Abstraction - Log::Any adapter backed by Log::Abstraction
 
 =head1 VERSION
 
-0.36
+0.37
 
 =head1 SYNOPSIS
 
@@ -330,46 +330,50 @@ C&lt;is_warn&gt;).&nbsp;&nbsp;As in Log::Abstraction, C&lt;is_trace&gt; equals C
 <tr><td class="h">314</td><td></td><td></td><td></td><td></td><td></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;no strict &#39;refs&#39;;</td></tr>
 <tr><td class="h">315</td><td></td><td></td><td></td><td></td><td></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*{$la_level} = sub {</td></tr>
 <tr><td class="h">316</td><td></td><td></td><td></td><td></td><td></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;my ($self, $msg) = @_;</td></tr>
-<tr><td class="h">317</td><td></td><td></td><td></td><td></td><td></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;eval { $self-&gt;{_logger}-&gt;$method($msg); 1 } or Carp::carp($@);</td></tr>
-<tr><td class="h">318</td><td></td><td></td><td></td><td></td><td></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return;</td></tr>
-<tr><td class="h">319</td><td></td><td></td><td></td><td></td><td></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;};</td></tr>
-<tr><td class="h">320</td><td></td><td></td><td></td><td></td><td></td><td class="s">}</td></tr>
-<tr><td class="h">321</td><td colspan="6"></td></tr><tr><td class="h">322</td><td></td><td></td><td></td><td></td><td></td><td class="s"># ---------------------------------------------------------------------------</td></tr>
-<tr><td class="h">323</td><td></td><td></td><td></td><td></td><td></td><td class="s"># structured -- receive a log call with its structured fields from Log::Any</td></tr>
-<tr><td class="h">324</td><td></td><td></td><td></td><td></td><td></td><td class="s">#</td></tr>
-<tr><td class="h">325</td><td></td><td></td><td></td><td></td><td></td><td class="s"># Purpose:&nbsp;&nbsp;Log::Any calls this instead of the per-level methods when the</td></tr>
-<tr><td class="h">326</td><td></td><td></td><td></td><td></td><td></td><td class="s">#&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;adapter can(&#39;structured&#39;), passing the parts as given and the</td></tr>
-<tr><td class="h">327</td><td></td><td></td><td></td><td></td><td></td><td class="s">#&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;merged context and fields as a final hashref (only when there are</td></tr>
-<tr><td class="h">328</td><td></td><td></td><td></td><td></td><td></td><td class="s">#&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;any), so the fields reach Log::Abstraction as data, not text.</td></tr>
-<tr><td class="h">329</td><td></td><td></td><td></td><td></td><td></td><td class="s"># Entry:&nbsp;&nbsp;&nbsp;&nbsp;$self&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-- the adapter.</td></tr>
-<tr><td class="h">330</td><td></td><td></td><td></td><td></td><td></td><td class="s">#&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;$level&nbsp;&nbsp;&nbsp;&nbsp;-- a Log::Any level name.</td></tr>
-<tr><td class="h">331</td><td></td><td></td><td></td><td></td><td></td><td class="s">#&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;$category -- the Log::Any category (unused).</td></tr>
-<tr><td class="h">332</td><td></td><td></td><td></td><td></td><td></td><td class="s">#&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;@parts&nbsp;&nbsp;&nbsp;&nbsp;-- message parts, then optionally a hashref of fields.</td></tr>
-<tr><td class="h">333</td><td></td><td></td><td></td><td></td><td></td><td class="s"># Exit:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Returns nothing.</td></tr>
-<tr><td class="h">334</td><td></td><td></td><td></td><td></td><td></td><td class="s"># Side effects: Logs through the wrapped Log::Abstraction instance.</td></tr>
-<tr><td class="h">335</td><td></td><td></td><td></td><td></td><td></td><td class="s"># ---------------------------------------------------------------------------</td></tr>
-<tr><td class="h">336</td><td></td><td></td><td></td><td></td><td></td><td class="s">sub structured {</td></tr>
-<tr><td class="h">337</td><td></td><td></td><td></td><td></td><td></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;my ($self, $level, $category, @parts) = @_;</td></tr>
-<tr><td class="h">338</td><td colspan="6"></td></tr><tr><td class="h">339</td><td></td><td></td><td></td><td></td><td></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;my $fields = (@parts &amp;&amp; (ref($parts[-1]) eq &#39;HASH&#39;)) ? pop(@parts) : undef;</td></tr>
-<tr><td class="h">340</td><td></td><td></td><td></td><td></td><td></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;my $msg = join(&#39; &#39;, grep { defined($_) &amp;&amp; length($_) } @parts);</td></tr>
-<tr><td class="h">341</td><td></td><td></td><td></td><td></td><td></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;my $method = $LA_TO_METHOD{$level} or return;</td></tr>
-<tr><td class="h">342</td><td colspan="6"></td></tr><tr><td class="h">343</td><td></td><td></td><td></td><td></td><td></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;eval { $self-&gt;{_logger}-&gt;$method($msg, ($fields ? $fields : ())); 1 } or Carp::carp($@);</td></tr>
-<tr><td class="h">344</td><td></td><td></td><td></td><td></td><td></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return;</td></tr>
-<tr><td class="h">345</td><td></td><td></td><td></td><td></td><td></td><td class="s">}</td></tr>
-<tr><td class="h">346</td><td colspan="6"></td></tr><tr><td class="h">347</td><td></td><td></td><td></td><td></td><td></td><td class="s"># ---------------------------------------------------------------------------</td></tr>
-<tr><td class="h">348</td><td></td><td></td><td></td><td></td><td></td><td class="s"># Build is_* detection methods for every Log::Any level name.</td></tr>
-<tr><td class="h">349</td><td></td><td></td><td></td><td></td><td></td><td class="s"># Each delegates to the matching Log::Abstraction is_* method (is_warning to</td></tr>
-<tr><td class="h">350</td><td></td><td></td><td></td><td></td><td></td><td class="s"># is_warn), which returns 1 when messages at that level would not be dropped.</td></tr>
-<tr><td class="h">351</td><td></td><td></td><td></td><td></td><td></td><td class="s"># ---------------------------------------------------------------------------</td></tr>
-<tr><td class="h">352</td><td></td><td></td><td></td><td></td><td></td><td class="s">for my $la_level (keys %LA_TO_METHOD) {</td></tr>
-<tr><td class="h">353</td><td></td><td></td><td></td><td></td><td></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;my $detector = &quot;is_$LA_TO_METHOD{$la_level}&quot;;</td></tr>
-<tr><td class="h">354</td><td></td><td></td><td></td><td></td><td></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;no strict &#39;refs&#39;;</td></tr>
-<tr><td class="h">355</td><td></td><td></td><td></td><td></td><td></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*{&quot;is_$la_level&quot;} = sub {</td></tr>
-<tr><td class="h">356</td><td></td><td></td><td></td><td></td><td></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;my $self = $_[0];</td></tr>
-<tr><td class="h">357</td><td></td><td></td><td></td><td></td><td></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return $self-&gt;{_logger}-&gt;$detector();</td></tr>
-<tr><td class="h">358</td><td></td><td></td><td></td><td></td><td></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;};</td></tr>
-<tr><td class="h">359</td><td></td><td></td><td></td><td></td><td></td><td class="s">}</td></tr>
-<tr><td class="h">360</td><td colspan="6"></td></tr><tr><td class="h">361 - 426</td><td colspan="5"></td><td class="s"><pre>=head1 LIMITATIONS
+<tr><td class="h">317</td><td></td><td></td><td></td><td></td><td></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;# The eval would otherwise reset the calling module&#39;s $@</td></tr>
+<tr><td class="h">318</td><td></td><td></td><td></td><td></td><td></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;local ($@, $!);</td></tr>
+<tr><td class="h">319</td><td></td><td></td><td></td><td></td><td></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;eval { $self-&gt;{_logger}-&gt;$method($msg); 1 } or Carp::carp($@);</td></tr>
+<tr><td class="h">320</td><td></td><td></td><td></td><td></td><td></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return;</td></tr>
+<tr><td class="h">321</td><td></td><td></td><td></td><td></td><td></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;};</td></tr>
+<tr><td class="h">322</td><td></td><td></td><td></td><td></td><td></td><td class="s">}</td></tr>
+<tr><td class="h">323</td><td colspan="6"></td></tr><tr><td class="h">324</td><td></td><td></td><td></td><td></td><td></td><td class="s"># ---------------------------------------------------------------------------</td></tr>
+<tr><td class="h">325</td><td></td><td></td><td></td><td></td><td></td><td class="s"># structured -- receive a log call with its structured fields from Log::Any</td></tr>
+<tr><td class="h">326</td><td></td><td></td><td></td><td></td><td></td><td class="s">#</td></tr>
+<tr><td class="h">327</td><td></td><td></td><td></td><td></td><td></td><td class="s"># Purpose:&nbsp;&nbsp;Log::Any calls this instead of the per-level methods when the</td></tr>
+<tr><td class="h">328</td><td></td><td></td><td></td><td></td><td></td><td class="s">#&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;adapter can(&#39;structured&#39;), passing the parts as given and the</td></tr>
+<tr><td class="h">329</td><td></td><td></td><td></td><td></td><td></td><td class="s">#&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;merged context and fields as a final hashref (only when there are</td></tr>
+<tr><td class="h">330</td><td></td><td></td><td></td><td></td><td></td><td class="s">#&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;any), so the fields reach Log::Abstraction as data, not text.</td></tr>
+<tr><td class="h">331</td><td></td><td></td><td></td><td></td><td></td><td class="s"># Entry:&nbsp;&nbsp;&nbsp;&nbsp;$self&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-- the adapter.</td></tr>
+<tr><td class="h">332</td><td></td><td></td><td></td><td></td><td></td><td class="s">#&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;$level&nbsp;&nbsp;&nbsp;&nbsp;-- a Log::Any level name.</td></tr>
+<tr><td class="h">333</td><td></td><td></td><td></td><td></td><td></td><td class="s">#&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;$category -- the Log::Any category (unused).</td></tr>
+<tr><td class="h">334</td><td></td><td></td><td></td><td></td><td></td><td class="s">#&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;@parts&nbsp;&nbsp;&nbsp;&nbsp;-- message parts, then optionally a hashref of fields.</td></tr>
+<tr><td class="h">335</td><td></td><td></td><td></td><td></td><td></td><td class="s"># Exit:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Returns nothing.</td></tr>
+<tr><td class="h">336</td><td></td><td></td><td></td><td></td><td></td><td class="s"># Side effects: Logs through the wrapped Log::Abstraction instance.</td></tr>
+<tr><td class="h">337</td><td></td><td></td><td></td><td></td><td></td><td class="s"># ---------------------------------------------------------------------------</td></tr>
+<tr><td class="h">338</td><td></td><td></td><td></td><td></td><td></td><td class="s">sub structured {</td></tr>
+<tr><td class="h">339</td><td></td><td></td><td></td><td></td><td></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;my ($self, $level, $category, @parts) = @_;</td></tr>
+<tr><td class="h">340</td><td colspan="6"></td></tr><tr><td class="h">341</td><td></td><td></td><td></td><td></td><td></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;my $fields = (@parts &amp;&amp; (ref($parts[-1]) eq &#39;HASH&#39;)) ? pop(@parts) : undef;</td></tr>
+<tr><td class="h">342</td><td></td><td></td><td></td><td></td><td></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;my $msg = join(&#39; &#39;, grep { defined($_) &amp;&amp; length($_) } @parts);</td></tr>
+<tr><td class="h">343</td><td></td><td></td><td></td><td></td><td></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;my $method = $LA_TO_METHOD{$level} or return;</td></tr>
+<tr><td class="h">344</td><td colspan="6"></td></tr><tr><td class="h">345</td><td></td><td></td><td></td><td></td><td></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;# The eval would otherwise reset the calling module&#39;s $@</td></tr>
+<tr><td class="h">346</td><td></td><td></td><td></td><td></td><td></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;local ($@, $!);</td></tr>
+<tr><td class="h">347</td><td></td><td></td><td></td><td></td><td></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;eval { $self-&gt;{_logger}-&gt;$method($msg, ($fields ? $fields : ())); 1 } or Carp::carp($@);</td></tr>
+<tr><td class="h">348</td><td></td><td></td><td></td><td></td><td></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return;</td></tr>
+<tr><td class="h">349</td><td></td><td></td><td></td><td></td><td></td><td class="s">}</td></tr>
+<tr><td class="h">350</td><td colspan="6"></td></tr><tr><td class="h">351</td><td></td><td></td><td></td><td></td><td></td><td class="s"># ---------------------------------------------------------------------------</td></tr>
+<tr><td class="h">352</td><td></td><td></td><td></td><td></td><td></td><td class="s"># Build is_* detection methods for every Log::Any level name.</td></tr>
+<tr><td class="h">353</td><td></td><td></td><td></td><td></td><td></td><td class="s"># Each delegates to the matching Log::Abstraction is_* method (is_warning to</td></tr>
+<tr><td class="h">354</td><td></td><td></td><td></td><td></td><td></td><td class="s"># is_warn), which returns 1 when messages at that level would not be dropped.</td></tr>
+<tr><td class="h">355</td><td></td><td></td><td></td><td></td><td></td><td class="s"># ---------------------------------------------------------------------------</td></tr>
+<tr><td class="h">356</td><td></td><td></td><td></td><td></td><td></td><td class="s">for my $la_level (keys %LA_TO_METHOD) {</td></tr>
+<tr><td class="h">357</td><td></td><td></td><td></td><td></td><td></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;my $detector = &quot;is_$LA_TO_METHOD{$la_level}&quot;;</td></tr>
+<tr><td class="h">358</td><td></td><td></td><td></td><td></td><td></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;no strict &#39;refs&#39;;</td></tr>
+<tr><td class="h">359</td><td></td><td></td><td></td><td></td><td></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*{&quot;is_$la_level&quot;} = sub {</td></tr>
+<tr><td class="h">360</td><td></td><td></td><td></td><td></td><td></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;my $self = $_[0];</td></tr>
+<tr><td class="h">361</td><td></td><td></td><td></td><td></td><td></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return $self-&gt;{_logger}-&gt;$detector();</td></tr>
+<tr><td class="h">362</td><td></td><td></td><td></td><td></td><td></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;};</td></tr>
+<tr><td class="h">363</td><td></td><td></td><td></td><td></td><td></td><td class="s">}</td></tr>
+<tr><td class="h">364</td><td colspan="6"></td></tr><tr><td class="h">365 - 430</td><td colspan="5"></td><td class="s"><pre>=head1 LIMITATIONS
 
 =over 4
 
@@ -435,7 +439,7 @@ If you use it,
 please let me know.
 
 =cut</pre></td></tr>
-<tr><td class="h">427</td><td colspan="6"></td></tr><tr><td class="h">428</td><td></td><td></td><td></td><td></td><td></td><td class="s">1;</td></tr>
+<tr><td class="h">431</td><td colspan="6"></td></tr><tr><td class="h">432</td><td></td><td></td><td></td><td></td><td></td><td class="s">1;</td></tr>
 </table>
 </body>
 </html>
