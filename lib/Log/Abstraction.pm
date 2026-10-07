@@ -229,11 +229,11 @@ Log::Abstraction - Logging Abstraction Layer
 
 =head1 VERSION
 
-0.38
+0.39
 
 =cut
 
-our $VERSION = '0.38';
+our $VERSION = '0.39';
 
 =head1 SYNOPSIS
 
@@ -1393,7 +1393,9 @@ sub _redact :Private {
 	return $value if(!defined($value));
 	if(Scalar::Util::blessed($value)) {
 		my $string = "$value";
-		return ($string =~ $re) ? _redact($re, $string) : $value;
+		return $value unless $string =~ $re;
+		$string =~ s/$re/$REDACTED_MARKER/g;
+		return $string;
 	}
 	if(my $type = ref($value)) {
 		return $value if(($type ne 'HASH') && ($type ne 'ARRAY'));
