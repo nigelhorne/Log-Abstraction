@@ -247,17 +247,18 @@ The file is kept open between messages, but before each write the logger
 checks that the path still names the same file (device and inode), so
 **logrotate**'s default (rename the file and let the application create a new
 one) works without `copytruncate`, and without sending the process a
-`SIGHUP`: the next message is written to a new file.  A `postrotate`
-script that sends `SIGHUP` also works if the program calls ["reopen"](#reopen) on
-it:
+`SIGHUP`: the next message is written to a new file.
 
-```perl
-local $SIG{HUP} = sub { $logger->reopen() };
-```
+A `postrotate` script that sends the process a `SIGHUP` works too: except
+on Windows, the first time a logger opens a file, `Log::Abstraction` sets
+`$SIG{HUP}` to a handler that makes every logger open its files again on
+the next write.  A handler that was already set (a code reference or a sub
+name) is called after it.  This means a `SIGHUP` no longer ends the
+program, as it does by default.  A handler that the program sets later
+replaces `Log::Abstraction`'s; it can call ["reopen"](#reopen) itself.
 
-Tools that replace the file some other way are caught by
-`reopen_interval`: every 5 minutes, by default, the file is closed and
-opened again.
+In case a `SIGHUP` isn't sent, every file is also closed and opened again
+every 5 minutes (see `reopen_interval`).
 
 On Windows an open file can't be renamed or deleted, so a file the logger is
 writing can only be rotated by the logger itself (which closes it first), or
@@ -428,8 +429,8 @@ called on an object.  It may also be called as a plain function,
 
     Log files written by path are kept open between messages.  Every this many
     seconds (default 300, i.e. 5 minutes) each one is closed and opened again on
-    its next write, for rotation tools that change the file without renaming it
-    and without telling the program (see ["reopen"](#reopen)).  `0` turns this off.
+    its next write, in case a rotation tool changed the file without renaming it
+    and without sending a `SIGHUP` (see ["logrotate"](#logrotate)).  `0` turns this off.
 
 - `rotate_interval`
 
@@ -977,20 +978,25 @@ $logger->flush();                # emailed now
 
 ### Reopen
 
-```perl
+```
 $logger->reopen();
-
-# Reopen the log files when logrotate sends SIGHUP
-local $SIG{HUP} = sub { $logger->reopen() };
 ```
 
 Closes the log files the logger holds open, so that the next message opens
 them again.  Log files written by path (see ["File rotation"](#file-rotation)) are kept open
 between messages; call this after something outside the program has renamed,
 moved or truncated them.  It isn't usually needed: a file that has been
-renamed or deleted is noticed on the next write, and every file is reopened
-when `reopen_interval` has passed.  File handles passed as `fd` are not
-closed.
+renamed or deleted is noticed on the next write, a `SIGHUP` reopens every
+logger's files (except on Windows, see ["logrotate"](#logrotate)), and every file is
+reopened when `reopen_interval` has passed.  File handles passed as `fd`
+are not closed.
+
+A program that sets its own `$SIG{HUP}` after logging has started replaces
+the module's handler, and can call this from its own:
+
+```perl
+$SIG{HUP} = sub { $logger->reopen(); reload_config() };
+```
 
 #### Arguments
 

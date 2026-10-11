@@ -1,6 +1,6 @@
 #!/usr/bin/env perl
 # t/file_handles.t -- log files are kept open between messages: reopen(),
-# reopen_interval, and noticing a file that has been renamed or deleted
+# reopen_interval, SIGHUP, and noticing a file that has been renamed or deleted
 
 use strict;
 use warnings;
@@ -8,7 +8,7 @@ use warnings;
 use File::Temp qw(tempdir);
 use Test::Most;
 
-use Log::Abstraction;
+use_ok('Log::Abstraction');
 
 my $tmpdir = tempdir(CLEANUP => 1);
 my $count  = 0;
@@ -33,6 +33,12 @@ sub logger {
 
 # The handle the logger has open on $path, if any
 sub handle { return $_[0]->{_handles}{$_[1]} && $_[0]->{_handles}{$_[1]}{fh} }
+
+# The program's own SIGHUP handler, set before any file is logged to, which
+# the module's handler must still call
+my $program_hup = 0;
+$SIG{HUP} = sub { $program_hup++ };
+my $program_handler = $SIG{HUP};
 
 subtest 'the file is opened once, and each line is written at once' => sub {
 	my $path = new_path();
@@ -99,6 +105,33 @@ subtest 'a truncated file is appended to from the start' => sub {
 	truncate($path, 0) or die "truncate: $!";
 	$log->info('after');
 	is_deeply([ lines($path) ], ['after'], 'no hole at the start of the file');
+};
+
+subtest "SIGHUP reopens every logger's files" => sub {
+	if($^O eq 'MSWin32') {
+		logger(new_path())->info('x');
+		is($SIG{HUP}, $program_handler, 'no SIGHUP handler is installed on Windows');
+		return;
+	}
+
+	my ($p1, $p2) = (new_path(), new_path());
+	my ($log1, $log2) = (logger($p1), logger($p2, reopen_interval => 0));
+	$_->info('one') for($log1, $log2);
+	my ($fh1, $fh2) = (handle($log1, $p1), handle($log2, $p2));
+	isnt($SIG{HUP}, $program_handler, 'the module has installed its handler');
+
+	kill('HUP', $$) or die "kill: $!";
+	is($program_hup, 1, "the program's handler is still called");
+	ok(handle($log1, $p1), 'the files are not closed in the handler');
+
+	$_->info('two') for($log1, $log2);
+	isnt(handle($log1, $p1), $fh1, 'the first logger opened its file again');
+	isnt(handle($log2, $p2), $fh2, 'and so did the second, without reopen_interval');
+	$fh1 = handle($log1, $p1);
+	$log1->info('three');
+	is(handle($log1, $p1), $fh1, 'then keeps it open until the next SIGHUP');
+	is_deeply([ lines($p1) ], [qw(one two three)], 'every line written once');
+	is_deeply([ lines($p2) ], [qw(one two)], 'in both files');
 };
 
 subtest 'reopen_interval' => sub {

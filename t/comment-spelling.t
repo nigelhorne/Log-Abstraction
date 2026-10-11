@@ -33,6 +33,7 @@ HH
 hh
 hhmm
 HiRes
+HUP
 IPC
 iso
 journald
@@ -61,13 +62,16 @@ otel
 OTLP
 Params
 params
+postrotate
 Pseudocode
 Readonly
 rescanned
 rfc
 SDK
 SeverityNumber
+SIG
 SIGHUP
+sighup
 sm
 str
 Sys

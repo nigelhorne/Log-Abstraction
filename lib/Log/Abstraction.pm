@@ -202,6 +202,15 @@ Readonly::Scalar my $REDACTED_MARKER => '[REDACTED]';
 # a character string so that all backends share one output-encoding path
 my $json_encoder;
 
+# How many SIGHUP signals the process has had.  Each open log file remembers the
+# count when it was opened, and is opened again on the next write once the
+# count has changed.  The handler only counts: closing a handle there could
+# close it between _file_handle returning it and the print
+my $sighup_count = 0;
+
+# True once _catch_sighup has installed the SIGHUP handler
+my $sighup_caught;
+
 =head1 NAME
 
 Log::Abstraction - Logging Abstraction Layer
@@ -454,15 +463,18 @@ The file is kept open between messages, but before each write the logger
 checks that the path still names the same file (device and inode), so
 B<logrotate>'s default (rename the file and let the application create a new
 one) works without C<copytruncate>, and without sending the process a
-C<SIGHUP>: the next message is written to a new file.  A C<postrotate>
-script that sends C<SIGHUP> also works if the program calls L</reopen> on
-it:
+C<SIGHUP>: the next message is written to a new file.
 
-  local $SIG{HUP} = sub { $logger->reopen() };
+A C<postrotate> script that sends the process a C<SIGHUP> works too: except
+on Windows, the first time a logger opens a file, C<Log::Abstraction> sets
+C<$SIG{HUP}> to a handler that makes every logger open its files again on
+the next write.  A handler that was already set (a code reference or a sub
+name) is called after it.  This means a C<SIGHUP> no longer ends the
+program, as it does by default.  A handler that the program sets later
+replaces C<Log::Abstraction>'s; it can call L</reopen> itself.
 
-Tools that replace the file some other way are caught by
-C<reopen_interval>: every 5 minutes, by default, the file is closed and
-opened again.
+In case a C<SIGHUP> isn't sent, every file is also closed and opened again
+every 5 minutes (see C<reopen_interval>).
 
 On Windows an open file can't be renamed or deleted, so a file the logger is
 writing can only be rotated by the logger itself (which closes it first), or
@@ -650,8 +662,8 @@ C<qr//>), or an array reference of them.  See L</Redaction>.
 
 Log files written by path are kept open between messages.  Every this many
 seconds (default 300, i.e. 5 minutes) each one is closed and opened again on
-its next write, for rotation tools that change the file without renaming it
-and without telling the program (see L</reopen>).  C<0> turns this off.
+its next write, in case a rotation tool changed the file without renaming it
+and without sending a C<SIGHUP> (see L</logrotate>).  C<0> turns this off.
 
 =item * C<rotate_interval>
 
@@ -1792,8 +1804,10 @@ sub _write_line :Private {
 #               Croaks (autodie) if the file can't be opened.
 # Side effects: Opens the file if the logger hasn't, or opens it again if
 #               the path is now a different file (renamed or deleted, e.g.
-#               by logrotate) or reopen_interval seconds have passed since it
-#               was opened.
+#               by logrotate), the process has had a SIGHUP, or
+#               reopen_interval seconds have passed since it was opened.
+#               Installs the SIGHUP handler (_catch_sighup) when it opens a
+#               file.
 # Notes:        Costs one stat() per line.  The device and inode are taken
 #               from the path, not the handle, so that the two are compared
 #               alike (Windows' fstat can differ).
@@ -1802,10 +1816,13 @@ sub _write_line :Private {
 #   FUNCTION _file_handle(self, path)
 #     IF the logger has a handle on path:
 #       RETURN it IF path still names the same device and inode AND
+#         there has been no SIGHUP since it was opened AND
 #         (reopen_interval is 0 OR it was opened less than that long ago)
 #       close it
+#     install the SIGHUP handler, unless done already or on Windows
 #     open path for appending, autoflush on
-#     remember the handle, path's device and inode, and the time
+#     remember the handle, path's device and inode, the SIGHUP count and
+#       the time
 #     RETURN the handle
 #   END FUNCTION
 # ---------------------------------------------------------------------------
@@ -1816,17 +1833,57 @@ sub _file_handle :Private {
 		my @st = stat($path);
 		my $interval = $self->{'reopen_interval'} // $DEFAULT_REOPEN_INTERVAL;
 		if(@st && ($st[0] == $open->{dev}) && ($st[1] == $open->{ino})
+		   && ($open->{sighup} == $sighup_count)
 		   && !($interval && ((time() - $open->{opened}) >= $interval))) {
 			return $open->{fh};
 		}
 		$self->_close_files($path);
 	}
 
+	_catch_sighup();
 	open(my $fh, '>>', $path);
 	$fh->autoflush(1);
 	my @st = stat($path);
-	$self->{_handles}{$path} = { fh => $fh, dev => $st[0], ino => $st[1], opened => time() };
+	$self->{_handles}{$path} = {
+		fh => $fh, dev => $st[0], ino => $st[1], sighup => $sighup_count, opened => time(),
+	};
 	return $fh;
+}
+
+# ---------------------------------------------------------------------------
+# _catch_sighup -- reopen the log files when the process gets a SIGHUP
+#
+# Purpose:      logrotate's postrotate script, and similar tools, send
+#               SIGHUP to tell a program to reopen its log files.
+# Entry:        None.
+# Exit:         Returns nothing.
+# Side effects: The first time, except on Windows, sets $SIG{HUP} to a
+#               handler that counts the signal (see $sighup_count) and then
+#               calls the handler that was there before, if it was a code
+#               reference or a sub name.  So SIGHUP no longer ends the
+#               process by default.
+# Notes:        Called when a file is opened, so a program that never logs
+#               to a file keeps its SIGHUP behaviour.  A handler the program
+#               sets afterwards replaces this one; reopen_interval still
+#               reopens the files.
+# ---------------------------------------------------------------------------
+sub _catch_sighup :Private {
+	return if($sighup_caught || ($^O eq 'MSWin32'));
+	$sighup_caught = 1;
+
+	my $previous = $SIG{HUP};
+	if(defined($previous) && !ref($previous)) {
+		$previous = undef if(($previous eq '') || ($previous eq 'IGNORE') || ($previous eq 'DEFAULT'));
+		$previous = "main::$previous" if(defined($previous) && ($previous !~ /::/));
+	}
+	$SIG{HUP} = sub {
+		$sighup_count++;
+		if(defined($previous)) {
+			no strict 'refs';
+			$previous->(@_);
+		}
+	};
+	return;
 }
 
 # ---------------------------------------------------------------------------
@@ -2691,16 +2748,19 @@ sub flush {
 
   $logger->reopen();
 
-  # Reopen the log files when logrotate sends SIGHUP
-  local $SIG{HUP} = sub { $logger->reopen() };
-
 Closes the log files the logger holds open, so that the next message opens
 them again.  Log files written by path (see L</File rotation>) are kept open
 between messages; call this after something outside the program has renamed,
 moved or truncated them.  It isn't usually needed: a file that has been
-renamed or deleted is noticed on the next write, and every file is reopened
-when C<reopen_interval> has passed.  File handles passed as C<fd> are not
-closed.
+renamed or deleted is noticed on the next write, a C<SIGHUP> reopens every
+logger's files (except on Windows, see L</logrotate>), and every file is
+reopened when C<reopen_interval> has passed.  File handles passed as C<fd>
+are not closed.
+
+A program that sets its own C<$SIG{HUP}> after logging has started replaces
+the module's handler, and can call this from its own:
+
+  $SIG{HUP} = sub { $logger->reopen(); reload_config() };
 
 =head3 Arguments
 

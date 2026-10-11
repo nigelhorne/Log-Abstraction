@@ -13,11 +13,14 @@ Revision history for Log-Abstraction
 	  trace method), and both joined the message's parts with spaces.
 	- Log files written by path are kept open between messages instead of
 	  being opened and closed for every line.  A file renamed or deleted
-	  (e.g. by logrotate) is noticed on the next write, the new reopen()
-	  method closes them (hook it to SIGHUP), and the new reopen_interval
-	  option (default 300 seconds, 0 for never) reopens them regularly.  On
-	  Windows an open log file can't be renamed or deleted by another
-	  program; call reopen() first.
+	  (e.g. by logrotate) is noticed on the next write.  Except on Windows,
+	  a SIGHUP makes every logger reopen its files (the module installs a
+	  handler when it first opens a file, calling any handler already set),
+	  so SIGHUP no longer ends a program that logs to a file.  In case no
+	  SIGHUP is sent, the new reopen_interval option (default 300 seconds,
+	  0 for never) reopens them regularly, and the new reopen() method
+	  closes them.  On Windows an open log file can't be renamed or deleted
+	  by another program; call reopen() first.
 	[ API Changes ]
 	- Each backend is now a Log::Abstraction::Backend::* object, built once
 	  by new() instead of worked out again for every message.
