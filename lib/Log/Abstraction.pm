@@ -53,9 +53,6 @@ package Log::Abstraction;
 #     provider swaps (workaround for blocker 3 above).
 
 # Roadmap - technical debt:
-#   - Split _log into per-backend classes (Log::Abstraction::Backend::*)
-#     built once in new(), so the caller's syslog hash is not mutated and
-#     the "Don't know how to deal" fallback disappears.
 #   - Keep file handles open (re-open on inode change) instead of
 #     open/print/close for every message.  logrotate then needs the file
 #     reopened: add a reopen() method (and document hooking it to SIGHUP),
@@ -98,8 +95,20 @@ use Time::Local ();
 BEGIN { $Sub::Private::config{mode} = 'enforce' }
 use Sub::Private 0.06;
 
-# Sys::Syslog, called as Sys::Syslog::openlog() etc. in _log and DESTROY
-use Sys::Syslog 0.28 ();
+# The backends, one object per destination, built by new() (see
+# _build_backends).  Loaded now rather than on demand, so that they are
+# compiled with the rest of the module
+use Log::Abstraction::Backend;
+use Log::Abstraction::Backend::Array;
+use Log::Abstraction::Backend::Code;
+use Log::Abstraction::Backend::Fd;
+use Log::Abstraction::Backend::File;
+use Log::Abstraction::Backend::Journald;
+use Log::Abstraction::Backend::LogAny;
+use Log::Abstraction::Backend::LogDispatch;
+use Log::Abstraction::Backend::Object;
+use Log::Abstraction::Backend::Sendmail;
+use Log::Abstraction::Backend::Syslog;
 
 # ---------------------------------------------------------------------------
 # Module-level constants -- no magic strings or numbers anywhere below
@@ -114,11 +123,6 @@ Readonly::Scalar my $DEFAULT_SMTP_PORT => 25;
 Readonly::Scalar my $DEFAULT_FROM_ADDR => 'noreply@localhost';
 Readonly::Scalar my $MIN_PORT          => 1;
 Readonly::Scalar my $MAX_PORT          => 65535;
-
-# Default syslog connection parameters
-Readonly::Scalar my $DEFAULT_SYSLOG_FACILITY => 'local0';
-Readonly::Scalar my $DEFAULT_SYSLOG_OPTIONS  => 'cons,pid';
-Readonly::Scalar my $DEFAULT_SYSLOG_IDENTITY => 'user';
 
 # Default strftime pattern for %timestamp% and the JSON timestamp
 Readonly::Scalar my $DEFAULT_TIMESTAMP_FORMAT => '%Y-%m-%d %H:%M:%S';
@@ -157,37 +161,18 @@ Readonly::Hash my %ROTATE_PERIOD => (
 Readonly::Scalar my $DEFAULT_FORMAT         => '%level%> [%timestamp%] %class% %callstack% %message%';
 Readonly::Scalar my $DEFAULT_FORMAT_NOCLASS => '%level%> [%timestamp%] %callstack% %message%';
 
-# Map internal level names to POSIX syslog priority strings.  syslog has no
-# priority below debug, so trace shares debug's threshold (see the POD)
-Readonly::Hash my %LEVEL_TO_SYSLOG_PRIORITY => (
-	trace     => 'debug',
-	debug     => 'debug',
-	info      => 'info',
-	notice    => 'notice',
-	warn      => 'warning',
-	warning   => 'warning',
-	error     => 'err',
-	critical  => 'crit',
-	alert     => 'alert',
-	emergency => 'emerg',
-);
-
-# Map internal level names to the Log::Any methods (Log::Any::Proxy) and
-# Log::Dispatch level names that the log_any and log_dispatch backends use
-Readonly::Hash my %LEVEL_TO_LOG_ANY => (
-	trace     => 'trace',
-	debug     => 'debug',
-	info      => 'info',
-	notice    => 'notice',
-	warn      => 'warning',
-	error     => 'error',
-	critical  => 'critical',
-	alert     => 'alert',
-	emergency => 'emergency',
-);
-Readonly::Hash my %LEVEL_TO_LOG_DISPATCH => (
-	%LEVEL_TO_LOG_ANY,
-	trace => 'debug',    # Log::Dispatch has nothing below debug
+# The backend class for each key of a logger hash, in the order they are
+# given a message
+Readonly::Array my @HASH_BACKENDS => qw(file array sendmail syslog journald log_any log_dispatch fd);
+Readonly::Hash my %BACKEND_CLASS => (
+	array        => 'Log::Abstraction::Backend::Array',
+	fd           => 'Log::Abstraction::Backend::Fd',
+	file         => 'Log::Abstraction::Backend::File',
+	journald     => 'Log::Abstraction::Backend::Journald',
+	log_any      => 'Log::Abstraction::Backend::LogAny',
+	log_dispatch => 'Log::Abstraction::Backend::LogDispatch',
+	sendmail     => 'Log::Abstraction::Backend::Sendmail',
+	syslog       => 'Log::Abstraction::Backend::Syslog',
 );
 
 # Regex: characters forbidden in a log-file path (prevents command injection).
@@ -203,45 +188,20 @@ Readonly::Scalar my $RE_SAFE_HOST => qr/[^a-zA-Z0-9.\-]/;
 # Regex: a valid TCP port number string (decimal digits only; range checked separately)
 Readonly::Scalar my $RE_PORT => qr/^\d+$/;
 
-# Default path to the journald native-protocol socket on systemd systems
-Readonly::Scalar my $DEFAULT_JOURNALD_SOCKET => '/run/systemd/journal/socket';
-
 # Regex: a valid journald field name (uppercase ASCII, digits and underscore,
 # not starting with an underscore, which journald reserves for trusted fields)
 Readonly::Scalar my $RE_JOURNALD_FIELD => qr/^[A-Z0-9][A-Z0-9_]*$/;
-
-# Largest journald datagram sent; the default socket send buffer is ~212KB
-# on most Linux systems and bigger datagrams fail, so longer messages are
-# truncated to fit.  Some systems have smaller buffers, so on EMSGSIZE the
-# limit is halved and the send retried, down to $JOURNALD_MIN_PAYLOAD
-Readonly::Scalar my $JOURNALD_MAX_PAYLOAD => 200_000;
-Readonly::Scalar my $JOURNALD_MIN_PAYLOAD => 4_096;
-
-# Longest journald field name; journald ignores fields with longer names
-Readonly::Scalar my $JOURNALD_MAX_FIELD_NAME => 64;
 
 # Most messages a sendmail digest holds, unless digest_max says otherwise;
 # beyond it they are only counted
 Readonly::Scalar my $DEFAULT_DIGEST_MAX => 100;
 
-# Marker appended to a message truncated to fit in a journald datagram
-Readonly::Scalar my $TRUNCATED_MARKER => ' [truncated]';
-
 # What each match of a redact pattern is replaced with
 Readonly::Scalar my $REDACTED_MARKER => '[REDACTED]';
-
-# Number of live instances that have opened the process-global syslog
-# connection; closelog() is only called when the last one is destroyed
-my $syslog_open_count = 0;
 
 # Single JSON encoder for format => 'json', built on first use.  It returns
 # a character string so that all backends share one output-encoding path
 my $json_encoder;
-
-# True while a message is being handed to Log::Any or Log::Dispatch.  If that
-# brings it back to a Log::Abstraction (e.g. through
-# Log::Any::Adapter::Abstraction), it isn't forwarded again, which would loop
-my $forwarding = 0;
 
 =head1 NAME
 
@@ -749,6 +709,11 @@ or in a C<logger> hash) and C<script_name> is not supplied.  Loads
 C<Log::Log4perl> if no backend (C<logger>, C<file>, C<fd> or C<array>) is
 specified.
 
+Builds one L<Log::Abstraction::Backend> object for each place messages go
+to.  The arguments are not changed: in particular, the C<syslog> hash keeps
+its C<facility>, C<level> and C<format> keys, and a C<server> key is not
+renamed C<host> (before 0.40, the first message did both).
+
 =head3 Example
 
   my $logger = Log::Abstraction->new(
@@ -840,6 +805,12 @@ specified.
     positive integer, not '<v>'"            number.
   "<class>: invalid journald field name     An extra journald key, upper-cased, is not
     '<k>'"                                  [A-Z0-9_] or starts with '_'.
+  "<class>: the logger hash has none of     The logger hash has nowhere to send
+    the keys array, fd, file, journald,     messages.  (Before 0.40, the first
+    log_any, log_dispatch, sendmail,        message croaked "Don't know how to deal
+    syslog"                                 with the <level> message".)
+  "<class>: the logger can't be a <TYPE>    logger is a reference of an unsupported
+    reference"                              type, e.g. a SCALAR or GLOB reference.
   "<class>: log_any must be a Log::Any      log_any is neither a Log::Any logger
     logger or a category name"              (Log::Any::Proxy) nor a non-empty string.
   "<class>: log_any needs Log::Any to be    log_any is a category name but Log::Any
@@ -864,14 +835,8 @@ logging failure must never crash the application.
                                             other than A-Z a-z 0-9 . -
   "<class>: Invalid SMTP port: <port>"      The sendmail 'port' is not an integer in
                                             1-65535.
-  "<class>: Don't know how to deal with     A logger hash has none of the keys file,
-    the <level> message"                    array, fd, syslog, journald, sendmail,
-                                            log_any or log_dispatch.
   "<class>: <object class> doesn't know     An object logger has no method for this
     how to deal with the <level> message"   level.  (notice falls back to info.)
-  "<class>: configuration error, no         logger is a reference of an unsupported
-    handler written for the <level>         type, e.g. a SCALAR or GLOB reference.
-    message"
 
   Carp                                      Meaning / Action
   ----------------------------------------  -----------------------------------------
@@ -908,6 +873,7 @@ logging failure must never crash the application.
       copy message history list
       start the clone with no held email digest
       count the clone as a user of an open syslog connection
+      build the clone's own backends
       RETURN clone
 
     IF syslog requested (top level or in a logger hash) and script_name
@@ -952,8 +918,11 @@ logging failure must never crash the application.
       CROAK if a sendmail sub-hash has no 'to' address, or a digest_max
         that isn't a positive integer
       CROAK if an extra journald key is not a valid journald field name
+      CROAK if it has none of the backend keys
 
-    RETURN bless { messages => [], merged args, level => numeric } as class
+    self = bless { messages => [], merged args, level => numeric } as class
+    self->{_backends} = _build_backends()  (CROAK on an unsupported logger)
+    RETURN self
 
   END FUNCTION
 
@@ -1017,7 +986,9 @@ sub new {
 		# A clone has its own digest, or held messages would be sent twice
 		delete @{$clone}{qw(_email_digest _email_digest_dropped)};
 		# The clone shares the parent's open syslog connection
-		$syslog_open_count++ if($clone->{_syslog_opened});
+		Log::Abstraction::Backend::Syslog->retain_connection() if($clone->{_syslog_opened});
+		# and has its own backends, as the overrides may change them
+		$clone->{_backends} = $clone->_build_backends();
 		return $clone;
 	}
 
@@ -1126,14 +1097,116 @@ sub new {
 				}
 			}
 		}
+
+		# A hash with nowhere to send messages is a mistake
+		if(!grep { $hash->{$_} } @HASH_BACKENDS) {
+			Carp::croak("$class: the logger hash has none of the keys ", join(', ', sort @HASH_BACKENDS));
+		}
 	}
 
-	# Construct and return the blessed object
-	return bless {
+	# Construct the object, and the backends that messages go to
+	my $self = bless {
 		messages => [],
 		%args,
 		level => $syslog_values{ $args{'level'} },
 	}, $class;
+	$self->{_backends} = $self->_build_backends();
+	return $self;
+}
+
+# ---------------------------------------------------------------------------
+# _build_backends -- one Log::Abstraction::Backend object per destination
+#
+# Purpose:      Turn the logger, array, file and fd arguments into the
+#               objects that _log passes each message to, once, rather than
+#               working them out again for every message.
+# Entry:        $self -- the logger object, whose arguments new() has checked.
+# Exit:         Returns an array reference of backends, in the order they
+#               get a message: the logger (or the logger hash's file, array,
+#               sendmail, syslog, journald, log_any, log_dispatch and fd),
+#               or the top-level array if there is no logger; then the
+#               top-level file and fd.
+# Side effects: None.  The caller's hashes are not changed (the syslog
+#               backend works on a copy).
+# Notes:        Each backend's own 'level' is converted to a number here.
+#               Croaks if the logger is a reference of an unsupported type.
+#
+# Pseudocode:
+#   FUNCTION _build_backends(self)
+#     backends = []
+#     IF logger is set:
+#       CODE ref     -> Code
+#       ARRAY ref    -> Array
+#       HASH ref     -> for each key of HASH_BACKENDS that is set, its
+#                       class, with destination, level and format from
+#                       _backend (syslog, sendmail and journald are hashes
+#                       holding level and format)
+#       plain string -> File (the path)
+#       Log::Any::Proxy -> LogAny;  Log::Dispatch -> LogDispatch
+#       other object -> Object
+#       other ref    -> CROAK
+#     ELSE IF array: Array
+#     IF top-level file: File;  IF top-level fd: Fd
+#     RETURN backends
+#   END FUNCTION
+# ---------------------------------------------------------------------------
+sub _build_backends :Private {
+	my $self = shift;
+
+	my $class = Scalar::Util::blessed($self);
+	my @backends;
+
+	# Build one backend from a key's value: the destination under the
+	# backend's own name, plus its level (as a number) and format
+	my $build = sub {
+		my ($name, $value) = @_;
+		my ($dest, $level, $format);
+		if($name =~ /^(?:syslog|sendmail|journald)$/) {
+			# These are hashes already, holding their own level and format
+			$dest = (ref($value) eq 'HASH') ? $value : {};
+			($level, $format) = @{$dest}{qw(level format)};
+		} else {
+			($dest, $level, $format) = _backend($name, $value);
+		}
+		return $BACKEND_CLASS{$name}->new(
+			$name  => $dest,
+			level  => scalar(_level_number($level)),
+			format => $format,
+		);
+	};
+
+	if(my $logger = $self->{'logger'}) {
+		my $type = ref($logger);
+		if($type eq 'CODE') {
+			push @backends, Log::Abstraction::Backend::Code->new(code => $logger);
+		} elsif($type eq 'ARRAY') {
+			push @backends, Log::Abstraction::Backend::Array->new(array => $logger);
+		} elsif($type eq 'HASH') {
+			push @backends, map { $build->($_, $logger->{$_}) } grep { $logger->{$_} } @HASH_BACKENDS;
+		} elsif(!$type) {
+			push @backends, Log::Abstraction::Backend::File->new(file => $logger);
+		} elsif(Scalar::Util::blessed($logger) && $logger->isa('Log::Any::Proxy')) {
+			# Neither has a method for every level, and both would join
+			# the arguments with spaces, so they aren't plain objects
+			push @backends, Log::Abstraction::Backend::LogAny->new(log_any => $logger);
+		} elsif(Scalar::Util::blessed($logger) && $logger->isa('Log::Dispatch')) {
+			push @backends, Log::Abstraction::Backend::LogDispatch->new(log_dispatch => $logger);
+		} elsif(Scalar::Util::blessed($logger)) {
+			push @backends, Log::Abstraction::Backend::Object->new(object => $logger);
+		} else {
+			Carp::croak("$class: the logger can't be a $type reference");
+		}
+	} elsif($self->{'array'}) {
+		# A top-level array is only used when there's no logger
+		push @backends, $build->('array', $self->{'array'});
+	}
+
+	# Top-level file and fd keys (parallel to 'logger')
+	for my $name (qw(file fd)) {
+		push @backends, $build->($name, $self->{$name}) if($self->{$name});
+	}
+
+	return \@backends;
 }
 
 # ---------------------------------------------------------------------------
@@ -1179,25 +1252,6 @@ sub _level_number :Private {
 		return ($value <= $DEBUG) ? $value + 0 : undef;
 	}
 	return $syslog_values{lc($value)};
-}
-
-# ---------------------------------------------------------------------------
-# _wants -- does a backend's own level let a message through?
-#
-# Purpose:      One test for every sub-backend's 'level' key.
-# Entry:        $level         -- the message's level name.
-#               $backend_level -- the backend's 'level' (a name or 0-7), or
-#                                 undef for none.
-# Exit:         Returns true if the backend has no level, or the message is
-#               at that level or more severe.
-# Notes:        A pure function (no $self), called as _wants($level, $bl).
-#               The logger's own level has already been applied by _log.
-# ---------------------------------------------------------------------------
-sub _wants :Private {
-	my ($level, $backend_level) = @_;
-
-	return 1 unless(defined($backend_level));
-	return $syslog_values{$level} <= (_level_number($backend_level) // -1);
 }
 
 # ---------------------------------------------------------------------------
@@ -1253,53 +1307,6 @@ sub _check_producer :Private {
 	if(!Scalar::Util::blessed($dest) || !$dest->can('log')) {
 		Carp::croak("$class: log_dispatch must be a Log::Dispatch object");
 	}
-}
-
-# ---------------------------------------------------------------------------
-# _produce -- hand a message to a Log::Any logger or a Log::Dispatch object
-#
-# Purpose:      The log_any and log_dispatch backends, and object loggers
-#               that are Log::Any::Proxy or Log::Dispatch objects.
-# Entry:        $self    -- the logger object.
-#               $dest    -- a Log::Any::Proxy, a Log::Any category name, or a
-#                           Log::Dispatch object.
-#               $level   -- the message's internal level name.
-#               $message -- the text to send.
-#               $fields  -- structured fields (hashref) or undef.  Log::Any
-#                           gets them as its trailing hashref, which reaches
-#                           a structured adapter as data; Log::Dispatch has
-#                           no fields, so the caller appends them as text.
-# Exit:         Returns nothing.
-# Side effects: Carps if the destination dies.  Does nothing while a
-#               message is already being forwarded (see $forwarding).
-# ---------------------------------------------------------------------------
-sub _produce :Private {
-	my ($self, $dest, $level, $message, $fields) = @_;
-
-	return if($forwarding);
-
-	# The eval catches everything, so $forwarding is always cleared again
-	$forwarding = 1;
-	my $what = 'Log::Dispatch';
-	my $ok = eval {
-		if(Scalar::Util::blessed($dest) && !$dest->isa('Log::Any::Proxy')) {
-			$dest->log(level => $LEVEL_TO_LOG_DISPATCH{$level}, message => $message);
-		} else {
-			$what = 'Log::Any';
-			if(!ref($dest)) {
-				# Proxies follow Log::Any::Adapter->set(), so one per category will do
-				$dest = $self->{_log_any_proxies}{$dest} //= do {
-					require Log::Any;
-					Log::Any->get_logger(category => $dest);
-				};
-			}
-			my $method = $LEVEL_TO_LOG_ANY{$level};
-			$dest->$method($message, ($fields ? ($fields) : ()));
-		}
-		1;
-	};
-	$forwarding = 0;
-	Carp::carp(ref($self), ": $what failed: $@") if(!$ok);
 }
 
 # ---------------------------------------------------------------------------
@@ -1874,104 +1881,6 @@ sub _validate_file_path :Private {
 }
 
 # ---------------------------------------------------------------------------
-# _journald_send -- encode fields and send one datagram to the journald socket
-#
-# Purpose:      Format key=value fields in the journald native protocol and
-#               deliver them as a single Unix-domain SOCK_DGRAM packet.
-# Entry:        $self        -- the logger object (unused but required for
-#                              consistent OOP dispatch; enforces Sub::Private).
-#               $socket_path -- filesystem path of the journald socket.
-#               %fields      -- FIELD_NAME => value pairs; names must be
-#                              uppercase ASCII + digits + underscore.
-# Exit:         Returns nothing.  Croaks on socket or send failure (the caller
-#               wraps every call in eval{} so failures are silent to the app).
-# Side effects: Opens a transient Unix datagram socket, sends, closes.
-# Notes:        Values containing newline or NUL use the binary framing
-#               (field-name NL uint64-LE-length value NL) as specified by
-#               https://systemd.io/JOURNAL_NATIVE_PROTOCOL/.
-#               Values without newlines or NULs use the simpler FIELD=VALUE NL
-#               text format.  The send buffer, and so the largest datagram,
-#               varies between systems: a send failing with EMSGSIZE is
-#               retried with MESSAGE truncated to half the size, down to
-#               $JOURNALD_MIN_PAYLOAD.
-# ---------------------------------------------------------------------------
-sub _journald_send :Private {
-	my ($self, $socket_path, %fields) = @_;
-
-	# The protocol carries bytes, and binary framing declares a byte length,
-	# so encode character strings to UTF-8 first
-	for my $key (keys %fields) {
-		my $value = defined($fields{$key}) ? "$fields{$key}" : '';
-		utf8::encode($value) if(utf8::is_utf8($value));
-		$fields{$key} = $value;
-	}
-
-	# Build the datagram payload from all supplied fields
-	my $build = sub {
-		my $payload = '';
-		for my $key (sort keys %fields) {
-			my $value = $fields{$key};
-			if($value =~ /[\n\0]/) {
-				# Binary framing: field-name LF uint64LE-length value LF.
-				# The length is packed as two 32-bit little-endian words
-				# because pack('Q') dies on perls without 64-bit integers
-				my $len = length($value);
-				$payload .= $key . "\n"
-					. pack('VV', $len % 2**32, int($len / 2**32))
-					. $value . "\n";
-			} else {
-				$payload .= "$key=$value\n";
-			}
-		}
-		return $payload;
-	};
-	my $full = $build->();
-	my $message = $fields{'MESSAGE'};
-
-	# A datagram bigger than the socket send buffer fails outright, so
-	# truncate MESSAGE to fit in $limit bytes.  The extra 8 bytes allow for
-	# the message switching from text to binary framing.
-	my $fit = sub {
-		my $limit = shift;
-		my $excess = length($full) - $limit;
-		return $full if(($excess <= 0) || !defined($message));
-		my $keep = length($message) - $excess - length($TRUNCATED_MARKER) - 8;
-		my $cut = substr($message, 0, ($keep > 0) ? $keep : 0);
-		# Don't leave a partial UTF-8 sequence at the cut
-		$cut =~ s/[\xC0-\xFF][\x80-\xBF]*\z//;
-		$fields{'MESSAGE'} = $cut . $TRUNCATED_MARKER;
-		return $build->();
-	};
-
-	# Open a Unix-domain datagram socket, send, and close
-	require Socket;
-	socket(my $sock, Socket::AF_UNIX(), Socket::SOCK_DGRAM(), 0);
-	my $dest = Socket::sockaddr_un($socket_path);
-
-	{
-		# send() is checked by hand: EMSGSIZE means retry smaller
-		no autodie qw(send setsockopt);
-
-		# Ask for a send buffer big enough for the largest datagram; the
-		# kernel may cap it (net.core.wmem_max), which the retry handles
-		setsockopt($sock, Socket::SOL_SOCKET(), Socket::SO_SNDBUF(), $JOURNALD_MAX_PAYLOAD + 1024);
-
-		my $limit = $JOURNALD_MAX_PAYLOAD;
-		while(1) {
-			last if(defined(send($sock, $fit->($limit), 0, $dest)));
-			my $err = $!;
-			if(($err == POSIX::EMSGSIZE()) && ($limit > $JOURNALD_MIN_PAYLOAD)) {
-				$limit = int($limit / 2);
-				next;
-			}
-			close $sock;
-			Carp::croak("Can't send to $socket_path: $err");
-		}
-	}
-	close $sock;
-}
-
-# ---------------------------------------------------------------------------
 # _format_message -- expand a log-format string into a final log line
 #
 # Purpose:      Centralise the repeated format-token substitution so that
@@ -2107,8 +2016,10 @@ sub _format_message :Private {
 #               @messages -- one or more message strings (or a single arrayref),
 #                           optionally followed by a hashref of structured fields.
 # Exit:         Returns nothing (void).  Croaks on configuration errors.
-# Side effects: Appends to $self->{messages}.  May write to a file, fd,
-#               array, syslog, or email backend.  May load Email::* modules.
+# Side effects: Appends to $self->{messages}.  Passes the message to the
+#               backends (Log::Abstraction::Backend::*), which may write to a
+#               file, fd, array, syslog, journald, email, Log::Any or
+#               Log::Dispatch.  May load Email::* modules.
 # Notes:        Enforced private: croaks if called from outside this package.
 #               The caller file/line is resolved past the _high_priority frame
 #               (warn/error) and any Log::Any frames, so it is the user's code.
@@ -2132,67 +2043,15 @@ sub _format_message :Private {
 #       shared by every file/fd backend
 #     render(format) = _format_message(..., format), cached per format;
 #       undef format means the logger's own
-#     Every backend below is skipped unless _wants(level, its own level);
-#       file/fd/array may be the hash form { <name> => destination, level, format }
-#       (split by _backend)
-#
-#     IF self->{'logger'} is a CODE ref:
-#       Build args hashref { class, file, line, level, message, ctx?, fields? }
-#       Call logger->( args )
-#
-#     ELSIF self->{'logger'} is an ARRAY ref:
-#       Push { level, message, fields? }
-#
-#     ELSIF self->{'logger'} is a HASH ref:
-#       IF 'file' key present:
-#         validate path; write render(its format) via _write_line
-#       IF 'array' key present:
-#         push { level, message, fields? }, message = render(its format)
-#           if it has one
-#       IF 'sendmail' key present with a 'to' address:
-#         IF level passes threshold:
-#           body = render(its format) if it has one, else $text
-#           IF not throttled: _send_email(sm, body) (with any held digest;
-#             croaks on a bad host/port, carps on a failed delivery, and
-#             the remaining backends still run)
-#           ELSIF sm->{digest}: _hold_email(sm, body)
-#       IF 'syslog' key present:
-#         IF level passes threshold:
-#           Open syslog connection on first use (setlogsock, openlog)
-#           (eval) map level to syslog priority; call Sys::Syslog::syslog
-#                  with a '%s' format and render(its format) or $text;
-#                  carp on failure
-#       IF 'journald' key present:
-#         Map level to syslog PRIORITY integer
-#         Build fields: MESSAGE (render(its format), or $str), PRIORITY,
-#           SYSLOG_IDENTIFIER, plus any extra from the config hash (but not
-#           socket/identifier/level/format), plus the structured fields (names
-#           upper-cased and sanitised; they can't replace the first three)
-#         (eval) _journald_send(socket_path, %fields); carp on the first
-#                failure only, until a send succeeds again
-#       IF 'fd' key present:
-#         write render(its format) to the handle via _write_line
-#       ELSIF no actionable key (no file/array/syslog/sendmail/journald/fd):
-#         CROAK (configuration error)
-#     (file and fd writes go through _write_line, which UTF-8 encodes
-#      character strings and never lets an I/O error escape)
-#
-#     ELSIF self->{'logger'} is an unblessed scalar (file path):
-#       Validate path; format line; (eval) open>>file, print, close
-#
-#     ELSIF self->{'logger'} is a blessed object:
-#       Map 'notice' to 'info', and critical/alert/emergency to 'fatal' or
-#         else 'error', for backends without them (e.g. Log::Log4perl)
-#       CROAK if object cannot handle the level
-#       Call $logger->$level(@messages), plus the fields as logfmt text
-#
-#     ELSIF self->{'array'} top-level key:
-#       Push { level, message, fields? }, as for the 'array' sub-backend
-#
-#     IF self->{'file'} top-level key (and its own level lets it through):
-#       Validate path; write render(its format) via _write_line
-#     IF self->{'fd'} top-level key (and its own level lets it through):
-#       write render(its format) to the handle via _write_line
+#     Build the event: level, priority, message, parts, fields, text, the
+#       history entry, class, caller file/line, ctx, and closures for the
+#       private methods the backends need (render, write, send_email,
+#       hold_email, field_string)
+#     backends = self->{_backends}, or _build_backends() if not built yet
+#     FOR each backend (see _build_backends for which and in what order):
+#       IF backend->wants(event) (its own level, if any, lets it through):
+#         backend->emit(self, event)
+#     (each Log::Abstraction::Backend::* class documents what it does)
 #   END FUNCTION
 # ---------------------------------------------------------------------------
 sub _log :Private {
@@ -2272,9 +2131,10 @@ sub _log :Private {
 	# For warn/error: _log ← _high_priority ← public_method ← user → depth=2
 	# Frames inside Log::Any (its proxy and our adapter) are skipped too, so
 	# messages routed through Log::Any report the user's code.  So are those
-	# of the Log::Abstraction that forwarded a message here (see _produce)
+	# of the Log::Abstraction that forwarded a message here (see the LogAny
+	# and LogDispatch backends)
 	my $depth = ((caller(1))[3] // '') =~ /::_high_priority$/ ? 2 : 1;
-	my $skip = $forwarding ? qr/^Log::(?:Any|Abstraction|Dispatch)(?:::|$)/ : qr/^Log::Any(?:::|$)/;
+	my $skip = $Log::Abstraction::Backend::FORWARDING ? qr/^Log::(?:Any|Abstraction|Dispatch)(?:::|$)/ : qr/^Log::Any(?:::|$)/;
 	while((caller($depth + 1))[0] && (((caller($depth))[0] // '') =~ $skip)) {
 		$depth++;
 	}
@@ -2295,253 +2155,37 @@ sub _log :Private {
 		);
 	};
 
-	# -----------------------------------------------------------------------
-	# Dispatch to the configured backend(s)
-	# -----------------------------------------------------------------------
-	if(my $logger = $self->{'logger'}) {
-		if(ref($logger) eq 'CODE') {
-			# CODE-ref backend: build the args hashref and invoke the callback
-			my $args = {
-				class   => Scalar::Util::blessed($self) || __PACKAGE__,
-				file    => $caller_file,
-				line    => $caller_line,
-				level   => $level,
-				message => \@messages,
-			};
-			if(my $ctx = $self->{ctx}) {
-				$args->{ctx} = $ctx;
-			}
-			$args->{fields} = $fields if($fields);
-			$logger->($args);
-		} elsif(ref($logger) eq 'ARRAY') {
-			# ARRAY-ref backend: push a simple hashref
-			push @{$logger}, { @entry };
-		} elsif(ref($logger) eq 'HASH') {
-			# HASH backend: route to whichever sub-keys are present
+	# What a backend needs to know about the message, and closures for
+	# the private methods it needs (see Log::Abstraction::Backend)
+	my %event = (
+		level       => $level,
+		priority    => $syslog_values{$level},
+		message     => $str,
+		parts       => \@messages,
+		fields      => $fields,
+		fields_text => $fields_text,
+		text        => $text,
+		entry       => \@entry,
+		class       => Scalar::Util::blessed($self) || __PACKAGE__,
+		file        => $caller_file,
+		line        => $caller_line,
+		ctx         => $self->{ctx},
+		render      => $render,
+		write       => sub {
+			my ($target, $line) = @_;
+			$target = $self->_validate_file_path($target) if(!ref($target));
+			$self->_write_line($target, $line);
+		},
+		send_email   => sub { $self->_send_email(@_) },
+		hold_email   => sub { $self->_hold_email(@_) },
+		field_string => sub { _field_string(@_) },
+	);
 
-			# Each sub-backend may have its own 'level' and 'format' (file,
-			# fd and array in their hash form; see _backend)
-
-			# -- file sub-backend -------------------------------------------
-			my ($raw_file, $file_level, $file_format) = _backend('file', $logger->{'file'});
-			if($raw_file && _wants($level, $file_level)) {
-				my $file = $self->_validate_file_path($raw_file);
-				$self->_write_line($file, $render->($file_format));
-			}
-
-			# -- array sub-backend ------------------------------------------
-			# With a format, the entry's message is the formatted line
-			my ($array, $array_level, $array_format) = _backend('array', $logger->{'array'});
-			if($array && _wants($level, $array_level)) {
-				push @{$array}, { @entry, (defined($array_format) ? (message => $render->($array_format)) : ()) };
-			}
-
-			# -- sendmail sub-backend ---------------------------------------
-			# ('to' and 'level' have been validated by new())
-			if(exists($logger->{'sendmail'}) && exists($logger->{'sendmail'}->{'to'})) {
-				my $sm = $logger->{'sendmail'};
-
-				# Check the level threshold for email (undef means send always)
-				if(_wants($level, $sm->{'level'})) {
-					my $body = defined($sm->{'format'}) ? $render->($sm->{'format'}) : $text;
-
-					# Honour the minimum-interval throttle
-					my $throttled = 0;
-					if(my $interval = $sm->{'min_interval'}) {
-						$throttled = defined($self->{_last_email_sent})
-							&& (time() - $self->{_last_email_sent}) < $interval;
-					}
-
-					# A throttled message is dropped, or with digest held for
-					# the next email.  A failed send doesn't stop the other
-					# backends (_send_email carps)
-					if(!$throttled) {
-						$self->_send_email($sm, $body);
-					} elsif($sm->{'digest'}) {
-						$self->_hold_email($sm, $body);
-					}
-				}
-			}
-
-			# -- syslog sub-backend -----------------------------------------
-			if(my $syslog = $logger->{'syslog'}) {
-				if(_wants($level, $syslog->{'level'})) {
-
-					# Open the persistent syslog connection on first use
-					if(!$self->{_syslog_opened}) {
-						my $facility = delete $syslog->{'facility'} || $DEFAULT_SYSLOG_FACILITY;
-						my $min_level = delete $syslog->{'level'};
-						my $format = delete $syslog->{'format'};
-
-						# Accept 'server' as an alias for 'host' (CHI convention)
-						if($syslog->{'server'}) {
-							$syslog->{'host'} = delete $syslog->{'server'};
-						}
-						Sys::Syslog::setlogsock($syslog) if(scalar keys %{$syslog});
-						$syslog->{'facility'} = $facility;
-						$syslog->{'level'}    = $min_level if(defined($min_level));
-						$syslog->{'format'}   = $format if(defined($format));
-
-						Sys::Syslog::openlog($self->{script_name}, $DEFAULT_SYSLOG_OPTIONS, $DEFAULT_SYSLOG_IDENTITY);
-						$self->{_syslog_opened} = 1;
-						$syslog_open_count++;
-					}
-
-					# Map internal level names to syslog priority strings.  The
-					# message is passed through '%s' so that a '%m' (or any other
-					# '%' sequence) in it is logged literally.
-					eval {
-						my $priority = $LEVEL_TO_SYSLOG_PRIORITY{$level};
-						my $facility = $syslog->{'facility'};
-						my $message = defined($syslog->{'format'}) ? $render->($syslog->{'format'}) : $text;
-						Sys::Syslog::syslog("$priority|$facility", '%s', $message);
-					};
-					if($@) {
-						Carp::carp(ref($self), ": syslog failed: $@");
-					}
-				}
-			}
-
-			# -- journald sub-backend --------------------------------------
-			# (extra field names have been validated by new())
-			my $jd = $logger->{'journald'};
-			if($jd && _wants($level, $jd->{'level'})) {
-				# Map internal level name to journald/syslog PRIORITY integer (0=emerg, 7=debug)
-				my $priority  = $syslog_values{$level};
-				my $sock_path = $jd->{'socket'} || $DEFAULT_JOURNALD_SOCKET;
-
-				# Determine the syslog identifier (script name or basename of $0)
-				my $ident = $jd->{'identifier'} || $self->{'script_name'} || do {
-					require File::Basename;
-					File::Basename::basename($0);
-				};
-
-				# Mandatory journald fields
-				my %entry = (
-					MESSAGE           => defined($jd->{'format'}) ? $render->($jd->{'format'}) : $str,
-					PRIORITY          => $priority,
-					SYSLOG_IDENTIFIER => $ident,
-				);
-
-				# Include any extra fields from the journald config hash
-				for my $key (keys %{$jd}) {
-					next if lc($key) =~ /^(?:socket|identifier|level|format)$/;
-					$entry{uc($key)} = $jd->{$key};
-				}
-
-				# Then the structured fields.  These weren't checked by new(),
-				# so make each name valid rather than reject it: upper-case,
-				# other characters to '_', no leading '_' (journald reserves
-				# those for trusted fields) and at most 64 characters
-				for my $key (keys %{$fields || {}}) {
-					(my $name = uc($key)) =~ s/[^A-Z0-9_]/_/g;
-					$name =~ s/^_+//;
-					$name = substr($name, 0, $JOURNALD_MAX_FIELD_NAME);
-					next if(($name eq '') || $name =~ /^(?:MESSAGE|PRIORITY|SYSLOG_IDENTIFIER)$/);
-					$entry{$name} = _field_string($fields->{$key});
-				}
-
-				# Delivery failures are silent; the app must not crash on log
-				# errors.  Carp only on the first failure, so that a system
-				# without journald (FreeBSD, macOS) isn't flooded with warnings;
-				# a later success re-arms the warning.
-				if(eval { $self->_journald_send($sock_path, %entry); 1 }) {
-					delete $self->{_journald_failed};
-				} elsif(!$self->{_journald_failed}++) {
-					Carp::carp(ref($self), ": journald send failed: $@");
-				}
-			}
-
-			# -- log_any and log_dispatch sub-backends -----------------------
-			# Log::Any takes the fields as data; Log::Dispatch gets them as
-			# text.  With a format, both get the formatted line instead
-			for my $name (qw(log_any log_dispatch)) {
-				my ($dest, $dest_level, $dest_format) = _backend($name, $logger->{$name});
-				next if(!defined($dest) || !_wants($level, $dest_level));
-				if(defined($dest_format)) {
-					$self->_produce($dest, $level, $render->($dest_format));
-				} elsif($name eq 'log_any') {
-					$self->_produce($dest, $level, $str, $fields);
-				} else {
-					$self->_produce($dest, $level, $text);
-				}
-			}
-
-			# -- fd sub-backend ---------------------------------------------
-			if($logger->{'fd'}) {
-				my ($fout, $fd_level, $fd_format) = _backend('fd', $logger->{'fd'});
-				$self->_write_line($fout, $render->($fd_format)) if(_wants($level, $fd_level));
-
-			} elsif(!$logger->{'file'} && !$logger->{'array'}
-					&& !$logger->{'syslog'} && !exists($logger->{'sendmail'})
-					&& !$logger->{'fd'} && !$logger->{'journald'}
-					&& !$logger->{'log_any'} && !$logger->{'log_dispatch'}) {
-				# Hash logger with no recognised sub-key -- configuration error
-				Carp::croak(ref($self), ": Don't know how to deal with the $level message");
-			}
-
-		} elsif(!ref($logger)) {
-			# Scalar-path backend: validate path then append to the file
-			my $safe_path = $self->_validate_file_path($logger);
-			$self->_write_line($safe_path, $render->());
-
-		} elsif(Scalar::Util::blessed($logger)
-				&& ($logger->isa('Log::Any::Proxy') || $logger->isa('Log::Dispatch'))) {
-			# Log::Any and Log::Dispatch objects: as the log_any and
-			# log_dispatch backends, rather than one method per level
-			# (neither has a level method for every level, and both join
-			# the arguments with spaces)
-			if($logger->isa('Log::Any::Proxy')) {
-				$self->_produce($logger, $level, $str, $fields);
-			} else {
-				$self->_produce($logger, $level, $text);
-			}
-
-		} elsif(Scalar::Util::blessed($logger)) {
-			# Object backend: delegate to the method matching the level name
-			if(!$logger->can($level)) {
-				# Log::Log4perl has no notice(), critical(), alert() or
-				# emergency(); use the nearest method it does have
-				my @fallbacks = ($level eq 'notice') ? ('info')
-					: ($level =~ /^(?:critical|alert|emergency)$/) ? ('fatal', 'error')
-					: ();
-				if(my ($method) = grep { $logger->can($_) } @fallbacks) {
-					$level = $method;
-				} else {
-					Carp::croak(
-						ref($self), ': ', ref($logger),
-						" doesn't know how to deal with the $level message",
-					);
-				}
-			}
-			$logger->$level(@messages, ($fields ? ((length($str) ? ' ' : '') . $fields_text) : ()));
-
-		} else {
-			Carp::croak(ref($self),
-				": configuration error, no handler written for the $level message");
-		}
-
-	} elsif($self->{'array'}) {
-		# Top-level 'array' key (not nested inside logger hash)
-		my ($array, $array_level, $array_format) = _backend('array', $self->{'array'});
-		if(_wants($level, $array_level)) {
-			push @{$array}, { @entry, (defined($array_format) ? (message => $render->($array_format)) : ()) };
-		}
-	}
-
-	# -----------------------------------------------------------------------
-	# Top-level 'file' and 'fd' keys (parallel to 'logger'), which may also
-	# have their own level and format
-	# -----------------------------------------------------------------------
-	my ($top_file, $top_file_level, $top_file_format) = _backend('file', $self->{'file'});
-	if($top_file && _wants($level, $top_file_level)) {
-		my $file = $self->_validate_file_path($top_file);
-		$self->_write_line($file, $render->($top_file_format));
-	}
-
-	my ($top_fd, $top_fd_level, $top_fd_format) = _backend('fd', $self->{'fd'});
-	if($top_fd && _wants($level, $top_fd_level)) {
-		$self->_write_line($top_fd, $render->($top_fd_format));
+	# Pass the message to every backend whose own level it passes.  A bare
+	# object (not made by new()) builds them now
+	my $backends = $self->{_backends} //= $self->_build_backends();
+	for my $backend (@{$backends}) {
+		$backend->emit($self, \%event) if($backend->wants(\%event));
 	}
 }
 
@@ -3457,8 +3101,7 @@ sub DESTROY {
 	# when the last instance using it goes away
 	if($self->{_syslog_opened}) {
 		delete $self->{_syslog_opened};
-		$syslog_open_count-- if($syslog_open_count > 0);
-		Sys::Syslog::closelog() if($syslog_open_count == 0);
+		Log::Abstraction::Backend::Syslog->release_connection();
 	}
 }
 
@@ -3631,6 +3274,10 @@ Nigel Horne C<njh@nigelhorne.com>
 Route messages from any C<Log::Any>-using CPAN module through
 C<Log::Abstraction> with a single C<Log::Any::Adapter-E<gt>set()> call,
 or send messages on to Log::Any with the C<log_any> backend.
+
+=item * L<Log::Abstraction::Backend>
+
+The classes that send messages to each kind of backend.
 
 =item * L<Log::Dispatch>
 

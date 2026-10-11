@@ -11,8 +11,18 @@ Revision history for Log-Abstraction
 	- A Log::Any logger or Log::Dispatch object given as the logger is used
 	  the same way.  Before, Log::Dispatch croaked on trace() (it has no
 	  trace method), and both joined the message's parts with spaces.
+	[ API Changes ]
+	- Each backend is now a Log::Abstraction::Backend::* object, built once
+	  by new() instead of worked out again for every message.
+	- new() croaks on a logger hash with none of the backend keys, and on a
+	  logger that is an unsupported kind of reference.  Before, the first
+	  message croaked ("Don't know how to deal with the <level> message",
+	  "configuration error, no handler written for the <level> message").
+	[ Bug Fixes ]
+	- The syslog hash given to new() is no longer changed: the first
+	  message renamed its 'server' key 'host'.
 	[ Tests ]
-	- New t/producers.t.
+	- New t/producers.t and t/backends.t.
 
 0.39	Tue Oct  6 08:17:42 PM EDT 2026
 	[ Bug Fixes ]

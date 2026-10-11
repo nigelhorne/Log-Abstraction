@@ -488,6 +488,11 @@ or in a `logger` hash) and `script_name` is not supplied.  Loads
 `Log::Log4perl` if no backend (`logger`, `file`, `fd` or `array`) is
 specified.
 
+Builds one [Log::Abstraction::Backend](https://metacpan.org/pod/Log%3A%3AAbstraction%3A%3ABackend) object for each place messages go
+to.  The arguments are not changed: in particular, the `syslog` hash keeps
+its `facility`, `level` and `format` keys, and a `server` key is not
+renamed `host` (before 0.40, the first message did both).
+
 #### Example
 
 ```perl
@@ -586,6 +591,12 @@ Error                                     Meaning / Action
   positive integer, not '<v>'"            number.
 "<class>: invalid journald field name     An extra journald key, upper-cased, is not
   '<k>'"                                  [A-Z0-9_] or starts with '_'.
+"<class>: the logger hash has none of     The logger hash has nowhere to send
+  the keys array, fd, file, journald,     messages.  (Before 0.40, the first
+  log_any, log_dispatch, sendmail,        message croaked "Don't know how to deal
+  syslog"                                 with the <level> message".)
+"<class>: the logger can't be a <TYPE>    logger is a reference of an unsupported
+  reference"                              type, e.g. a SCALAR or GLOB reference.
 "<class>: log_any must be a Log::Any      log_any is neither a Log::Any logger
   logger or a category name"              (Log::Any::Proxy) nor a non-empty string.
 "<class>: log_any needs Log::Any to be    log_any is a category name but Log::Any
@@ -612,14 +623,8 @@ Croak                                     Meaning / Action
                                           other than A-Z a-z 0-9 . -
 "<class>: Invalid SMTP port: <port>"      The sendmail 'port' is not an integer in
                                           1-65535.
-"<class>: Don't know how to deal with     A logger hash has none of the keys file,
-  the <level> message"                    array, fd, syslog, journald, sendmail,
-                                          log_any or log_dispatch.
 "<class>: <object class> doesn't know     An object logger has no method for this
   how to deal with the <level> message"   level.  (notice falls back to info.)
-"<class>: configuration error, no         logger is a reference of an unsupported
-  handler written for the <level>         type, e.g. a SCALAR or GLOB reference.
-  message"
 
 Carp                                      Meaning / Action
 ----------------------------------------  -----------------------------------------
@@ -658,6 +663,7 @@ FUNCTION new(class_or_obj, args...)
     copy message history list
     start the clone with no held email digest
     count the clone as a user of an open syslog connection
+    build the clone's own backends
     RETURN clone
 
   IF syslog requested (top level or in a logger hash) and script_name
@@ -702,8 +708,11 @@ FUNCTION new(class_or_obj, args...)
     CROAK if a sendmail sub-hash has no 'to' address, or a digest_max
       that isn't a positive integer
     CROAK if an extra journald key is not a valid journald field name
+    CROAK if it has none of the backend keys
 
-  RETURN bless { messages => [], merged args, level => numeric } as class
+  self = bless { messages => [], merged args, level => numeric } as class
+  self->{_backends} = _build_backends()  (CROAK on an unsupported logger)
+  RETURN self
 
 END FUNCTION
 ```
@@ -1566,6 +1575,10 @@ Nigel Horne `njh@nigelhorne.com`
     Route messages from any `Log::Any`-using CPAN module through
     `Log::Abstraction` with a single `Log::Any::Adapter->set()` call,
     or send messages on to Log::Any with the `log_any` backend.
+
+- [Log::Abstraction::Backend](https://metacpan.org/pod/Log%3A%3AAbstraction%3A%3ABackend)
+
+    The classes that send messages to each kind of backend.
 
 - [Log::Dispatch](https://metacpan.org/pod/Log%3A%3ADispatch)
 

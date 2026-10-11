@@ -38,6 +38,8 @@ iso
 journald
 LF
 LoadFile
+LogAny
+LogDispatch
 logfmt
 LoggerProvider
 LogRecord
