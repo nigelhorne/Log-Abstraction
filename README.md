@@ -389,13 +389,26 @@ called on an object.  It may also be called as a plain function,
 
     The `sendmail` sub-hash supports:
     `host`, `port`, `to`, `from`, `subject`, `level`, `format`,
-    `min_interval`, `digest`, `digest_max`.  `to` is required.  With `format`, the email body is the
+    `min_interval`, `digest`, `digest_max`, `async`.  `to` is required.  With `format`, the email body is the
     formatted line rather than the message.  `level` may be a level name or a syslog number (0-7);
     without it, every message is emailed.
     At most one email is sent per `min_interval` seconds per instance; the
     messages in between are dropped, unless `digest` is set, which sends them
     with the next email (see ["Email digests"](#email-digests)).  If delivery fails,
     `Carp::carp` is called and the other backends still receive the message.
+
+    Sending an email waits for the SMTP server, which can take seconds.  With
+    `async => 1`, the email is sent by a child process (made with
+    `fork`), and the log call returns at once.  The `host` and `port` are
+    still checked first.  The logger can't know whether the child succeeded:
+    the child carps a failure itself, and the message (and any digest sent
+    with it) is lost rather than held.  Emails sent close together are sent at
+    the same time, so they may arrive in any order.  The finished children are
+    reaped the next time an email is sent and when a logger is destroyed; a program that
+    reaps every child itself (e.g. `waitpid(-1, ...)` in a `$SIG{CHLD}`
+    handler) may see them.  On Windows, whose `fork` is emulated with threads,
+    when `fork` fails, and for the email sent when perl exits, the email is
+    sent in the log call as without `async`.
 
     The `syslog` sub-hash supports the keys below.  The message is passed to
     `syslog()` through a `%s` format, so `%` sequences in it, such as `%m`,

@@ -52,10 +52,6 @@ package Log::Abstraction;
 #   - Store the provider reference, not a cached Logger, to survive
 #     provider swaps (workaround for blocker 3 above).
 
-# Roadmap - technical debt:
-#   - Optional asynchronous/non-blocking delivery for the sendmail backend;
-#     a blocking SMTP conversation inside a log call is a latency hazard.
-
 # Enforce strict variable declarations and enable common warnings
 use strict;
 use warnings;
@@ -197,6 +193,10 @@ Readonly::Scalar my $RE_JOURNALD_FIELD => qr/^[A-Z0-9][A-Z0-9_]*$/;
 # beyond it they are only counted
 Readonly::Scalar my $DEFAULT_DIGEST_MAX => 100;
 
+# Exit status of an async sendmail child (see _send_email)
+Readonly::Scalar my $EXIT_SENT   => 0;
+Readonly::Scalar my $EXIT_FAILED => 1;
+
 # What each match of a redact pattern is replaced with
 Readonly::Scalar my $REDACTED_MARKER => '[REDACTED]';
 
@@ -216,6 +216,10 @@ my $sighup_count = 0;
 my $sighup_handler;
 my $sighup_previous;
 my $sighup_users = 0;
+
+# Process IDs of the children sending emails for sendmail's async option,
+# not yet reaped (by _reap_email_children)
+my @email_children;
 
 =head1 NAME
 
@@ -613,13 +617,26 @@ When not supplied, L<Log::Log4perl> is initialised as the default backend.
 
 The C<sendmail> sub-hash supports:
 C<host>, C<port>, C<to>, C<from>, C<subject>, C<level>, C<format>,
-C<min_interval>, C<digest>, C<digest_max>.  C<to> is required.  With C<format>, the email body is the
+C<min_interval>, C<digest>, C<digest_max>, C<async>.  C<to> is required.  With C<format>, the email body is the
 formatted line rather than the message.  C<level> may be a level name or a syslog number (0-7);
 without it, every message is emailed.
 At most one email is sent per C<min_interval> seconds per instance; the
 messages in between are dropped, unless C<digest> is set, which sends them
 with the next email (see L</Email digests>).  If delivery fails,
 C<Carp::carp> is called and the other backends still receive the message.
+
+Sending an email waits for the SMTP server, which can take seconds.  With
+C<async =E<gt> 1>, the email is sent by a child process (made with
+C<fork>), and the log call returns at once.  The C<host> and C<port> are
+still checked first.  The logger can't know whether the child succeeded:
+the child carps a failure itself, and the message (and any digest sent
+with it) is lost rather than held.  Emails sent close together are sent at
+the same time, so they may arrive in any order.  The finished children are
+reaped the next time an email is sent and when a logger is destroyed; a program that
+reaps every child itself (e.g. C<waitpid(-1, ...)> in a C<$SIG{CHLD}>
+handler) may see them.  On Windows, whose C<fork> is emulated with threads,
+when C<fork> fails, and for the email sent when perl exits, the email is
+sent in the log call as without C<async>.
 
 The C<syslog> sub-hash supports the keys below.  The message is passed to
 C<syslog()> through a C<%s> format, so C<%> sequences in it, such as C<%m>,
@@ -1973,7 +1990,7 @@ sub _close_files :Private {
 # Purpose:      The sendmail backend's delivery, shared by _log and flush().
 # Entry:        $self  -- the logger object (the digest and throttle state).
 #               $sm    -- the sendmail hash (to, from, subject, host, port,
-#                         digest).
+#                         digest, async).
 #               @lines -- the bodies of the new messages (none from flush).
 # Exit:         Returns 1 if the email was sent or there was nothing to
 #               send, 0 if delivery failed.
@@ -1985,14 +2002,25 @@ sub _close_files :Private {
 # Notes:        The body is the held lines, a "... and N more" line if some
 #               were dropped, then @lines, one per line; a single message
 #               with nothing held is sent exactly as it is.
+#               With async (not on Windows, nor while perl is exiting), a
+#               forked child sends the email and this returns 1 at once, as
+#               if it had been sent: the child carps a failure itself, and
+#               the lines are lost.  If fork fails, the email is sent here.
 #
 # Pseudocode:
 #   FUNCTION _send_email(self, sm, lines...)
 #     CROAK if host contains unsafe characters, or port isn't 1-65535
 #     body = held digest, "... and N more" if N were dropped, lines
 #     RETURN 1 if body is empty
-#     (eval) load Email::* modules; build email with sanitised headers and
-#            body joined with newlines; send via SMTP transport
+#     deliver = load Email::* modules; build email with sanitised headers
+#               and body joined with newlines; send via SMTP transport
+#     IF sm->{async} AND not Windows AND perl isn't exiting:
+#       reap finished children
+#       fork
+#       IN THE CHILD: (eval) deliver; CARP on failure; _exit
+#       IN THE PARENT, if the fork worked: remember the child; clear the
+#         digest; record the time for the throttle; RETURN 1
+#     (eval) deliver
 #     IF it failed:
 #       CARP; IF sm->{digest}: hold each of lines; RETURN 0
 #     clear the digest; record the time for the throttle; RETURN 1
@@ -2019,8 +2047,8 @@ sub _send_email :Private {
 	);
 	return 1 if(!@body);
 
-	# Load mail modules lazily; wrap only I/O in eval to handle delivery failures
-	eval {
+	# Load mail modules lazily; called in an eval to handle delivery failures
+	my $deliver = sub {
 		require Email::Simple;
 		require Email::Sender::Simple;
 		require Email::Sender::Transport::SMTP;
@@ -2042,7 +2070,37 @@ sub _send_email :Private {
 		# nothing is imported into this package
 		Email::Sender::Simple->send($email, { transport => $transport });
 	};
-	if($@) {
+
+	# async: send from a child process, so that the log call doesn't wait
+	# for the SMTP conversation.  Windows' fork is emulated with threads,
+	# and while perl is exiting (DESTROY's flush) the modules may be gone
+	if($sm->{'async'} && ($^O ne 'MSWin32') && (${^GLOBAL_PHASE} ne 'DESTRUCT')) {
+		_reap_email_children();
+		my $pid = do {
+			no autodie qw(fork);
+			fork();
+		};
+		if(defined($pid) && ($pid == 0)) {
+			# The child: no END blocks, destructors or buffered output of
+			# the parent's must run here, so leave with _exit
+			my $ok = eval { $deliver->(); 1 };
+			if(!$ok) {
+				# Copied first: entering the eval clears $@
+				my $error = $@;
+				eval { Carp::carp("Failed to send email: $error") };
+			}
+			POSIX::_exit($ok ? $EXIT_SENT : $EXIT_FAILED);
+		}
+		if(defined($pid)) {
+			push @email_children, $pid;
+			delete @{$self}{qw(_email_digest _email_digest_dropped)};
+			$self->{_last_email_sent} = time();
+			return 1;
+		}
+		# fork failed: send it here instead
+	}
+
+	if(!eval { $deliver->(); 1 }) {
 		Carp::carp("Failed to send email: $@");
 		if($sm->{'digest'}) {
 			$self->_hold_email($sm, $_) for @lines;
@@ -2054,6 +2112,24 @@ sub _send_email :Private {
 	delete @{$self}{qw(_email_digest _email_digest_dropped)};
 	$self->{_last_email_sent} = time();
 	return 1;
+}
+
+# ---------------------------------------------------------------------------
+# _reap_email_children -- collect the async sendmail children that finished
+#
+# Purpose:      Stop finished children from being left as zombies.
+# Entry:        None.
+# Exit:         Returns nothing.
+# Side effects: Reaps, without waiting, the children in @email_children
+#               that have exited, and forgets them.  One already reaped by
+#               the program (e.g. by a SIGCHLD handler) is forgotten too.
+# Notes:        Called before each async send and by DESTROY.  Children
+#               still running then are reaped by a later call, or when the
+#               program exits.
+# ---------------------------------------------------------------------------
+sub _reap_email_children :Private {
+	@email_children = grep { waitpid($_, POSIX::WNOHANG()) == 0 } @email_children;
+	return;
 }
 
 # ---------------------------------------------------------------------------
@@ -3372,6 +3448,9 @@ sub DESTROY {
 
 	# Send any messages a sendmail digest is still holding
 	eval { $self->flush() } if($self->{_email_digest});
+
+	# Collect async sendmail children that have finished
+	_reap_email_children() if(@email_children);
 
 	# openlog/closelog are process-global, so only close the connection
 	# when the last instance using it goes away

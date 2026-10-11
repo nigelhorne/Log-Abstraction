@@ -13,6 +13,7 @@ Test::Spelling::Comment->new()->add_stopwords(<DATA>)->all_files_ok();
 
 __DATA__
 Any
+async
 autodie
 callstack
 closelog
@@ -20,6 +21,7 @@ Corinna
 ctx
 debug
 dest
+DESTROY
 DGRAM
 dT
 emerg
@@ -70,6 +72,7 @@ rfc
 SDK
 SeverityNumber
 SIG
+SIGCHLD
 SIGHUP
 sighup
 sm

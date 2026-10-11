@@ -134,53 +134,97 @@ subtest "SIGHUP reopens every logger's files" => sub {
 	is_deeply([ lines($p2) ], [qw(one two)], 'in both files');
 };
 
+# Checked in a new perl, because whether the handler is put back depends on
+# every logger that used it having been freed.  In this process, a tool such
+# as Devel::Cover (the CI dashboard) can keep a logger from an earlier
+# subtest alive, which then (correctly) keeps the handler installed
+my $restore_script = <<'SCRIPT';
+use strict;
+use warnings;
+use Log::Abstraction;
+
+my $dir = shift;
+my $n = 0;
+sub logger {
+	return Log::Abstraction->new(level => 'info', format => '%message%', file => "$dir/restore" . ++$n . '.log', @_);
+}
+
+my $program = sub { };
+$SIG{HUP} = $program;
+sub state {
+	my $h = $SIG{HUP};
+	return !defined($h) ? 'undef' : !ref($h) ? $h : ($h == $program) ? 'program' : 'module';
+}
+
+{
+	my $log1 = logger();
+	my $log2 = logger();
+	$_->info('x') for($log1, $log2);
+	my $clone = $log1->new(level => 'debug');
+	$clone->info('x');
+	print state(), "\n";
+	undef $log1;
+	print state(), "\n";
+	undef $log2;
+	print state(), "\n";
+}
+print state(), "\n";
+{
+	my $log = logger();
+	$log->info('x');
+	print state(), "\n";
+}
+print state(), "\n";
+for my $previous ('IGNORE', 'DEFAULT') {
+	local $SIG{HUP} = $previous;
+	{ logger()->info('x') }
+	print state(), "\n";
+}
+my $mine = sub { };
+{
+	my $log = logger();
+	$log->info('x');
+	$SIG{HUP} = $mine;
+	undef $log;
+	print(($SIG{HUP} == $mine) ? "mine\n" : state() . "\n");
+}
+$SIG{HUP} = $program;
+{
+	my $log = logger(reopen_interval => 0);
+	$log->info('x');
+	print state(), "\n";
+}
+SCRIPT
+
 subtest 'the previous SIGHUP handler is put back' => sub {
 	plan skip_all => "no SIGHUP handler on $^O" if($^O eq 'MSWin32');
 
-	is($SIG{HUP}, $program_handler, "the program's handler is back after the earlier loggers were freed");
-	{
-		my $log1 = logger(new_path());
-		my $log2 = logger(new_path());
-		$log1->info('x');
-		$log2->info('x');
-		my $clone = $log1->new(level => 'debug');
-		$clone->info('x');
-		isnt($SIG{HUP}, $program_handler, 'replaced while loggers have files open');
-		undef $log1;
-		isnt($SIG{HUP}, $program_handler, 'still replaced while one remains');
-		undef $log2;
-		isnt($SIG{HUP}, $program_handler, 'a clone counts as a user too');
-	}
-	is($SIG{HUP}, $program_handler, 'put back when the last one is freed');
+	my $script = "$tmpdir/restore.pl";
+	open(my $fout, '>', $script) or die "$script: $!";
+	print $fout $restore_script;
+	close $fout;
 
-	{
-		my $log = logger(new_path());
-		$log->info('x');
-		isnt($SIG{HUP}, $program_handler, 'installed again by the next logger');
-	}
-	is($SIG{HUP}, $program_handler, 'and put back again');
+	# The child finds the module where this perl did (lib or blib), and
+	# runs without coverage or debugger options
+	require Config;
+	local $ENV{PERL5LIB} = join($Config::Config{path_sep}, grep { !ref } @INC);
+	delete local $ENV{PERL5OPT};
+	open(my $child, '-|', $^X, $script, $tmpdir) or die "$^X: $!";
+	my @states = map { s/\r?\n\z//r } <$child>;
+	ok(close($child), 'the child perl ran') or diag("exit status $?");
 
-	for my $previous ('IGNORE', 'DEFAULT') {
-		local $SIG{HUP} = $previous;
-		{ logger(new_path())->info('x') }
-		is($SIG{HUP}, $previous, "$previous is put back");
-	}
-
-	my $mine = sub { };
-	{
-		local $SIG{HUP} = $program_handler;
-		my $log = logger(new_path());
-		$log->info('x');
-		$SIG{HUP} = $mine;
-		undef $log;
-		is($SIG{HUP}, $mine, "a handler the program set afterwards isn't changed");
-	}
-
-	{
-		my $log = logger(new_path(), reopen_interval => 0);
-		$log->info('x');
-		is($SIG{HUP}, $program_handler, 'not installed with reopen_interval 0');
-	}
+	is_deeply(\@states, [
+		'module',     # two loggers and a clone have files open
+		'module',     # one logger freed
+		'module',     # the clone still uses it
+		'program',    # all freed: the program's handler is back
+		'module',     # installed again by the next logger
+		'program',    # and put back again
+		'IGNORE',     # IGNORE is put back
+		'DEFAULT',    # and DEFAULT
+		'mine',       # a handler the program set afterwards isn't changed
+		'program',    # not installed with reopen_interval 0
+	], 'the handler is installed while loggers use it, and put back after') or diag(explain(\@states));
 };
 
 subtest 'reopen_interval' => sub {

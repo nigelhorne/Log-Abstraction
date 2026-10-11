@@ -26,6 +26,10 @@ Revision history for Log-Abstraction
 	- The journald backend keeps its socket open between messages instead
 	  of creating one for every message.  A failed send closes it, and the
 	  next message opens a new one.
+	- New sendmail option async: the email is sent by a forked child, so
+	  the log call doesn't wait for the SMTP server.  A failure is carped
+	  by the child, and the message is lost rather than held.  On Windows
+	  the email is sent in the log call as before.
 	[ API Changes ]
 	- Each backend is now a Log::Abstraction::Backend::* object, built once
 	  by new() instead of worked out again for every message.
@@ -37,7 +41,7 @@ Revision history for Log-Abstraction
 	- The syslog hash given to new() is no longer changed: the first
 	  message renamed its 'server' key 'host'.
 	[ Tests ]
-	- New t/producers.t and t/backends.t and t/file_handles.t.
+	- New t/producers.t and t/backends.t and t/file_handles.t and t/sendmail_async.t.
 
 0.39	Tue Oct  6 08:17:42 PM EDT 2026
 	[ Bug Fixes ]
