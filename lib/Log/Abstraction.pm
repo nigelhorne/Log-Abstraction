@@ -211,8 +211,12 @@ my $json_encoder;
 # close it between _file_handle returning it and the print
 my $sighup_count = 0;
 
-# True once _catch_sighup has installed the SIGHUP handler
-my $sighup_caught;
+# The SIGHUP handler that _catch_sighup installed, if it is installed; the
+# $SIG{HUP} it replaced, put back by _release_sighup; and how many loggers
+# use it (each has _sighup set)
+my $sighup_handler;
+my $sighup_previous;
+my $sighup_users = 0;
 
 =head1 NAME
 
@@ -473,8 +477,11 @@ on Windows, the first time a logger opens a file, C<Log::Abstraction> sets
 C<$SIG{HUP}> to a handler that makes every logger open its files again on
 the next write.  A handler that was already set (a code reference or a sub
 name) is called after it.  This means a C<SIGHUP> no longer ends the
-program, as it does by default.  A handler that the program sets later
-replaces C<Log::Abstraction>'s; it can call L</reopen> itself.
+program, as it does by default, while a logger that has opened a file
+exists.  When the last of them is destroyed, the handler that was there
+before is put back.  A handler that the program sets later replaces
+C<Log::Abstraction>'s (and isn't changed when the loggers are destroyed);
+it can call L</reopen> itself.
 
 In case a C<SIGHUP> isn't sent, every file is also closed and opened again
 every 5 minutes, by default.  C<reopen_interval> changes how often, makes
@@ -916,7 +923,8 @@ logging failure must never crash the application.
       shallow-clone self merged with override args
       validate and store new level integer if level given in args
       copy message history list
-      start the clone with no held email digest and no open files
+      start the clone with no held email digest, no open files, and not
+        counted as a user of the SIGHUP handler
       count the clone as a user of an open syslog connection
       build the clone's own backends
       RETURN clone
@@ -1031,7 +1039,7 @@ sub new {
 		# A clone has its own digest, or held messages would be sent twice
 		delete @{$clone}{qw(_email_digest _email_digest_dropped)};
 		# and opens its own files, so that closing them doesn't affect the parent
-		delete $clone->{_handles};
+		delete @{$clone}{qw(_handles _sighup)};
 		# The clone shares the parent's open syslog connection
 		Log::Abstraction::Backend::Syslog->retain_connection() if($clone->{_syslog_opened});
 		# and has its own backends, as the overrides may change them
@@ -1859,7 +1867,7 @@ sub _file_handle :Private {
 		$self->_close_files($path);
 	}
 
-	_catch_sighup() unless(($self->{'reopen_interval'} // $DEFAULT_REOPEN_INTERVAL) == $REOPEN_EVERY_WRITE);
+	$self->_catch_sighup() unless(($self->{'reopen_interval'} // $DEFAULT_REOPEN_INTERVAL) == $REOPEN_EVERY_WRITE);
 	open(my $fh, '>>', $path);
 	$fh->autoflush(1);
 	my @st = stat($path);
@@ -1874,34 +1882,68 @@ sub _file_handle :Private {
 #
 # Purpose:      logrotate's postrotate script, and similar tools, send
 #               SIGHUP to tell a program to reopen its log files.
-# Entry:        None.
+# Entry:        $self -- the logger opening a file.
 # Exit:         Returns nothing.
-# Side effects: The first time, except on Windows, sets $SIG{HUP} to a
-#               handler that counts the signal (see $sighup_count) and then
-#               calls the handler that was there before, if it was a code
-#               reference or a sub name.  So SIGHUP no longer ends the
-#               process by default.
+# Side effects: Except on Windows, counts the logger as a user of the
+#               handler (_sighup), and if no logger has installed it, saves
+#               $SIG{HUP} and sets it to a handler that counts the signal
+#               (see $sighup_count) and then calls the saved handler, if it
+#               is a code reference or a sub name.  So SIGHUP doesn't end
+#               the process by default while a logger uses the handler;
+#               _release_sighup puts the saved one back.
 # Notes:        Called when a file is opened, so a program that never logs
 #               to a file keeps its SIGHUP behaviour.  A handler the program
 #               sets afterwards replaces this one; reopen_interval still
 #               reopens the files.
 # ---------------------------------------------------------------------------
 sub _catch_sighup :Private {
-	return if($sighup_caught || ($^O eq 'MSWin32'));
-	$sighup_caught = 1;
+	my $self = $_[0];
 
-	my $previous = $SIG{HUP};
-	if(defined($previous) && !ref($previous)) {
-		$previous = undef if(($previous eq '') || ($previous eq 'IGNORE') || ($previous eq 'DEFAULT'));
-		$previous = "main::$previous" if(defined($previous) && ($previous !~ /::/));
+	return if($self->{_sighup} || ($^O eq 'MSWin32'));
+	$self->{_sighup} = 1;
+	$sighup_users++;
+	return if($sighup_handler);
+
+	$sighup_previous = $SIG{HUP};
+	my $chain = $sighup_previous;
+	if(defined($chain) && !ref($chain)) {
+		$chain = undef if(($chain eq '') || ($chain eq 'IGNORE') || ($chain eq 'DEFAULT'));
+		$chain = "main::$chain" if(defined($chain) && ($chain !~ /::/));
 	}
-	$SIG{HUP} = sub {
+	$sighup_handler = sub {
 		$sighup_count++;
-		if(defined($previous)) {
+		if(defined($chain)) {
 			no strict 'refs';
-			$previous->(@_);
+			$chain->(@_);
 		}
 	};
+	$SIG{HUP} = $sighup_handler;
+	return;
+}
+
+# ---------------------------------------------------------------------------
+# _release_sighup -- stop using the SIGHUP handler
+#
+# Purpose:      Give the program its own SIGHUP handler back when no logger
+#               needs this module's.
+# Entry:        $self -- a logger being destroyed.
+# Exit:         Returns nothing.
+# Side effects: If the logger used the handler and was the last to, puts
+#               back the $SIG{HUP} that _catch_sighup replaced, unless the
+#               program has set a handler of its own since; the next logger
+#               to open a file installs the handler again.
+# ---------------------------------------------------------------------------
+sub _release_sighup :Private {
+	my $self = $_[0];
+
+	return unless(delete $self->{_sighup});
+	return if(--$sighup_users > 0);
+
+	my $current = $SIG{HUP};
+	if($sighup_handler && ref($current) && ($current == $sighup_handler)) {
+		$SIG{HUP} = (defined($sighup_previous) && length($sighup_previous)) ? $sighup_previous : 'DEFAULT';
+	}
+	$sighup_handler = $sighup_previous = undef;
 	return;
 }
 
@@ -3308,14 +3350,16 @@ sub emergency {
 }
 
 # ---------------------------------------------------------------------------
-# DESTROY -- close the persistent syslog connection when the object is freed
+# DESTROY -- release the syslog connection and SIGHUP handler when freed
 #
 # Purpose:      Ensure the syslog socket is closed cleanly on object
 #               destruction, avoiding resource leaks under persistent
 #               interpreters such as mod_perl.
 # Entry:        $self -- the logger object being destroyed.
 # Exit:         void
-# Side effects: Sends any held email digest.  Removes the _syslog_opened flag, and calls
+# Side effects: Sends any held email digest.  Puts back the program's
+#               SIGHUP handler (_release_sighup) if this was the last
+#               logger using the module's.  Removes the _syslog_opened flag, and calls
 #               Sys::Syslog::closelog() if no other instance still uses it.
 # Notes:        Uses fully-qualified Sys::Syslog::closelog() so that
 #               Test::Mockingbird can intercept the call in tests.
@@ -3336,6 +3380,9 @@ sub DESTROY {
 		delete $self->{_syslog_opened};
 		Log::Abstraction::Backend::Syslog->release_connection();
 	}
+
+	# Give the program its SIGHUP handler back if no other logger needs ours
+	$self->_release_sighup() if($self->{_sighup});
 }
 
 =head1 EXAMPLES

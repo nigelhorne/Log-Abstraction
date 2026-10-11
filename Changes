@@ -16,7 +16,8 @@ Revision history for Log-Abstraction
 	  (e.g. by logrotate) is noticed on the next write.  Except on Windows,
 	  a SIGHUP makes every logger reopen its files (the module installs a
 	  handler when it first opens a file, calling any handler already set),
-	  so SIGHUP no longer ends a program that logs to a file.  In case no
+	  so SIGHUP doesn't end the program while such a logger exists; the
+	  previous handler is put back when the last one is destroyed.  In case no
 	  SIGHUP is sent, they are reopened every reopen_interval seconds, a
 	  new option: default 300, -1 for only on SIGHUP, and 0 to close the
 	  file after every message as before.  The new reopen() method closes

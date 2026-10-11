@@ -134,6 +134,55 @@ subtest "SIGHUP reopens every logger's files" => sub {
 	is_deeply([ lines($p2) ], [qw(one two)], 'in both files');
 };
 
+subtest 'the previous SIGHUP handler is put back' => sub {
+	plan skip_all => "no SIGHUP handler on $^O" if($^O eq 'MSWin32');
+
+	is($SIG{HUP}, $program_handler, "the program's handler is back after the earlier loggers were freed");
+	{
+		my $log1 = logger(new_path());
+		my $log2 = logger(new_path());
+		$log1->info('x');
+		$log2->info('x');
+		my $clone = $log1->new(level => 'debug');
+		$clone->info('x');
+		isnt($SIG{HUP}, $program_handler, 'replaced while loggers have files open');
+		undef $log1;
+		isnt($SIG{HUP}, $program_handler, 'still replaced while one remains');
+		undef $log2;
+		isnt($SIG{HUP}, $program_handler, 'a clone counts as a user too');
+	}
+	is($SIG{HUP}, $program_handler, 'put back when the last one is freed');
+
+	{
+		my $log = logger(new_path());
+		$log->info('x');
+		isnt($SIG{HUP}, $program_handler, 'installed again by the next logger');
+	}
+	is($SIG{HUP}, $program_handler, 'and put back again');
+
+	for my $previous ('IGNORE', 'DEFAULT') {
+		local $SIG{HUP} = $previous;
+		{ logger(new_path())->info('x') }
+		is($SIG{HUP}, $previous, "$previous is put back");
+	}
+
+	my $mine = sub { };
+	{
+		local $SIG{HUP} = $program_handler;
+		my $log = logger(new_path());
+		$log->info('x');
+		$SIG{HUP} = $mine;
+		undef $log;
+		is($SIG{HUP}, $mine, "a handler the program set afterwards isn't changed");
+	}
+
+	{
+		my $log = logger(new_path(), reopen_interval => 0);
+		$log->info('x');
+		is($SIG{HUP}, $program_handler, 'not installed with reopen_interval 0');
+	}
+};
+
 subtest 'reopen_interval' => sub {
 	my $path = new_path();
 	my $log = logger($path);

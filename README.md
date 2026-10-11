@@ -254,8 +254,11 @@ on Windows, the first time a logger opens a file, `Log::Abstraction` sets
 `$SIG{HUP}` to a handler that makes every logger open its files again on
 the next write.  A handler that was already set (a code reference or a sub
 name) is called after it.  This means a `SIGHUP` no longer ends the
-program, as it does by default.  A handler that the program sets later
-replaces `Log::Abstraction`'s; it can call ["reopen"](#reopen) itself.
+program, as it does by default, while a logger that has opened a file
+exists.  When the last of them is destroyed, the handler that was there
+before is put back.  A handler that the program sets later replaces
+`Log::Abstraction`'s (and isn't changed when the loggers are destroyed);
+it can call ["reopen"](#reopen) itself.
 
 In case a `SIGHUP` isn't sent, every file is also closed and opened again
 every 5 minutes, by default.  `reopen_interval` changes how often, makes
@@ -695,7 +698,8 @@ FUNCTION new(class_or_obj, args...)
     shallow-clone self merged with override args
     validate and store new level integer if level given in args
     copy message history list
-    start the clone with no held email digest and no open files
+    start the clone with no held email digest, no open files, and not
+      counted as a user of the SIGHUP handler
     count the clone as a user of an open syslog connection
     build the clone's own backends
     RETURN clone
