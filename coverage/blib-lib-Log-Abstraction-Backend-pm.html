@@ -27,9 +27,9 @@ https://pjcj.net
 <tr><th>line</th><th>stmt</th><th>bran</th><th>cond</th><th>sub</th><th>time</th><th>code</th></tr>
 <tr><td class="h">1</td><td></td><td></td><td></td><td></td><td></td><td class="s">package Log::Abstraction::Backend;</td></tr>
 <tr><td class="h">2</td><td colspan="6"></td></tr><tr><td class="h">3</td><td></td><td></td><td></td><td></td><td></td><td class="s"># Base class of the backends that Log::Abstraction sends messages to</td></tr>
-<tr><td class="h">4</td><td><div class="c3">36</div><div class="c3">36</div><div class="c3">36</div></td><td></td><td></td><td><div class="c3"><a href="blib-lib-Log-Abstraction-Backend-pm--subroutine.html#L4">36</a></div></td><td><div>224</div><div>39</div><div>458</div></td><td class="s">use strict;</td></tr>
-<tr><td class="h">5</td><td><div class="c3">36</div><div class="c3">36</div><div class="c3">36</div></td><td></td><td></td><td><div class="c3"><a href="blib-lib-Log-Abstraction-Backend-pm--subroutine.html#L5">36</a></div></td><td><div>50</div><div>26</div><div>615</div></td><td class="s">use warnings;</td></tr>
-<tr><td class="h">6</td><td colspan="6"></td></tr><tr><td class="h">7</td><td><div class="c3">36</div><div class="c3">36</div><div class="c3">36</div></td><td></td><td></td><td><div class="c3"><a href="blib-lib-Log-Abstraction-Backend-pm--subroutine.html#L7">36</a></div></td><td><div>56</div><div>22</div><div>3822</div></td><td class="s">use Carp ();</td></tr>
+<tr><td class="h">4</td><td><div class="c3">37</div><div class="c3">37</div><div class="c3">37</div></td><td></td><td></td><td><div class="c3"><a href="blib-lib-Log-Abstraction-Backend-pm--subroutine.html#L4">37</a></div></td><td><div>217</div><div>31</div><div>482</div></td><td class="s">use strict;</td></tr>
+<tr><td class="h">5</td><td><div class="c3">37</div><div class="c3">37</div><div class="c3">37</div></td><td></td><td></td><td><div class="c3"><a href="blib-lib-Log-Abstraction-Backend-pm--subroutine.html#L5">37</a></div></td><td><div>60</div><div>29</div><div>605</div></td><td class="s">use warnings;</td></tr>
+<tr><td class="h">6</td><td colspan="6"></td></tr><tr><td class="h">7</td><td><div class="c3">37</div><div class="c3">37</div><div class="c3">37</div></td><td></td><td></td><td><div class="c3"><a href="blib-lib-Log-Abstraction-Backend-pm--subroutine.html#L7">37</a></div></td><td><div>54</div><div>28</div><div>4058</div></td><td class="s">use Carp ();</td></tr>
 <tr><td class="h">8</td><td colspan="6"></td></tr><tr><td class="h">9</td><td></td><td></td><td></td><td></td><td></td><td class="s">our $VERSION = &#39;0.39&#39;;</td></tr>
 <tr><td class="h">10</td><td colspan="6"></td></tr><tr><td class="h">11</td><td></td><td></td><td></td><td></td><td></td><td class="s"># Carp and croak from a backend report the code that called Log::Abstraction,</td></tr>
 <tr><td class="h">12</td><td></td><td></td><td></td><td></td><td></td><td class="s"># not Log::Abstraction itself.&nbsp;&nbsp;The subclasses trust this package through</td></tr>
@@ -84,8 +84,8 @@ C&lt;Log::Abstraction-E&lt;gt&gt;new()&gt;; C&lt;level&gt; is a syslog number (0
 
 =cut</pre></td></tr>
 <tr><td class="h">65</td><td colspan="6"></td></tr><tr><td class="h">66</td><td></td><td></td><td></td><td></td><td></td><td class="s">sub new {</td></tr>
-<tr><td class="h">67</td><td><div class="c3">1721</div></td><td></td><td></td><td><div class="c3"><a href="blib-lib-Log-Abstraction-Backend-pm--subroutine.html#L67">1721</a></div></td><td><div>8367</div></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;my ($class, %args) = @_;</td></tr>
-<tr><td class="h">68</td><td colspan="6"></td></tr><tr><td class="h">69</td><td><div class="c3">1721</div></td><td></td><td></td><td></td><td><div>3082</div></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return bless { %args }, $class;</td></tr>
+<tr><td class="h">67</td><td><div class="c3">1740</div></td><td></td><td></td><td><div class="c3"><a href="blib-lib-Log-Abstraction-Backend-pm--subroutine.html#L67">1740</a></div></td><td><div>8847</div></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;my ($class, %args) = @_;</td></tr>
+<tr><td class="h">68</td><td colspan="6"></td></tr><tr><td class="h">69</td><td><div class="c3">1740</div></td><td></td><td></td><td></td><td><div>3240</div></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return bless { %args }, $class;</td></tr>
 <tr><td class="h">70</td><td></td><td></td><td></td><td></td><td></td><td class="s">}</td></tr>
 <tr><td class="h">71</td><td colspan="6"></td></tr><tr><td class="h">72 - 79</td><td colspan="5"></td><td class="s"><pre>=head2 wants
 
@@ -96,9 +96,9 @@ or more severe.
 
 =cut</pre></td></tr>
 <tr><td class="h">80</td><td colspan="6"></td></tr><tr><td class="h">81</td><td></td><td></td><td></td><td></td><td></td><td class="s">sub wants {</td></tr>
-<tr><td class="h">82</td><td><div class="c3">10985</div></td><td></td><td></td><td><div class="c3"><a href="blib-lib-Log-Abstraction-Backend-pm--subroutine.html#L82">10985</a></div></td><td><div>7198</div></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;my ($self, $event) = @_;</td></tr>
-<tr><td class="h">83</td><td colspan="6"></td></tr><tr><td class="h">84</td><td><div class="c3">10985</div></td><td><div class="c3" title="T/F"><a href="blib-lib-Log-Abstraction-Backend-pm--branch.html#L84">100</a></div></td><td></td><td></td><td><div>17129</div></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return 1 unless(defined($self-&gt;{&#39;level&#39;}));</td></tr>
-<tr><td class="h">85</td><td><div class="c3">56</div></td><td></td><td></td><td></td><td><div>195</div></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return $event-&gt;{&#39;priority&#39;} &lt;= $self-&gt;{&#39;level&#39;};</td></tr>
+<tr><td class="h">82</td><td><div class="c3">11018</div></td><td></td><td></td><td><div class="c3"><a href="blib-lib-Log-Abstraction-Backend-pm--subroutine.html#L82">11018</a></div></td><td><div>7534</div></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;my ($self, $event) = @_;</td></tr>
+<tr><td class="h">83</td><td colspan="6"></td></tr><tr><td class="h">84</td><td><div class="c3">11018</div></td><td><div class="c3" title="T/F"><a href="blib-lib-Log-Abstraction-Backend-pm--branch.html#L84">100</a></div></td><td></td><td></td><td><div>17004</div></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return 1 unless(defined($self-&gt;{&#39;level&#39;}));</td></tr>
+<tr><td class="h">85</td><td><div class="c3">56</div></td><td></td><td></td><td></td><td><div>202</div></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return $event-&gt;{&#39;priority&#39;} &lt;= $self-&gt;{&#39;level&#39;};</td></tr>
 <tr><td class="h">86</td><td></td><td></td><td></td><td></td><td></td><td class="s">}</td></tr>
 <tr><td class="h">87</td><td colspan="6"></td></tr><tr><td class="h">88 - 95</td><td colspan="5"></td><td class="s"><pre>=head2 text
 
@@ -109,8 +109,8 @@ otherwise the default given.
 
 =cut</pre></td></tr>
 <tr><td class="h">96</td><td colspan="6"></td></tr><tr><td class="h">97</td><td></td><td></td><td></td><td></td><td></td><td class="s">sub text {</td></tr>
-<tr><td class="h">98</td><td><div class="c3">81</div></td><td></td><td></td><td><div class="c3"><a href="blib-lib-Log-Abstraction-Backend-pm--subroutine.html#L98">81</a></div></td><td><div>74</div></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;my ($self, $event, $default) = @_;</td></tr>
-<tr><td class="h">99</td><td colspan="6"></td></tr><tr><td class="h">100</td><td><div class="c3">81</div></td><td><div class="c3" title="T/F"><a href="blib-lib-Log-Abstraction-Backend-pm--branch.html#L100">100</a></div></td><td></td><td></td><td><div>599</div></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return defined($self-&gt;{&#39;format&#39;}) ? $event-&gt;{&#39;render&#39;}-&gt;($self-&gt;{&#39;format&#39;}) : $default;</td></tr>
+<tr><td class="h">98</td><td><div class="c3">81</div></td><td></td><td></td><td><div class="c3"><a href="blib-lib-Log-Abstraction-Backend-pm--subroutine.html#L98">81</a></div></td><td><div>84</div></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;my ($self, $event, $default) = @_;</td></tr>
+<tr><td class="h">99</td><td colspan="6"></td></tr><tr><td class="h">100</td><td><div class="c3">81</div></td><td><div class="c3" title="T/F"><a href="blib-lib-Log-Abstraction-Backend-pm--branch.html#L100">100</a></div></td><td></td><td></td><td><div>143</div></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return defined($self-&gt;{&#39;format&#39;}) ? $event-&gt;{&#39;render&#39;}-&gt;($self-&gt;{&#39;format&#39;}) : $default;</td></tr>
 <tr><td class="h">101</td><td></td><td></td><td></td><td></td><td></td><td class="s">}</td></tr>
 <tr><td class="h">102</td><td colspan="6"></td></tr><tr><td class="h">103 - 130</td><td colspan="5"></td><td class="s"><pre>=head2 emit
 
@@ -141,8 +141,8 @@ Subclasses must override this.
 
 =cut</pre></td></tr>
 <tr><td class="h">131</td><td colspan="6"></td></tr><tr><td class="h">132</td><td></td><td></td><td></td><td></td><td></td><td class="s">sub emit {</td></tr>
-<tr><td class="h">133</td><td><div class="c3">1</div></td><td></td><td></td><td><div class="c3"><a href="blib-lib-Log-Abstraction-Backend-pm--subroutine.html#L133">1</a></div></td><td><div>0</div></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;my $self = shift;</td></tr>
-<tr><td class="h">134</td><td colspan="6"></td></tr><tr><td class="h">135</td><td><div class="c3">1</div></td><td></td><td></td><td></td><td><div>5</div></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Carp::croak(ref($self), &#39;: emit() is not implemented&#39;);</td></tr>
+<tr><td class="h">133</td><td><div class="c3">1</div></td><td></td><td></td><td><div class="c3"><a href="blib-lib-Log-Abstraction-Backend-pm--subroutine.html#L133">1</a></div></td><td><div>2</div></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;my $self = shift;</td></tr>
+<tr><td class="h">134</td><td colspan="6"></td></tr><tr><td class="h">135</td><td><div class="c3">1</div></td><td></td><td></td><td></td><td><div>4</div></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Carp::croak(ref($self), &#39;: emit() is not implemented&#39;);</td></tr>
 <tr><td class="h">136</td><td></td><td></td><td></td><td></td><td></td><td class="s">}</td></tr>
 <tr><td class="h">137</td><td colspan="6"></td></tr><tr><td class="h">138 - 154</td><td colspan="5"></td><td class="s"><pre>=head1 AUTHOR
 
