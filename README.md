@@ -243,10 +243,25 @@ same file, use **logrotate** instead.
 
 #### Logrotate
 
-The file is opened, appended to and closed for every message, never held
-open, so **logrotate**'s default (rename the file and let the application
-create a new one) works without `copytruncate`, and without sending the
-process a `SIGHUP`: the next message is written to the new file.
+The file is kept open between messages, but before each write the logger
+checks that the path still names the same file (device and inode), so
+**logrotate**'s default (rename the file and let the application create a new
+one) works without `copytruncate`, and without sending the process a
+`SIGHUP`: the next message is written to a new file.  A `postrotate`
+script that sends `SIGHUP` also works if the program calls ["reopen"](#reopen) on
+it:
+
+```perl
+local $SIG{HUP} = sub { $logger->reopen() };
+```
+
+Tools that replace the file some other way are caught by
+`reopen_interval`: every 5 minutes, by default, the file is closed and
+opened again.
+
+On Windows an open file can't be renamed or deleted, so a file the logger is
+writing can only be rotated by the logger itself (which closes it first), or
+after calling ["reopen"](#reopen), and then only until the next message.
 
 ## Methods
 
@@ -409,6 +424,13 @@ called on an object.  It may also be called as a plain function,
     string (compiled as a regular expression; a config file can't hold a
     `qr//`), or an array reference of them.  See ["Redaction"](#redaction).
 
+- `reopen_interval`
+
+    Log files written by path are kept open between messages.  Every this many
+    seconds (default 300, i.e. 5 minutes) each one is closed and opened again on
+    its next write, for rotation tools that change the file without renaming it
+    and without telling the program (see ["reopen"](#reopen)).  `0` turns this off.
+
 - `rotate_interval`
 
     Rotate log files by time: `hourly`, `daily`, `weekly` (weeks start on
@@ -519,6 +541,7 @@ my $clone = $logger->new(level => 'info');
     logger         => { optional => 1 },
     max_messages   => { type => 'integer', min => 0, optional => 1 },
     redact         => { optional => 1 },    # regex, string, or arrayref of them
+    reopen_interval => { type => 'integer', min => 0, optional => 1 },
     rotate_interval => { type => 'string', regex => qr/^(hourly|daily|weekly|monthly)$/i, optional => 1 },
     rotate_keep    => { type => 'integer', min => 0, optional => 1 },
     rotate_size    => { type => 'string',  regex => qr/^\s*[1-9]\d*\s*[kmg]?b?\s*$/i, optional => 1 },
@@ -563,6 +586,8 @@ Error                                     Meaning / Action
   not '<v>'"
 "<class>: rotate_keep must be a           rotate_keep is negative or not a number.
   non-negative integer, not '<v>'"
+"<class>: reopen_interval must be a       reopen_interval is negative or not a
+  non-negative integer, not '<v>'"        whole number of seconds.
 "<class>: timestamp_format must be a      timestamp_format is undef, empty or a
   non-empty string"                       reference.
 "<class>: timestamp_precision must be     timestamp_precision is not a whole
@@ -655,13 +680,13 @@ FUNCTION new(class_or_obj, args...)
 
   IF called on a blessed instance (clone form):
     CROAK on an invalid timestamp_format or timestamp_precision
-    CROAK on an invalid rotate_size, rotate_interval or rotate_keep, and
-      normalise rotate_size to bytes
+    CROAK on an invalid rotate_size, rotate_interval, rotate_keep or
+      reopen_interval, and normalise rotate_size to bytes
     CROAK on an invalid redact pattern; compile redact to one regex
     shallow-clone self merged with override args
     validate and store new level integer if level given in args
     copy message history list
-    start the clone with no held email digest
+    start the clone with no held email digest and no open files
     count the clone as a user of an open syslog connection
     build the clone's own backends
     RETURN clone
@@ -688,8 +713,8 @@ FUNCTION new(class_or_obj, args...)
   CROAK if timestamp_format is empty or not a string, or
     timestamp_precision is not an integer 0-9
   CROAK if rotate_size is not a positive size, rotate_interval is not
-    hourly/daily/weekly/monthly, or rotate_keep is not a non-negative
-    integer; normalise rotate_size to bytes
+    hourly/daily/weekly/monthly, or rotate_keep or reopen_interval is not
+    a non-negative integer; normalise rotate_size to bytes
   CROAK if a redact pattern is not a regex or non-empty string, doesn't
     compile, or matches the empty string; compile redact to one regex
 
@@ -935,6 +960,49 @@ $logger->error('disk full');    # emailed
 $logger->error('disk still full');    # held: within min_interval
 $logger->flush();                # emailed now
 ```
+
+#### Api Specification
+
+##### Input
+
+```
+{} (no arguments)
+```
+
+##### Output
+
+```perl
+{ type => 'object', class => 'Log::Abstraction' }
+```
+
+### Reopen
+
+```perl
+$logger->reopen();
+
+# Reopen the log files when logrotate sends SIGHUP
+local $SIG{HUP} = sub { $logger->reopen() };
+```
+
+Closes the log files the logger holds open, so that the next message opens
+them again.  Log files written by path (see ["File rotation"](#file-rotation)) are kept open
+between messages; call this after something outside the program has renamed,
+moved or truncated them.  It isn't usually needed: a file that has been
+renamed or deleted is noticed on the next write, and every file is reopened
+when `reopen_interval` has passed.  File handles passed as `fd` are not
+closed.
+
+#### Arguments
+
+None.
+
+#### Returns
+
+The logger, for method chaining.
+
+#### Side Effects
+
+Closes the logger's log files.
 
 #### Api Specification
 

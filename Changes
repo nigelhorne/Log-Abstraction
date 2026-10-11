@@ -11,6 +11,13 @@ Revision history for Log-Abstraction
 	- A Log::Any logger or Log::Dispatch object given as the logger is used
 	  the same way.  Before, Log::Dispatch croaked on trace() (it has no
 	  trace method), and both joined the message's parts with spaces.
+	- Log files written by path are kept open between messages instead of
+	  being opened and closed for every line.  A file renamed or deleted
+	  (e.g. by logrotate) is noticed on the next write, the new reopen()
+	  method closes them (hook it to SIGHUP), and the new reopen_interval
+	  option (default 300 seconds, 0 for never) reopens them regularly.  On
+	  Windows an open log file can't be renamed or deleted by another
+	  program; call reopen() first.
 	[ API Changes ]
 	- Each backend is now a Log::Abstraction::Backend::* object, built once
 	  by new() instead of worked out again for every message.
@@ -22,7 +29,7 @@ Revision history for Log-Abstraction
 	- The syslog hash given to new() is no longer changed: the first
 	  message renamed its 'server' key 'host'.
 	[ Tests ]
-	- New t/producers.t and t/backends.t.
+	- New t/producers.t and t/backends.t and t/file_handles.t.
 
 0.39	Tue Oct  6 08:17:42 PM EDT 2026
 	[ Bug Fixes ]

@@ -1503,6 +1503,8 @@ subtest 'no memory cycles; loggers and clones are freed' => sub {
 	my $clone = $logger->new(level => 'info');
 	$clone->info('three');
 
+	# Devel::Cycle warns "Unhandled type: GLOB" on the open log file
+	$_->reopen() for($logger, $clone);
 	memory_cycle_ok($logger, 'logger has no cycles after logging');
 	memory_cycle_ok($clone, 'clone has no cycles');
 

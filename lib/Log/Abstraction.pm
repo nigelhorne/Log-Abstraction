@@ -53,13 +53,6 @@ package Log::Abstraction;
 #     provider swaps (workaround for blocker 3 above).
 
 # Roadmap - technical debt:
-#   - Keep file handles open (re-open on inode change) instead of
-#     open/print/close for every message.  logrotate then needs the file
-#     reopened: add a reopen() method (and document hooking it to SIGHUP),
-#     and have _rotate close the handle before renaming.  Not every log
-#     rotation tool sends SIGHUP, so also close and reopen on a write when more
-#     than a configurable time (default 5 minutes) has passed since the
-#     last reopen.  Not needed while files are opened per message.
 #   - Reuse the journald socket rather than creating one per message.
 #   - Optional asynchronous/non-blocking delivery for the sendmail backend;
 #     a blocking SMTP conversation inside a log call is a latency hazard.
@@ -78,6 +71,7 @@ use autodie qw(:default);
 # logger ($log->croak, $log->syslog ...).  Readonly::Values::Syslog only
 # exports variables (%syslog_values, $DEBUG ...)
 use Carp ();
+use IO::Handle ();
 use Config::Abstraction 0.40;
 use Params::Get 0.15;
 use POSIX ();
@@ -137,6 +131,11 @@ Readonly::Scalar my $MAX_TIMESTAMP_PRECISION => 9;
 
 # Number of rotated files kept (FILE.1 ... FILE.5) when rotate_keep isn't given
 Readonly::Scalar my $DEFAULT_ROTATE_KEEP => 5;
+
+# Seconds after which an open log file is closed and opened again, when
+# reopen_interval isn't given, for rotation tools that neither send SIGHUP
+# nor change the file's inode
+Readonly::Scalar my $DEFAULT_REOPEN_INTERVAL => 300;
 
 # Multipliers for the K/M/G suffixes of rotate_size
 Readonly::Hash my %SIZE_UNITS => (
@@ -451,10 +450,23 @@ same file, use B<logrotate> instead.
 
 =head3 logrotate
 
-The file is opened, appended to and closed for every message, never held
-open, so B<logrotate>'s default (rename the file and let the application
-create a new one) works without C<copytruncate>, and without sending the
-process a C<SIGHUP>: the next message is written to the new file.
+The file is kept open between messages, but before each write the logger
+checks that the path still names the same file (device and inode), so
+B<logrotate>'s default (rename the file and let the application create a new
+one) works without C<copytruncate>, and without sending the process a
+C<SIGHUP>: the next message is written to a new file.  A C<postrotate>
+script that sends C<SIGHUP> also works if the program calls L</reopen> on
+it:
+
+  local $SIG{HUP} = sub { $logger->reopen() };
+
+Tools that replace the file some other way are caught by
+C<reopen_interval>: every 5 minutes, by default, the file is closed and
+opened again.
+
+On Windows an open file can't be renamed or deleted, so a file the logger is
+writing can only be rotated by the logger itself (which closes it first), or
+after calling L</reopen>, and then only until the next message.
 
 =head1 METHODS
 
@@ -634,6 +646,13 @@ Patterns to remove from every message before it is logged: a C<qr//>, a
 string (compiled as a regular expression; a config file can't hold a
 C<qr//>), or an array reference of them.  See L</Redaction>.
 
+=item * C<reopen_interval>
+
+Log files written by path are kept open between messages.  Every this many
+seconds (default 300, i.e. 5 minutes) each one is closed and opened again on
+its next write, for rotation tools that change the file without renaming it
+and without telling the program (see L</reopen>).  C<0> turns this off.
+
 =item * C<rotate_interval>
 
 Rotate log files by time: C<hourly>, C<daily>, C<weekly> (weeks start on
@@ -737,6 +756,7 @@ renamed C<host> (before 0.40, the first message did both).
       logger         => { optional => 1 },
       max_messages   => { type => 'integer', min => 0, optional => 1 },
       redact         => { optional => 1 },    # regex, string, or arrayref of them
+      reopen_interval => { type => 'integer', min => 0, optional => 1 },
       rotate_interval => { type => 'string', regex => qr/^(hourly|daily|weekly|monthly)$/i, optional => 1 },
       rotate_keep    => { type => 'integer', min => 0, optional => 1 },
       rotate_size    => { type => 'string',  regex => qr/^\s*[1-9]\d*\s*[kmg]?b?\s*$/i, optional => 1 },
@@ -777,6 +797,8 @@ renamed C<host> (before 0.40, the first message did both).
     not '<v>'"
   "<class>: rotate_keep must be a           rotate_keep is negative or not a number.
     non-negative integer, not '<v>'"
+  "<class>: reopen_interval must be a       reopen_interval is negative or not a
+    non-negative integer, not '<v>'"        whole number of seconds.
   "<class>: timestamp_format must be a      timestamp_format is undef, empty or a
     non-empty string"                       reference.
   "<class>: timestamp_precision must be     timestamp_precision is not a whole
@@ -865,13 +887,13 @@ logging failure must never crash the application.
 
     IF called on a blessed instance (clone form):
       CROAK on an invalid timestamp_format or timestamp_precision
-      CROAK on an invalid rotate_size, rotate_interval or rotate_keep, and
-        normalise rotate_size to bytes
+      CROAK on an invalid rotate_size, rotate_interval, rotate_keep or
+        reopen_interval, and normalise rotate_size to bytes
       CROAK on an invalid redact pattern; compile redact to one regex
       shallow-clone self merged with override args
       validate and store new level integer if level given in args
       copy message history list
-      start the clone with no held email digest
+      start the clone with no held email digest and no open files
       count the clone as a user of an open syslog connection
       build the clone's own backends
       RETURN clone
@@ -898,8 +920,8 @@ logging failure must never crash the application.
     CROAK if timestamp_format is empty or not a string, or
       timestamp_precision is not an integer 0-9
     CROAK if rotate_size is not a positive size, rotate_interval is not
-      hourly/daily/weekly/monthly, or rotate_keep is not a non-negative
-      integer; normalise rotate_size to bytes
+      hourly/daily/weekly/monthly, or rotate_keep or reopen_interval is not
+      a non-negative integer; normalise rotate_size to bytes
     CROAK if a redact pattern is not a regex or non-empty string, doesn't
       compile, or matches the empty string; compile redact to one regex
 
@@ -985,6 +1007,8 @@ sub new {
 		$clone->{messages} = [ @{$class->{messages}} ];
 		# A clone has its own digest, or held messages would be sent twice
 		delete @{$clone}{qw(_email_digest _email_digest_dropped)};
+		# and opens its own files, so that closing them doesn't affect the parent
+		delete $clone->{_handles};
 		# The clone shares the parent's open syslog connection
 		Log::Abstraction::Backend::Syslog->retain_connection() if($clone->{_syslog_opened});
 		# and has its own backends, as the overrides may change them
@@ -1461,6 +1485,11 @@ sub _check_rotate_args :Private {
 			Carp::croak("$class: rotate_keep must be a non-negative integer, not '$keep'");
 		}
 	}
+	if(defined(my $interval = $args->{'reopen_interval'})) {
+		if($interval !~ /^\d+\z/) {
+			Carp::croak("$class: reopen_interval must be a non-negative integer, not '$interval'");
+		}
+	}
 	return;
 }
 
@@ -1604,6 +1633,7 @@ sub _redact :Private {
 #       period = ROTATE_PERIOD{rotate_interval}
 #       due = period(mtime) < period(now), each with its own UTC offset
 #     RETURN unless due
+#     close the logger's handle on path
 #     keep = rotate_keep // 5
 #     IF keep == 0: unlink path; RETURN
 #     unlink path.keep if it exists
@@ -1625,6 +1655,9 @@ sub _rotate :Private {
 		$due = $period->($mtime, _utc_offset($mtime, $utc), $utc) < $period->($now, _utc_offset($now, $utc), $utc);
 	}
 	return unless($due);
+
+	# Close the file first: Windows can't rename or delete an open file
+	$self->_close_files($path);
 
 	my $keep = $self->{'rotate_keep'} // $DEFAULT_ROTATE_KEEP;
 	if($keep == 0) {
@@ -1713,7 +1746,8 @@ sub _timestamp :Private {
 #               $line   -- the formatted line, without trailing newline.
 # Exit:         Returns nothing.
 # Side effects: Appends to the file or prints to the handle.  A file path
-#               is rotated first if rotate_size or rotate_interval says so.
+#               is rotated first if rotate_size or rotate_interval says so,
+#               and is kept open for the next line (see _file_handle).
 # Notes:        Character strings are encoded to UTF-8, avoiding "Wide
 #               character" warnings, unless the handle already has a
 #               :utf8 or :encoding layer.  File I/O failures are silent by
@@ -1737,11 +1771,82 @@ sub _write_line :Private {
 	if($self->{'rotate_size'} || $self->{'rotate_interval'}) {
 		eval { $self->_rotate($target) };
 	}
+	# A failed write closes the file, so that the next one opens it again
 	eval {
-		open(my $fout, '>>', $target);
-		print $fout "$line\n";
-		close $fout;
-	};
+		my $fout = $self->_file_handle($target);
+		print $fout "$line\n" or die "$target: $!";
+		1;
+	} or $self->_close_files($target);
+	return;
+}
+
+# ---------------------------------------------------------------------------
+# _file_handle -- the logger's open handle on a log file
+#
+# Purpose:      Keep log files open between messages, rather than opening
+#               and closing them for every line.
+# Entry:        $self -- the logger object (reopen_interval, and the open
+#                        handles in $self->{_handles}).
+#               $path -- a validated log-file path.
+# Exit:         Returns a handle open for appending, with autoflush on.
+#               Croaks (autodie) if the file can't be opened.
+# Side effects: Opens the file if the logger hasn't, or opens it again if
+#               the path is now a different file (renamed or deleted, e.g.
+#               by logrotate) or reopen_interval seconds have passed since it
+#               was opened.
+# Notes:        Costs one stat() per line.  The device and inode are taken
+#               from the path, not the handle, so that the two are compared
+#               alike (Windows' fstat can differ).
+#
+# Pseudocode:
+#   FUNCTION _file_handle(self, path)
+#     IF the logger has a handle on path:
+#       RETURN it IF path still names the same device and inode AND
+#         (reopen_interval is 0 OR it was opened less than that long ago)
+#       close it
+#     open path for appending, autoflush on
+#     remember the handle, path's device and inode, and the time
+#     RETURN the handle
+#   END FUNCTION
+# ---------------------------------------------------------------------------
+sub _file_handle :Private {
+	my ($self, $path) = @_;
+
+	if(my $open = $self->{_handles}{$path}) {
+		my @st = stat($path);
+		my $interval = $self->{'reopen_interval'} // $DEFAULT_REOPEN_INTERVAL;
+		if(@st && ($st[0] == $open->{dev}) && ($st[1] == $open->{ino})
+		   && !($interval && ((time() - $open->{opened}) >= $interval))) {
+			return $open->{fh};
+		}
+		$self->_close_files($path);
+	}
+
+	open(my $fh, '>>', $path);
+	$fh->autoflush(1);
+	my @st = stat($path);
+	$self->{_handles}{$path} = { fh => $fh, dev => $st[0], ino => $st[1], opened => time() };
+	return $fh;
+}
+
+# ---------------------------------------------------------------------------
+# _close_files -- close log files that the logger holds open
+#
+# Purpose:      Used by reopen(), before a rotation, and after a failed write.
+# Entry:        $self  -- the logger object.
+#               @paths -- the files to close; none means all of them.
+# Exit:         Returns nothing.
+# Side effects: Closes the handles and forgets them, so the next write opens
+#               the file again.  A failing close is ignored.
+# ---------------------------------------------------------------------------
+sub _close_files :Private {
+	my ($self, @paths) = @_;
+
+	my $handles = $self->{_handles} or return;
+	for my $path (@paths ? @paths : keys(%{$handles})) {
+		my $open = delete $handles->{$path} or next;
+		eval { close($open->{fh}) };
+	}
 	return;
 }
 
@@ -2582,6 +2687,55 @@ sub flush {
 	return $self;
 }
 
+=head2 reopen
+
+  $logger->reopen();
+
+  # Reopen the log files when logrotate sends SIGHUP
+  local $SIG{HUP} = sub { $logger->reopen() };
+
+Closes the log files the logger holds open, so that the next message opens
+them again.  Log files written by path (see L</File rotation>) are kept open
+between messages; call this after something outside the program has renamed,
+moved or truncated them.  It isn't usually needed: a file that has been
+renamed or deleted is noticed on the next write, and every file is reopened
+when C<reopen_interval> has passed.  File handles passed as C<fd> are not
+closed.
+
+=head3 Arguments
+
+None.
+
+=head3 Returns
+
+The logger, for method chaining.
+
+=head3 Side Effects
+
+Closes the logger's log files.
+
+=head3 API SPECIFICATION
+
+=head4 Input
+
+  {} (no arguments)
+
+=head4 Output
+
+  { type => 'object', class => 'Log::Abstraction' }
+
+=cut
+
+sub reopen {
+	my $self = $_[0];
+
+	# Preserve the caller's $@ and $! (see _log)
+	local ($@, $!);
+
+	$self->_close_files();
+	return $self;
+}
+
 =head2 trace
 
   $logger->trace(@messages);
@@ -3082,7 +3236,7 @@ sub emergency {
 #               interpreters such as mod_perl.
 # Entry:        $self -- the logger object being destroyed.
 # Exit:         void
-# Side effects: Removes the _syslog_opened flag, and calls
+# Side effects: Sends any held email digest.  Removes the _syslog_opened flag, and calls
 #               Sys::Syslog::closelog() if no other instance still uses it.
 # Notes:        Uses fully-qualified Sys::Syslog::closelog() so that
 #               Test::Mockingbird can intercept the call in tests.
