@@ -53,7 +53,6 @@ package Log::Abstraction;
 #     provider swaps (workaround for blocker 3 above).
 
 # Roadmap - technical debt:
-#   - Reuse the journald socket rather than creating one per message.
 #   - Optional asynchronous/non-blocking delivery for the sendmail backend;
 #     a blocking SMTP conversation inside a log call is a latency hazard.
 

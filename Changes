@@ -23,6 +23,9 @@ Revision history for Log-Abstraction
 	  file after every message as before.  The new reopen() method closes
 	  them.  On Windows an open log file can't be renamed or deleted by
 	  another program; call reopen() first.
+	- The journald backend keeps its socket open between messages instead
+	  of creating one for every message.  A failed send closes it, and the
+	  next message opens a new one.
 	[ API Changes ]
 	- Each backend is now a Log::Abstraction::Backend::* object, built once
 	  by new() instead of worked out again for every message.

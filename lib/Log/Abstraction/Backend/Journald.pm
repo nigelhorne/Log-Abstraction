@@ -51,7 +51,8 @@ datagram in the journald native protocol
 C<MESSAGE> (with a C<format>, the formatted line), C<PRIORITY>,
 C<SYSLOG_IDENTIFIER>, the hash's other keys upper-cased, and the structured
 fields.  A message too big for one datagram is truncated.  A failed send
-carps, once until a send succeeds again.
+carps, once until a send succeeds again.  The socket is opened for the
+first message and reused for the next ones, until a send fails.
 
 For use by L<Log::Abstraction> only; see L<Log::Abstraction::Backend>.
 
@@ -135,14 +136,16 @@ sub emit {
 #
 # Purpose:      Format key=value fields in the journald native protocol and
 #               deliver them as a single Unix-domain SOCK_DGRAM packet.
-# Entry:        $self        -- the backend (unused; a method so that it is
-#                              called like the other private methods).
+# Entry:        $self        -- the backend, which keeps the socket in
+#                              $self->{_socket} between messages.
 #               $socket_path -- filesystem path of the journald socket.
 #               %fields      -- FIELD_NAME => value pairs; names must be
 #                              uppercase ASCII + digits + underscore.
 # Exit:         Returns nothing.  Croaks on socket or send failure (the caller
 #               wraps every call in eval{} so failures are silent to the app).
-# Side effects: Opens a transient Unix datagram socket, sends, closes.
+# Side effects: Opens a Unix datagram socket on the first call, and keeps it
+#               for the next; closes it after a failed send, so that the
+#               next message gets a new one.
 # Notes:        Values containing newline or NUL use the binary framing
 #               (field-name NL uint64-LE-length value NL) as specified by
 #               https://systemd.io/JOURNAL_NATIVE_PROTOCOL/.
@@ -150,7 +153,9 @@ sub emit {
 #               text format.  The send buffer, and so the largest datagram,
 #               varies between systems: a send failing with EMSGSIZE is
 #               retried with MESSAGE truncated to half the size, down to
-#               $MIN_PAYLOAD.
+#               $MIN_PAYLOAD.  The socket isn't connected: each datagram is
+#               addressed to the path, so it still arrives after journald
+#               restarts and creates the socket file again.
 # ---------------------------------------------------------------------------
 sub _send :Private {
 	my ($self, $socket_path, %fields) = @_;
@@ -200,18 +205,23 @@ sub _send :Private {
 		return $build->();
 	};
 
-	# Open a Unix-domain datagram socket, send, and close
+	# The Unix-domain datagram socket, opened on the first message and then
+	# reused
 	require Socket;
-	socket(my $sock, Socket::AF_UNIX(), Socket::SOCK_DGRAM(), 0);
+	my $sock = $self->{_socket} //= do {
+		socket(my $new, Socket::AF_UNIX(), Socket::SOCK_DGRAM(), 0);
+
+		# Ask for a send buffer big enough for the largest datagram; the
+		# kernel may cap it (net.core.wmem_max), which the retry handles
+		no autodie qw(setsockopt);
+		setsockopt($new, Socket::SOL_SOCKET(), Socket::SO_SNDBUF(), $MAX_PAYLOAD + 1024);
+		$new;
+	};
 	my $dest = Socket::sockaddr_un($socket_path);
 
 	{
 		# send() is checked by hand: EMSGSIZE means retry smaller
-		no autodie qw(send setsockopt);
-
-		# Ask for a send buffer big enough for the largest datagram; the
-		# kernel may cap it (net.core.wmem_max), which the retry handles
-		setsockopt($sock, Socket::SOL_SOCKET(), Socket::SO_SNDBUF(), $MAX_PAYLOAD + 1024);
+		no autodie qw(send);
 
 		my $limit = $MAX_PAYLOAD;
 		while(1) {
@@ -221,11 +231,13 @@ sub _send :Private {
 				$limit = int($limit / 2);
 				next;
 			}
-			close $sock;
+			# Start again with a new socket next time
+			delete $self->{_socket};
+			eval { close $sock };
 			Carp::croak("Can't send to $socket_path: $err");
 		}
 	}
-	close $sock;
+	return;
 }
 
 
