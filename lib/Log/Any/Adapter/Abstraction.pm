@@ -128,7 +128,7 @@ instance when C<instance> is not supplied.
       rotate_size    => { type => SCALAR, optional => 1 },
       rotate_interval => { type => SCALAR, optional => 1 },
       rotate_keep    => { type => INTEGER, min => 0, optional => 1 },
-      reopen_interval => { type => INTEGER, min => 0, optional => 1 },
+      reopen_interval => { type => INTEGER, min => -1, optional => 1 },
   }
 
 =head4 Output

@@ -258,7 +258,9 @@ program, as it does by default.  A handler that the program sets later
 replaces `Log::Abstraction`'s; it can call ["reopen"](#reopen) itself.
 
 In case a `SIGHUP` isn't sent, every file is also closed and opened again
-every 5 minutes (see `reopen_interval`).
+every 5 minutes, by default.  `reopen_interval` changes how often, makes
+`SIGHUP` the only way (`-1`), or closes the file after every message
+(`0`), as before version 0.40.
 
 On Windows an open file can't be renamed or deleted, so a file the logger is
 writing can only be rotated by the logger itself (which closes it first), or
@@ -430,7 +432,12 @@ called on an object.  It may also be called as a plain function,
     Log files written by path are kept open between messages.  Every this many
     seconds (default 300, i.e. 5 minutes) each one is closed and opened again on
     its next write, in case a rotation tool changed the file without renaming it
-    and without sending a `SIGHUP` (see ["logrotate"](#logrotate)).  `0` turns this off.
+    and without sending a `SIGHUP` (see ["logrotate"](#logrotate)).
+
+    `0` closes the file after every message, so it is never held open, and no
+    `SIGHUP` handler is installed for it.  `-1` never reopens the file because
+    of time: only a `SIGHUP`, ["reopen"](#reopen), or the file being renamed or deleted
+    does.  (Windows has no `SIGHUP`.)
 
 - `rotate_interval`
 
@@ -542,7 +549,7 @@ my $clone = $logger->new(level => 'info');
     logger         => { optional => 1 },
     max_messages   => { type => 'integer', min => 0, optional => 1 },
     redact         => { optional => 1 },    # regex, string, or arrayref of them
-    reopen_interval => { type => 'integer', min => 0, optional => 1 },
+    reopen_interval => { type => 'integer', min => -1, optional => 1 },
     rotate_interval => { type => 'string', regex => qr/^(hourly|daily|weekly|monthly)$/i, optional => 1 },
     rotate_keep    => { type => 'integer', min => 0, optional => 1 },
     rotate_size    => { type => 'string',  regex => qr/^\s*[1-9]\d*\s*[kmg]?b?\s*$/i, optional => 1 },
@@ -587,8 +594,9 @@ Error                                     Meaning / Action
   not '<v>'"
 "<class>: rotate_keep must be a           rotate_keep is negative or not a number.
   non-negative integer, not '<v>'"
-"<class>: reopen_interval must be a       reopen_interval is negative or not a
-  non-negative integer, not '<v>'"        whole number of seconds.
+"<class>: reopen_interval must be a       reopen_interval is not a whole number
+  number of seconds, 0 or -1, not '<v>'"  of seconds, 0 (close after every
+                                          message) or -1 (only on SIGHUP).
 "<class>: timestamp_format must be a      timestamp_format is undef, empty or a
   non-empty string"                       reference.
 "<class>: timestamp_precision must be     timestamp_precision is not a whole
@@ -988,8 +996,8 @@ between messages; call this after something outside the program has renamed,
 moved or truncated them.  It isn't usually needed: a file that has been
 renamed or deleted is noticed on the next write, a `SIGHUP` reopens every
 logger's files (except on Windows, see ["logrotate"](#logrotate)), and every file is
-reopened when `reopen_interval` has passed.  File handles passed as `fd`
-are not closed.
+reopened when `reopen_interval` has passed (unless it is `-1`).  File
+handles passed as `fd` are not closed.
 
 A program that sets its own `$SIG{HUP}` after logging has started replaces
 the module's handler, and can call this from its own:

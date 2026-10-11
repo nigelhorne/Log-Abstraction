@@ -84,7 +84,7 @@ subtest 'a renamed or deleted file is noticed' => sub {
 	plan skip_all => "an open file can't be renamed or deleted on $^O" if($^O eq 'MSWin32');
 
 	my $path = new_path();
-	my $log = logger($path, reopen_interval => 0);
+	my $log = logger($path, reopen_interval => -1);
 	$log->info('one');
 	rename($path, "$path.old") or die "rename: $!";
 	$log->info('two');
@@ -115,7 +115,7 @@ subtest "SIGHUP reopens every logger's files" => sub {
 	}
 
 	my ($p1, $p2) = (new_path(), new_path());
-	my ($log1, $log2) = (logger($p1), logger($p2, reopen_interval => 0));
+	my ($log1, $log2) = (logger($p1), logger($p2, reopen_interval => -1));
 	$_->info('one') for($log1, $log2);
 	my ($fh1, $fh2) = (handle($log1, $p1), handle($log2, $p2));
 	isnt($SIG{HUP}, $program_handler, 'the module has installed its handler');
@@ -126,7 +126,7 @@ subtest "SIGHUP reopens every logger's files" => sub {
 
 	$_->info('two') for($log1, $log2);
 	isnt(handle($log1, $p1), $fh1, 'the first logger opened its file again');
-	isnt(handle($log2, $p2), $fh2, 'and so did the second, without reopen_interval');
+	isnt(handle($log2, $p2), $fh2, 'and so did the second, whose reopen_interval is -1');
 	$fh1 = handle($log1, $p1);
 	$log1->info('three');
 	is(handle($log1, $p1), $fh1, 'then keeps it open until the next SIGHUP');
@@ -153,17 +153,23 @@ subtest 'reopen_interval' => sub {
 	$log->info('five');
 	isnt(handle($log, $path), $fh, 'reopen_interval given');
 
-	$log = logger($path, reopen_interval => 0);
+	$log = logger($path, reopen_interval => -1);
 	$log->info('six');
 	$fh = handle($log, $path);
 	$log->{_handles}{$path}{opened} -= 1_000_000;
 	$log->info('seven');
-	is(handle($log, $path), $fh, '0 turns it off');
-	is_deeply([ lines($path) ], [qw(one two three four five six seven)], 'every line written once');
+	is(handle($log, $path), $fh, '-1: not reopened because of time');
 
-	for my $bad (-1, 'x', 1.5, '') {
+	$log = logger($path, reopen_interval => 0);
+	$log->info('eight');
+	ok(!handle($log, $path), '0: closed after the write');
+	$log->info('nine');
+	ok(!handle($log, $path), 'and after the next');
+	is_deeply([ lines($path) ], [qw(one two three four five six seven eight nine)], 'every line written once');
+
+	for my $bad (-2, 'x', 1.5, '', '+1') {
 		throws_ok(sub { Log::Abstraction->new(logger => [], reopen_interval => $bad) },
-			qr/reopen_interval must be a non-negative integer/, "reopen_interval '$bad'");
+			qr/reopen_interval must be a number of seconds, 0 or -1/, "reopen_interval '$bad'");
 	}
 	throws_ok(sub { Log::Abstraction->new(logger => [])->new(reopen_interval => 'x') },
 		qr/reopen_interval must be/, 'checked when cloning too');

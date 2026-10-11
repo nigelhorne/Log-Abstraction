@@ -17,10 +17,11 @@ Revision history for Log-Abstraction
 	  a SIGHUP makes every logger reopen its files (the module installs a
 	  handler when it first opens a file, calling any handler already set),
 	  so SIGHUP no longer ends a program that logs to a file.  In case no
-	  SIGHUP is sent, the new reopen_interval option (default 300 seconds,
-	  0 for never) reopens them regularly, and the new reopen() method
-	  closes them.  On Windows an open log file can't be renamed or deleted
-	  by another program; call reopen() first.
+	  SIGHUP is sent, they are reopened every reopen_interval seconds, a
+	  new option: default 300, -1 for only on SIGHUP, and 0 to close the
+	  file after every message as before.  The new reopen() method closes
+	  them.  On Windows an open log file can't be renamed or deleted by
+	  another program; call reopen() first.
 	[ API Changes ]
 	- Each backend is now a Log::Abstraction::Backend::* object, built once
 	  by new() instead of worked out again for every message.

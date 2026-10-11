@@ -133,9 +133,12 @@ Readonly::Scalar my $MAX_TIMESTAMP_PRECISION => 9;
 Readonly::Scalar my $DEFAULT_ROTATE_KEEP => 5;
 
 # Seconds after which an open log file is closed and opened again, when
-# reopen_interval isn't given, for rotation tools that neither send SIGHUP
-# nor change the file's inode
+# reopen_interval isn't given, in case a rotation tool doesn't send SIGHUP
 Readonly::Scalar my $DEFAULT_REOPEN_INTERVAL => 300;
+
+# reopen_interval values that aren't a number of seconds
+Readonly::Scalar my $REOPEN_EVERY_WRITE => 0;     # close after every line
+Readonly::Scalar my $REOPEN_ON_SIGHUP   => -1;    # only when told to
 
 # Multipliers for the K/M/G suffixes of rotate_size
 Readonly::Hash my %SIZE_UNITS => (
@@ -474,7 +477,9 @@ program, as it does by default.  A handler that the program sets later
 replaces C<Log::Abstraction>'s; it can call L</reopen> itself.
 
 In case a C<SIGHUP> isn't sent, every file is also closed and opened again
-every 5 minutes (see C<reopen_interval>).
+every 5 minutes, by default.  C<reopen_interval> changes how often, makes
+C<SIGHUP> the only way (C<-1>), or closes the file after every message
+(C<0>), as before version 0.40.
 
 On Windows an open file can't be renamed or deleted, so a file the logger is
 writing can only be rotated by the logger itself (which closes it first), or
@@ -663,7 +668,12 @@ C<qr//>), or an array reference of them.  See L</Redaction>.
 Log files written by path are kept open between messages.  Every this many
 seconds (default 300, i.e. 5 minutes) each one is closed and opened again on
 its next write, in case a rotation tool changed the file without renaming it
-and without sending a C<SIGHUP> (see L</logrotate>).  C<0> turns this off.
+and without sending a C<SIGHUP> (see L</logrotate>).
+
+C<0> closes the file after every message, so it is never held open, and no
+C<SIGHUP> handler is installed for it.  C<-1> never reopens the file because
+of time: only a C<SIGHUP>, L</reopen>, or the file being renamed or deleted
+does.  (Windows has no C<SIGHUP>.)
 
 =item * C<rotate_interval>
 
@@ -768,7 +778,7 @@ renamed C<host> (before 0.40, the first message did both).
       logger         => { optional => 1 },
       max_messages   => { type => 'integer', min => 0, optional => 1 },
       redact         => { optional => 1 },    # regex, string, or arrayref of them
-      reopen_interval => { type => 'integer', min => 0, optional => 1 },
+      reopen_interval => { type => 'integer', min => -1, optional => 1 },
       rotate_interval => { type => 'string', regex => qr/^(hourly|daily|weekly|monthly)$/i, optional => 1 },
       rotate_keep    => { type => 'integer', min => 0, optional => 1 },
       rotate_size    => { type => 'string',  regex => qr/^\s*[1-9]\d*\s*[kmg]?b?\s*$/i, optional => 1 },
@@ -809,8 +819,9 @@ renamed C<host> (before 0.40, the first message did both).
     not '<v>'"
   "<class>: rotate_keep must be a           rotate_keep is negative or not a number.
     non-negative integer, not '<v>'"
-  "<class>: reopen_interval must be a       reopen_interval is negative or not a
-    non-negative integer, not '<v>'"        whole number of seconds.
+  "<class>: reopen_interval must be a       reopen_interval is not a whole number
+    number of seconds, 0 or -1, not '<v>'"  of seconds, 0 (close after every
+                                            message) or -1 (only on SIGHUP).
   "<class>: timestamp_format must be a      timestamp_format is undef, empty or a
     non-empty string"                       reference.
   "<class>: timestamp_precision must be     timestamp_precision is not a whole
@@ -1498,8 +1509,8 @@ sub _check_rotate_args :Private {
 		}
 	}
 	if(defined(my $interval = $args->{'reopen_interval'})) {
-		if($interval !~ /^\d+\z/) {
-			Carp::croak("$class: reopen_interval must be a non-negative integer, not '$interval'");
+		if($interval !~ /^(?:\d+|-1)\z/) {
+			Carp::croak("$class: reopen_interval must be a number of seconds, 0 or -1, not '$interval'");
 		}
 	}
 	return;
@@ -1759,7 +1770,8 @@ sub _timestamp :Private {
 # Exit:         Returns nothing.
 # Side effects: Appends to the file or prints to the handle.  A file path
 #               is rotated first if rotate_size or rotate_interval says so,
-#               and is kept open for the next line (see _file_handle).
+#               and is kept open for the next line (see _file_handle), unless
+#               reopen_interval is 0.
 # Notes:        Character strings are encoded to UTF-8, avoiding "Wide
 #               character" warnings, unless the handle already has a
 #               :utf8 or :encoding layer.  File I/O failures are silent by
@@ -1789,6 +1801,11 @@ sub _write_line :Private {
 		print $fout "$line\n" or die "$target: $!";
 		1;
 	} or $self->_close_files($target);
+
+	# reopen_interval 0: never hold the file open, as before 0.40
+	if(($self->{'reopen_interval'} // $DEFAULT_REOPEN_INTERVAL) == $REOPEN_EVERY_WRITE) {
+		$self->_close_files($target);
+	}
 	return;
 }
 
@@ -1805,9 +1822,10 @@ sub _write_line :Private {
 # Side effects: Opens the file if the logger hasn't, or opens it again if
 #               the path is now a different file (renamed or deleted, e.g.
 #               by logrotate), the process has had a SIGHUP, or
-#               reopen_interval seconds have passed since it was opened.
-#               Installs the SIGHUP handler (_catch_sighup) when it opens a
-#               file.
+#               reopen_interval seconds have passed since it was opened
+#               (never with -1).  Installs the SIGHUP handler
+#               (_catch_sighup) when it opens a file, unless reopen_interval
+#               is 0, when _write_line closes the file again at once.
 # Notes:        Costs one stat() per line.  The device and inode are taken
 #               from the path, not the handle, so that the two are compared
 #               alike (Windows' fstat can differ).
@@ -1817,9 +1835,10 @@ sub _write_line :Private {
 #     IF the logger has a handle on path:
 #       RETURN it IF path still names the same device and inode AND
 #         there has been no SIGHUP since it was opened AND
-#         (reopen_interval is 0 OR it was opened less than that long ago)
+#         (reopen_interval is -1 OR it was opened less than that long ago)
 #       close it
-#     install the SIGHUP handler, unless done already or on Windows
+#     install the SIGHUP handler, unless done already, on Windows, or
+#       reopen_interval is 0
 #     open path for appending, autoflush on
 #     remember the handle, path's device and inode, the SIGHUP count and
 #       the time
@@ -1834,13 +1853,13 @@ sub _file_handle :Private {
 		my $interval = $self->{'reopen_interval'} // $DEFAULT_REOPEN_INTERVAL;
 		if(@st && ($st[0] == $open->{dev}) && ($st[1] == $open->{ino})
 		   && ($open->{sighup} == $sighup_count)
-		   && !($interval && ((time() - $open->{opened}) >= $interval))) {
+		   && (($interval == $REOPEN_ON_SIGHUP) || ((time() - $open->{opened}) < $interval))) {
 			return $open->{fh};
 		}
 		$self->_close_files($path);
 	}
 
-	_catch_sighup();
+	_catch_sighup() unless(($self->{'reopen_interval'} // $DEFAULT_REOPEN_INTERVAL) == $REOPEN_EVERY_WRITE);
 	open(my $fh, '>>', $path);
 	$fh->autoflush(1);
 	my @st = stat($path);
@@ -2754,8 +2773,8 @@ between messages; call this after something outside the program has renamed,
 moved or truncated them.  It isn't usually needed: a file that has been
 renamed or deleted is noticed on the next write, a C<SIGHUP> reopens every
 logger's files (except on Windows, see L</logrotate>), and every file is
-reopened when C<reopen_interval> has passed.  File handles passed as C<fd>
-are not closed.
+reopened when C<reopen_interval> has passed (unless it is C<-1>).  File
+handles passed as C<fd> are not closed.
 
 A program that sets its own C<$SIG{HUP}> after logging has started replaces
 the module's handler, and can call this from its own:
