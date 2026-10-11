@@ -10,7 +10,7 @@ use Carp ();
 use Readonly ();
 use Scalar::Util ();
 
-our $VERSION = '0.39';
+our $VERSION = '0.40';
 
 # The Log::Any method for each internal level name
 Readonly::Hash my %METHOD => (
@@ -31,7 +31,7 @@ Log::Abstraction::Backend::LogAny - send messages on to Log::Any
 
 =head1 VERSION
 
-0.39
+0.40
 
 =head1 DESCRIPTION
 

@@ -17,7 +17,7 @@ use Readonly ();
 BEGIN { $Sub::Private::config{mode} = 'enforce' }
 use Sub::Private 0.06;
 
-our $VERSION = '0.39';
+our $VERSION = '0.40';
 
 # Default path to the journald native-protocol socket on systemd systems
 Readonly::Scalar my $DEFAULT_SOCKET => '/run/systemd/journal/socket';
@@ -41,7 +41,7 @@ Log::Abstraction::Backend::Journald - send messages to the systemd journal
 
 =head1 VERSION
 
-0.39
+0.40
 
 =head1 DESCRIPTION
 

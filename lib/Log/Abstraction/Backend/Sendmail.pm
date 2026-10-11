@@ -6,7 +6,7 @@ use warnings;
 
 use parent 'Log::Abstraction::Backend';
 
-our $VERSION = '0.39';
+our $VERSION = '0.40';
 
 =head1 NAME
 
@@ -14,7 +14,7 @@ Log::Abstraction::Backend::Sendmail - email messages
 
 =head1 VERSION
 
-0.39
+0.40
 
 =head1 DESCRIPTION
 

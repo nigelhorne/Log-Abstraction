@@ -8,7 +8,7 @@ use parent 'Log::Abstraction::Backend';
 
 use Carp ();
 
-our $VERSION = '0.39';
+our $VERSION = '0.40';
 
 =head1 NAME
 
@@ -16,7 +16,7 @@ Log::Abstraction::Backend::Object - call a logger object's method for each messa
 
 =head1 VERSION
 
-0.39
+0.40
 
 =head1 DESCRIPTION
 

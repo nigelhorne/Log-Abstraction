@@ -9,7 +9,7 @@ use parent 'Log::Abstraction::Backend';
 use Carp ();
 use Readonly ();
 
-our $VERSION = '0.39';
+our $VERSION = '0.40';
 
 # The Log::Dispatch level name for each internal level name
 Readonly::Hash my %LEVEL => (
@@ -30,7 +30,7 @@ Log::Abstraction::Backend::LogDispatch - send messages on to Log::Dispatch
 
 =head1 VERSION
 
-0.39
+0.40
 
 =head1 DESCRIPTION
 

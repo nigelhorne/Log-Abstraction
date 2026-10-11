@@ -6,7 +6,7 @@ use warnings;
 
 use Carp ();
 
-our $VERSION = '0.39';
+our $VERSION = '0.40';
 
 # Carp and croak from a backend report the code that called Log::Abstraction,
 # not Log::Abstraction itself.  The subclasses trust this package through
@@ -26,7 +26,7 @@ Log::Abstraction::Backend - base class of the Log::Abstraction backends
 
 =head1 VERSION
 
-0.39
+0.40
 
 =head1 DESCRIPTION
 
@@ -61,6 +61,21 @@ The backends are:
 Stores its arguments.  They have already been checked by
 C<Log::Abstraction-E<gt>new()>; C<level> is a syslog number (0-7).
 
+=head3 API SPECIFICATION
+
+=head4 Input
+
+  {
+      level  => { type => 'integer', min => 0, max => 7, optional => 1 },
+      format => { type => 'string', min => 1, optional => 1 },
+      # and the destination, under the backend's own key (file, fd,
+      # array, sendmail ...)
+  }
+
+=head4 Output
+
+  { type => 'object', isa => 'Log::Abstraction::Backend' }
+
 =cut
 
 sub new {
@@ -75,6 +90,16 @@ sub new {
 
 True if the backend has no level of its own, or the message is at that level
 or more severe.
+
+=head3 API SPECIFICATION
+
+=head4 Input
+
+  { event => { type => 'hashref', schema => { priority => { type => 'integer', min => 0, max => 7 } } } }
+
+=head4 Output
+
+  { type => 'boolean' }
 
 =cut
 
@@ -91,6 +116,19 @@ sub wants {
 
 The message formatted with the backend's own C<format>, if it has one,
 otherwise the default given.
+
+=head3 API SPECIFICATION
+
+=head4 Input
+
+  {
+      event   => { type => 'hashref', schema => { render => { type => 'coderef' } } },
+      default => { type => 'string' },
+  }
+
+=head4 Output
+
+  { type => 'string' }
 
 =cut
 
@@ -126,6 +164,22 @@ reference built by C<Log::Abstraction> for each message:
 
 The closures are how a backend uses Log::Abstraction's private methods.
 Subclasses must override this.
+
+=head3 API SPECIFICATION
+
+=head4 Input
+
+  {
+      logger => { type => 'object', isa => 'Log::Abstraction' },
+      event  => { type => 'hashref' },    # the keys above
+  }
+
+=head4 Output
+
+  None.  The base class's emit() croaks "<class>: emit() is not
+  implemented"; a subclass's sends the message.  A failed delivery is
+  carped, not fatal; a configuration error (e.g. an invalid sendmail
+  host) still croaks.
 
 =cut
 

@@ -227,11 +227,11 @@ Log::Abstraction - Logging Abstraction Layer
 
 =head1 VERSION
 
-0.39
+0.40
 
 =cut
 
-our $VERSION = '0.39';
+our $VERSION = '0.40';
 
 =head1 SYNOPSIS
 
@@ -678,7 +678,10 @@ A message too large for one datagram (about 200KB) is truncated and
 C<[truncated]> appended.
 Delivery failures are silent apart from a single C<Carp::carp> (repeated only
 after a later send has succeeded); the application is never crashed by a
-journald error.
+journald error.  The socket is opened for the first message and reused for
+the next ones; after a failed send it is closed, and the next message opens a
+new one.  Each datagram is addressed to the socket path, so delivery
+continues after journald restarts.
 
 =item * C<redact>
 
@@ -2846,7 +2849,9 @@ The logger, for method chaining.
 =head3 Side Effects
 
 May send an email, which starts the C<min_interval> interval again.  A
-delivery failure is carped and the messages stay held.  Croaks if the
+delivery failure is carped and the messages stay held.  With C<async>, the
+email is sent by a child process and the messages are no longer held: a
+failure is carped by the child, and the messages are lost.  Croaks if the
 C<sendmail> C<host> or C<port> is invalid.
 
 =head3 Example
@@ -2891,7 +2896,11 @@ moved or truncated them.  It isn't usually needed: a file that has been
 renamed or deleted is noticed on the next write, a C<SIGHUP> reopens every
 logger's files (except on Windows, see L</logrotate>), and every file is
 reopened when C<reopen_interval> has passed (unless it is C<-1>).  File
-handles passed as C<fd> are not closed.
+handles passed as C<fd> are not closed.  It does nothing if no files are
+open.
+
+A file is also closed when writing to it fails (e.g. the disk is full), so
+that the next message opens it again.
 
 A program that sets its own C<$SIG{HUP}> after logging has started replaces
 the module's handler, and can call this from its own:
@@ -3564,15 +3573,6 @@ callback as described above.
 
 =over 4
 
-=item B<Syslog hash mutation>
-
-The C<syslog> sub-hash passed to C<new()> is mutated in-place on the first
-log call: C<facility>, C<level> and C<format> are temporarily removed before
-C<setlogsock()> is called, then restored; C<server> is permanently renamed
-to C<host>.  Sharing a syslog hashref between two C<Log::Abstraction>
-instances is not supported and produces undefined behaviour on the second
-instance.
-
 =item B<trace is the same threshold as debug>
 
 syslog has no priority below debug, so C<trace> and C<debug> share one
@@ -3598,12 +3598,27 @@ keep L</Structured fields> as data.  Text formats, syslog, email,
 Log::Dispatch and object loggers get them as C<key=value> text appended to
 the message, and a custom C<format> has no token for them on their own.
 
-=item B<Single-threaded email throttle>
+=item B<Process-wide state, and no thread safety>
 
-The C<min_interval> throttle and C<digest> for the C<sendmail> backend and
-the C<_syslog_opened> first-open flag are stored on the object without mutex
-protection.  Under Perl ithreads or other concurrency models, objects shared
-between threads are not safe.
+Some state belongs to the whole process, not to a logger: the syslog
+connection (above), the C<$SIG{HUP}> handler (see L</logrotate>), and the
+list of C<async> email children still to be reaped.  The per-logger state
+(open log files, the C<min_interval> throttle and C<digest>, the
+first-open syslog flag) is stored on the object without locking.  Under
+Perl ithreads or other concurrency models, objects shared between threads
+are not safe.
+
+=item B<Asynchronous email uses fork>
+
+The C<sendmail> C<async> option sends each email from a child made with
+C<fork>.  That may not suit every program: under mod_perl the child is a
+copy of the Apache process; with ithreads only the calling thread is
+copied; and in an event loop (L<AnyEvent>, L<IO::Async>, L<Mojo::IOLoop>)
+the child is reaped by this module, not by the loop's child watcher.  A
+program that reaps every child itself (e.g. C<waitpid(-1, ...)> in a
+C<$SIG{CHLD}> handler) sees these children too.  The child's success or
+failure isn't reported back: a failure is carped by the child and the
+message is lost.  Without C<async> the email is sent in the log call.
 
 =item B<OpenTelemetry not yet supported>
 
@@ -3790,10 +3805,38 @@ L<http://deps.cpantesters.org/?module=Log::Abstraction>
   │ ΔLogState
   │ result! : LogState
   ├─────────────────────────────────────────────────────────────
-  │ digest ≠ ⟨⟩ ∧ sent(digest) ⟹ digest' = ⟨⟩ ∧ last_email_sent' = now
-  │ digest ≠ ⟨⟩ ∧ ¬sent(digest) ⟹ digest' = digest
+  │ digest ≠ ⟨⟩ ∧ (sent(digest) ∨ async ∧ forked) ⟹
+  │     digest' = ⟨⟩ ∧ last_email_sent' = now
+  │ digest ≠ ⟨⟩ ∧ ¬sent(digest) ∧ ¬(async ∧ forked) ⟹ digest' = digest
   │ digest = ⟨⟩ ⟹ digest' = digest
   │ messages' = messages
+  │ result! = self
+  └─────────────────────────────────────────────────────────────
+
+=head2 reopen
+
+  INTERVAL == ℤ                     reopen_interval: seconds, 0 or -1
+  HANDLE   == { fh; dev; ino; sighup : ℕ; opened : ℕ }
+
+  ┌─ OpenFiles ─────────────────────────────────────────────────
+  │ handles         : PATH ⇸ HANDLE
+  │ reopen_interval : INTERVAL
+  ├─────────────────────────────────────────────────────────────
+  │ reopen_interval ≥ -1
+  │ reopen_interval = 0 ⟹ handles = ∅   (between log calls)
+  └─────────────────────────────────────────────────────────────
+
+  A handle h on path p is used for the next write iff
+    stat(p) = (h.dev, h.ino) ∧ h.sighup = sighup_count
+    ∧ (reopen_interval = -1 ∨ now - h.opened < reopen_interval)
+  and is otherwise closed and p opened again.
+
+  ┌─ Reopen ────────────────────────────────────────────────────
+  │ ΔOpenFiles
+  │ result! : LogState
+  ├─────────────────────────────────────────────────────────────
+  │ handles' = ∅
+  │ reopen_interval' = reopen_interval
   │ result! = self
   └─────────────────────────────────────────────────────────────
 

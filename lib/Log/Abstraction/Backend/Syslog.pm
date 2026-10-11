@@ -10,7 +10,7 @@ use Carp ();
 use Readonly ();
 use Sys::Syslog 0.28 ();
 
-our $VERSION = '0.39';
+our $VERSION = '0.40';
 
 # Default syslog connection parameters
 Readonly::Scalar my $DEFAULT_FACILITY => 'local0';
@@ -43,7 +43,7 @@ Log::Abstraction::Backend::Syslog - send messages to syslog
 
 =head1 VERSION
 
-0.39
+0.40
 
 =head1 DESCRIPTION
 
