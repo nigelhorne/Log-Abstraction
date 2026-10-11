@@ -27,9 +27,9 @@ https://pjcj.net
 <tr><th>line</th><th>stmt</th><th>bran</th><th>cond</th><th>sub</th><th>time</th><th>code</th></tr>
 <tr><td class="h">1</td><td></td><td></td><td></td><td></td><td></td><td class="s">package Log::Abstraction::Backend;</td></tr>
 <tr><td class="h">2</td><td colspan="6"></td></tr><tr><td class="h">3</td><td></td><td></td><td></td><td></td><td></td><td class="s"># Base class of the backends that Log::Abstraction sends messages to</td></tr>
-<tr><td class="h">4</td><td><div class="c3">37</div><div class="c3">37</div><div class="c3">37</div></td><td></td><td></td><td><div class="c3"><a href="blib-lib-Log-Abstraction-Backend-pm--subroutine.html#L4">37</a></div></td><td><div>225</div><div>22</div><div>499</div></td><td class="s">use strict;</td></tr>
-<tr><td class="h">5</td><td><div class="c3">37</div><div class="c3">37</div><div class="c3">37</div></td><td></td><td></td><td><div class="c3"><a href="blib-lib-Log-Abstraction-Backend-pm--subroutine.html#L5">37</a></div></td><td><div>68</div><div>20</div><div>562</div></td><td class="s">use warnings;</td></tr>
-<tr><td class="h">6</td><td colspan="6"></td></tr><tr><td class="h">7</td><td><div class="c3">37</div><div class="c3">37</div><div class="c3">37</div></td><td></td><td></td><td><div class="c3"><a href="blib-lib-Log-Abstraction-Backend-pm--subroutine.html#L7">37</a></div></td><td><div>48</div><div>28</div><div>3789</div></td><td class="s">use Carp ();</td></tr>
+<tr><td class="h">4</td><td><div class="c3">37</div><div class="c3">37</div><div class="c3">37</div></td><td></td><td></td><td><div class="c3"><a href="blib-lib-Log-Abstraction-Backend-pm--subroutine.html#L4">37</a></div></td><td><div>234</div><div>34</div><div>504</div></td><td class="s">use strict;</td></tr>
+<tr><td class="h">5</td><td><div class="c3">37</div><div class="c3">37</div><div class="c3">37</div></td><td></td><td></td><td><div class="c3"><a href="blib-lib-Log-Abstraction-Backend-pm--subroutine.html#L5">37</a></div></td><td><div>63</div><div>23</div><div>688</div></td><td class="s">use warnings;</td></tr>
+<tr><td class="h">6</td><td colspan="6"></td></tr><tr><td class="h">7</td><td><div class="c3">37</div><div class="c3">37</div><div class="c3">37</div></td><td></td><td></td><td><div class="c3"><a href="blib-lib-Log-Abstraction-Backend-pm--subroutine.html#L7">37</a></div></td><td><div>59</div><div>34</div><div>4064</div></td><td class="s">use Carp ();</td></tr>
 <tr><td class="h">8</td><td colspan="6"></td></tr><tr><td class="h">9</td><td></td><td></td><td></td><td></td><td></td><td class="s">our $VERSION = &#39;0.39&#39;;</td></tr>
 <tr><td class="h">10</td><td colspan="6"></td></tr><tr><td class="h">11</td><td></td><td></td><td></td><td></td><td></td><td class="s"># Carp and croak from a backend report the code that called Log::Abstraction,</td></tr>
 <tr><td class="h">12</td><td></td><td></td><td></td><td></td><td></td><td class="s"># not Log::Abstraction itself.&nbsp;&nbsp;The subclasses trust this package through</td></tr>
@@ -84,8 +84,8 @@ C&lt;Log::Abstraction-E&lt;gt&gt;new()&gt;; C&lt;level&gt; is a syslog number (0
 
 =cut</pre></td></tr>
 <tr><td class="h">65</td><td colspan="6"></td></tr><tr><td class="h">66</td><td></td><td></td><td></td><td></td><td></td><td class="s">sub new {</td></tr>
-<tr><td class="h">67</td><td><div class="c3">1741</div></td><td></td><td></td><td><div class="c3"><a href="blib-lib-Log-Abstraction-Backend-pm--subroutine.html#L67">1741</a></div></td><td><div>8397</div></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;my ($class, %args) = @_;</td></tr>
-<tr><td class="h">68</td><td colspan="6"></td></tr><tr><td class="h">69</td><td><div class="c3">1741</div></td><td></td><td></td><td></td><td><div>2955</div></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return bless { %args }, $class;</td></tr>
+<tr><td class="h">67</td><td><div class="c3">1743</div></td><td></td><td></td><td><div class="c3"><a href="blib-lib-Log-Abstraction-Backend-pm--subroutine.html#L67">1743</a></div></td><td><div>8852</div></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;my ($class, %args) = @_;</td></tr>
+<tr><td class="h">68</td><td colspan="6"></td></tr><tr><td class="h">69</td><td><div class="c3">1743</div></td><td></td><td></td><td></td><td><div>3311</div></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return bless { %args }, $class;</td></tr>
 <tr><td class="h">70</td><td></td><td></td><td></td><td></td><td></td><td class="s">}</td></tr>
 <tr><td class="h">71</td><td colspan="6"></td></tr><tr><td class="h">72 - 79</td><td colspan="5"></td><td class="s"><pre>=head2 wants
 
@@ -96,9 +96,9 @@ or more severe.
 
 =cut</pre></td></tr>
 <tr><td class="h">80</td><td colspan="6"></td></tr><tr><td class="h">81</td><td></td><td></td><td></td><td></td><td></td><td class="s">sub wants {</td></tr>
-<tr><td class="h">82</td><td><div class="c3">11020</div></td><td></td><td></td><td><div class="c3"><a href="blib-lib-Log-Abstraction-Backend-pm--subroutine.html#L82">11020</a></div></td><td><div>6940</div></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;my ($self, $event) = @_;</td></tr>
-<tr><td class="h">83</td><td colspan="6"></td></tr><tr><td class="h">84</td><td><div class="c3">11020</div></td><td><div class="c3" title="T/F"><a href="blib-lib-Log-Abstraction-Backend-pm--branch.html#L84">100</a></div></td><td></td><td></td><td><div>16376</div></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return 1 unless(defined($self-&gt;{&#39;level&#39;}));</td></tr>
-<tr><td class="h">85</td><td><div class="c3">56</div></td><td></td><td></td><td></td><td><div>183</div></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return $event-&gt;{&#39;priority&#39;} &lt;= $self-&gt;{&#39;level&#39;};</td></tr>
+<tr><td class="h">82</td><td><div class="c3">11025</div></td><td></td><td></td><td><div class="c3"><a href="blib-lib-Log-Abstraction-Backend-pm--subroutine.html#L82">11025</a></div></td><td><div>7840</div></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;my ($self, $event) = @_;</td></tr>
+<tr><td class="h">83</td><td colspan="6"></td></tr><tr><td class="h">84</td><td><div class="c3">11025</div></td><td><div class="c3" title="T/F"><a href="blib-lib-Log-Abstraction-Backend-pm--branch.html#L84">100</a></div></td><td></td><td></td><td><div>17513</div></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return 1 unless(defined($self-&gt;{&#39;level&#39;}));</td></tr>
+<tr><td class="h">85</td><td><div class="c3">56</div></td><td></td><td></td><td></td><td><div>319</div></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return $event-&gt;{&#39;priority&#39;} &lt;= $self-&gt;{&#39;level&#39;};</td></tr>
 <tr><td class="h">86</td><td></td><td></td><td></td><td></td><td></td><td class="s">}</td></tr>
 <tr><td class="h">87</td><td colspan="6"></td></tr><tr><td class="h">88 - 95</td><td colspan="5"></td><td class="s"><pre>=head2 text
 
@@ -109,8 +109,8 @@ otherwise the default given.
 
 =cut</pre></td></tr>
 <tr><td class="h">96</td><td colspan="6"></td></tr><tr><td class="h">97</td><td></td><td></td><td></td><td></td><td></td><td class="s">sub text {</td></tr>
-<tr><td class="h">98</td><td><div class="c3">81</div></td><td></td><td></td><td><div class="c3"><a href="blib-lib-Log-Abstraction-Backend-pm--subroutine.html#L98">81</a></div></td><td><div>72</div></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;my ($self, $event, $default) = @_;</td></tr>
-<tr><td class="h">99</td><td colspan="6"></td></tr><tr><td class="h">100</td><td><div class="c3">81</div></td><td><div class="c3" title="T/F"><a href="blib-lib-Log-Abstraction-Backend-pm--branch.html#L100">100</a></div></td><td></td><td></td><td><div>122</div></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return defined($self-&gt;{&#39;format&#39;}) ? $event-&gt;{&#39;render&#39;}-&gt;($self-&gt;{&#39;format&#39;}) : $default;</td></tr>
+<tr><td class="h">98</td><td><div class="c3">86</div></td><td></td><td></td><td><div class="c3"><a href="blib-lib-Log-Abstraction-Backend-pm--subroutine.html#L98">86</a></div></td><td><div>106</div></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;my ($self, $event, $default) = @_;</td></tr>
+<tr><td class="h">99</td><td colspan="6"></td></tr><tr><td class="h">100</td><td><div class="c3">86</div></td><td><div class="c3" title="T/F"><a href="blib-lib-Log-Abstraction-Backend-pm--branch.html#L100">100</a></div></td><td></td><td></td><td><div>159</div></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return defined($self-&gt;{&#39;format&#39;}) ? $event-&gt;{&#39;render&#39;}-&gt;($self-&gt;{&#39;format&#39;}) : $default;</td></tr>
 <tr><td class="h">101</td><td></td><td></td><td></td><td></td><td></td><td class="s">}</td></tr>
 <tr><td class="h">102</td><td colspan="6"></td></tr><tr><td class="h">103 - 130</td><td colspan="5"></td><td class="s"><pre>=head2 emit
 
