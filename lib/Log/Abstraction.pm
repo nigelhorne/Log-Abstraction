@@ -52,9 +52,6 @@ package Log::Abstraction;
 #   - Store the provider reference, not a cached Logger, to survive
 #     provider swaps (workaround for blocker 3 above).
 
-# Roadmap - features:
-#   - Log::Dispatch / Log::Any producer mode.
-#
 # Roadmap - technical debt:
 #   - Split _log into per-backend classes (Log::Abstraction::Backend::*)
 #     built once in new(), so the caller's syslog hash is not mutated and
@@ -175,6 +172,24 @@ Readonly::Hash my %LEVEL_TO_SYSLOG_PRIORITY => (
 	emergency => 'emerg',
 );
 
+# Map internal level names to the Log::Any methods (Log::Any::Proxy) and
+# Log::Dispatch level names that the log_any and log_dispatch backends use
+Readonly::Hash my %LEVEL_TO_LOG_ANY => (
+	trace     => 'trace',
+	debug     => 'debug',
+	info      => 'info',
+	notice    => 'notice',
+	warn      => 'warning',
+	error     => 'error',
+	critical  => 'critical',
+	alert     => 'alert',
+	emergency => 'emergency',
+);
+Readonly::Hash my %LEVEL_TO_LOG_DISPATCH => (
+	%LEVEL_TO_LOG_ANY,
+	trace => 'debug',    # Log::Dispatch has nothing below debug
+);
+
 # Regex: characters forbidden in a log-file path (prevents command injection).
 # Anchored with \z, not $, which would accept a trailing newline
 Readonly::Scalar my $RE_SAFE_PATH => qr/^([^<>|*?;!`\$"\x00-\x1F]+)\z/;
@@ -222,6 +237,11 @@ my $syslog_open_count = 0;
 # Single JSON encoder for format => 'json', built on first use.  It returns
 # a character string so that all backends share one output-encoding path
 my $json_encoder;
+
+# True while a message is being handed to Log::Any or Log::Dispatch.  If that
+# brings it back to a Log::Abstraction (e.g. through
+# Log::Any::Adapter::Abstraction), it isn't forwarded again, which would loop
+my $forwarding = 0;
 
 =head1 NAME
 
@@ -375,8 +395,8 @@ L</flush>).  A clone made with L</new> starts with none held.
 Every backend can have its own C<level> and C<format>, as well as the
 logger's.  C<syslog>, C<journald> and C<sendmail> are hashes already, so
 they take them as keys.  C<file>, C<fd> and C<array>, inside a C<logger> hash
-or at the top level, may be given as a hash holding the destination under
-the backend's own name:
+or at the top level, and C<log_any> and C<log_dispatch>, may be given as a
+hash holding the destination under the backend's own name:
 
   my $log = Log::Abstraction->new(
       level  => 'debug',
@@ -399,13 +419,54 @@ C<level> to the most verbose any backend wants.
 L</format>, which it overrides.  For C<file> and C<fd> it is the line
 written.  For the others, which by default get the message as it is, it
 replaces the message: the C<array> entry's C<message>, the text sent to
-syslog, the journal's C<MESSAGE> field and the email body.
+syslog, Log::Any or Log::Dispatch, the journal's C<MESSAGE> field and the
+email body.
 
 =back
 
 The plain forms (C<file =E<gt> $path>, C<fd =E<gt> $handle>,
-C<array =E<gt> \@array>) still work and have no level or format of their
+C<array =E<gt> \@array>, C<log_any =E<gt> $category>,
+C<log_dispatch =E<gt> $dispatcher>) still work and have no level or format of their
 own.  A blessed handle object is a destination, not the hash form.
+
+=head2 Forwarding to Log::Any and Log::Dispatch
+
+L<Log::Any::Adapter::Abstraction> brings messages from L<Log::Any> into
+C<Log::Abstraction>.  The C<log_any> and C<log_dispatch> backends go the
+other way, sending messages on to an application's existing L<Log::Any> or
+L<Log::Dispatch> set-up, alongside any other backends:
+
+  my $log = Log::Abstraction->new(
+      level  => 'debug',
+      logger => {
+          log_any      => 'MyApp',          # a category, or a Log::Any logger
+          log_dispatch => $dispatcher,      # a Log::Dispatch object
+          file         => '/var/log/myapp.log',
+      },
+  );
+
+Levels keep their names, except that C<warn> becomes C<warning>, and
+Log::Dispatch, which has nothing below C<debug>, gets C<trace> messages as
+C<debug>.  Log::Any gets L</Structured fields> as its trailing hashref, so a
+structured adapter receives them as data; Log::Dispatch has no fields, so
+they are appended to the message as text.  With its own C<format> (see
+L</Per-backend level and format>) a backend gets the formatted line instead.
+
+A C<Log::Any> category name is looked up with
+C<Log::Any-E<gt>get_logger(category =E<gt> $name)> (which needs L<Log::Any>
+installed) when the first message is sent, and follows later
+C<Log::Any::Adapter-E<gt>set()> calls.  If Log::Any or Log::Dispatch dies,
+C<Carp::carp> is called and the other backends still get the message.
+
+A C<Log::Any::Proxy> or C<Log::Dispatch> object given as the C<logger>
+itself is used in the same way, rather than as an object whose method is
+called for each level: neither has a method for every level, and both
+would join the arguments with spaces.
+
+A message that reaches a C<Log::Abstraction> while it is being forwarded
+(e.g. through L<Log::Any::Adapter::Abstraction>) is logged by that logger's
+other backends but not forwarded again, so a set-up that points back at
+itself doesn't loop.
 
 =head2 File rotation
 
@@ -538,9 +599,12 @@ One of:
 =item * A code reference -- called with a hashref C<{ class, file, line, level, message, ctx, fields }>
 (C<ctx> and C<fields> only when there are any)
 
-=item * An object -- method matching the level name is called on it
+=item * An object -- method matching the level name is called on it; a
+L<Log::Any> logger or a L<Log::Dispatch> object is used as the C<log_any> or
+C<log_dispatch> backend (see L</Forwarding to Log::Any and Log::Dispatch>)
 
-=item * A hash reference -- may contain C<file>, C<array>, C<fd>, C<syslog>, C<journald>, and/or C<sendmail> keys,
+=item * A hash reference -- may contain C<file>, C<array>, C<fd>, C<syslog>, C<journald>, C<sendmail>,
+C<log_any> and/or C<log_dispatch> keys,
 each of which may have its own C<level> and C<format> (see L</Per-backend level and format>)
 
 =item * An array reference -- C<{ level, message }> hashrefs are pushed onto it, with a
@@ -766,15 +830,22 @@ specified.
                                             gives "invalid syslog level", as above.)
   "<class>: the <backend> format must be   A backend's 'format' is undef, empty or
     a non-empty string"                     a reference.
-  "<class>: the <backend> hash needs a      The hash form of file, fd or array has
-    '<backend>' key"                        no destination (e.g. file => { level =>
-                                            'info' } without a 'file' key).
+  "<class>: the <backend> hash needs a      The hash form of file, fd, array, log_any
+    '<backend>' key"                        or log_dispatch has no destination (e.g.
+                                            file => { level => 'info' } without a
+                                            'file' key).
   "<class>: the sendmail backend needs      The sendmail sub-hash has no 'to' key.
     a 'to' address"
   "<class>: sendmail digest_max must be a   digest_max is zero, negative or not a
     positive integer, not '<v>'"            number.
   "<class>: invalid journald field name     An extra journald key, upper-cased, is not
     '<k>'"                                  [A-Z0-9_] or starts with '_'.
+  "<class>: log_any must be a Log::Any      log_any is neither a Log::Any logger
+    logger or a category name"              (Log::Any::Proxy) nor a non-empty string.
+  "<class>: log_any needs Log::Any to be    log_any is a category name but Log::Any
+    installed"                              can't be loaded.
+  "<class>: log_dispatch must be a          log_dispatch is not an object with a
+    Log::Dispatch object"                   log() method.
 
 The following are not raised by C<new()> but later, by the logging methods
 (C<trace>, C<debug>, C<info>, C<notice>, C<warn>, C<error>, C<fatal>,
@@ -794,7 +865,8 @@ logging failure must never crash the application.
   "<class>: Invalid SMTP port: <port>"      The sendmail 'port' is not an integer in
                                             1-65535.
   "<class>: Don't know how to deal with     A logger hash has none of the keys file,
-    the <level> message"                    array, fd, syslog, journald or sendmail.
+    the <level> message"                    array, fd, syslog, journald, sendmail,
+                                            log_any or log_dispatch.
   "<class>: <object class> doesn't know     An object logger has no method for this
     how to deal with the <level> message"   level.  (notice falls back to info.)
   "<class>: configuration error, no         logger is a reference of an unsupported
@@ -809,6 +881,8 @@ logging failure must never crash the application.
   "<class>: journald send failed: <error>"  The journald socket could not be reached.
                                             Given once, then not again until a send
                                             succeeds.
+  "<class>: Log::Any failed: <error>"       Log::Any (or its adapter) died.  The other
+  "<class>: Log::Dispatch failed: <error>"  backends still receive the message.
 
 =head3 PSEUDOCODE
 
@@ -864,8 +938,13 @@ logging failure must never crash the application.
       compile, or matches the empty string; compile redact to one regex
 
     FOR each backend (top-level file/fd/array, and the logger hash's
-    file/fd/array/syslog/sendmail/journald) given as a hash:
-      CROAK if a file/fd/array hash lacks its destination key (its own name)
+    file/fd/array/syslog/sendmail/journald/log_any/log_dispatch):
+      IF log_any: CROAK unless a Log::Any::Proxy, or a category name with
+        Log::Any installed
+      IF log_dispatch: CROAK unless an object with a log() method
+      SKIP the rest unless given as a hash
+      CROAK if a file/fd/array/log_any/log_dispatch hash lacks its
+        destination key (its own name)
       CROAK if its 'level' is not a level name or 0-7
       CROAK if its 'format' is undef, empty or not a string
 
@@ -1005,12 +1084,13 @@ sub new {
 	if(ref($args{'logger'}) eq 'HASH') {
 		my $hash = $args{'logger'};
 		push @backends, map { [ $_, $hash->{$_} ] }
-			grep { defined($hash->{$_}) } qw(file fd array syslog sendmail journald);
+			grep { defined($hash->{$_}) } qw(file fd array syslog sendmail journald log_any log_dispatch);
 	}
 	for my $backend (@backends) {
 		my ($name, $value) = @{$backend};
+		_check_producer($class, $name, $value) if($name =~ /^log_(?:any|dispatch)$/);
 		next if(ref($value) ne 'HASH');
-		if(($name =~ /^(?:file|fd|array)$/) && !$value->{$name}) {
+		if(($name =~ /^(?:file|fd|array|log_any|log_dispatch)$/) && !$value->{$name}) {
 			Carp::croak("$class: the $name hash needs a '$name' key");
 		}
 		my $sub_level = $value->{'level'};
@@ -1139,6 +1219,87 @@ sub _backend :Private {
 
 	return ($value, undef, undef) unless(ref($value) eq 'HASH');
 	return ($value->{$name}, $value->{'level'}, $value->{'format'});
+}
+
+# ---------------------------------------------------------------------------
+# _check_producer -- validate a log_any or log_dispatch backend in new()
+#
+# Purpose:      Catch a wrong destination when the logger is built rather
+#               than at the first message.
+# Entry:        $class -- the class name, for messages.
+#               $name  -- 'log_any' or 'log_dispatch'.
+#               $value -- the configured value, plain or hash form.
+# Exit:         Returns nothing; croaks on an invalid destination.
+# Notes:        A pure function (no $self).  log_any takes a Log::Any::Proxy
+#               or a category name, which needs Log::Any installed;
+#               log_dispatch takes a Log::Dispatch (or anything with a
+#               Log::Dispatch-style log() method).
+# ---------------------------------------------------------------------------
+sub _check_producer :Private {
+	my ($class, $name, $value) = @_;
+
+	my ($dest) = _backend($name, $value);
+	return if(!defined($dest));    # a hash form without one croaks later
+
+	if($name eq 'log_any') {
+		if(Scalar::Util::blessed($dest)) {
+			return if($dest->isa('Log::Any::Proxy'));
+		} elsif(!ref($dest) && length($dest)) {
+			return if(eval { require Log::Any; 1 });
+			Carp::croak("$class: log_any needs Log::Any to be installed");
+		}
+		Carp::croak("$class: log_any must be a Log::Any logger or a category name");
+	}
+	if(!Scalar::Util::blessed($dest) || !$dest->can('log')) {
+		Carp::croak("$class: log_dispatch must be a Log::Dispatch object");
+	}
+}
+
+# ---------------------------------------------------------------------------
+# _produce -- hand a message to a Log::Any logger or a Log::Dispatch object
+#
+# Purpose:      The log_any and log_dispatch backends, and object loggers
+#               that are Log::Any::Proxy or Log::Dispatch objects.
+# Entry:        $self    -- the logger object.
+#               $dest    -- a Log::Any::Proxy, a Log::Any category name, or a
+#                           Log::Dispatch object.
+#               $level   -- the message's internal level name.
+#               $message -- the text to send.
+#               $fields  -- structured fields (hashref) or undef.  Log::Any
+#                           gets them as its trailing hashref, which reaches
+#                           a structured adapter as data; Log::Dispatch has
+#                           no fields, so the caller appends them as text.
+# Exit:         Returns nothing.
+# Side effects: Carps if the destination dies.  Does nothing while a
+#               message is already being forwarded (see $forwarding).
+# ---------------------------------------------------------------------------
+sub _produce :Private {
+	my ($self, $dest, $level, $message, $fields) = @_;
+
+	return if($forwarding);
+
+	# The eval catches everything, so $forwarding is always cleared again
+	$forwarding = 1;
+	my $what = 'Log::Dispatch';
+	my $ok = eval {
+		if(Scalar::Util::blessed($dest) && !$dest->isa('Log::Any::Proxy')) {
+			$dest->log(level => $LEVEL_TO_LOG_DISPATCH{$level}, message => $message);
+		} else {
+			$what = 'Log::Any';
+			if(!ref($dest)) {
+				# Proxies follow Log::Any::Adapter->set(), so one per category will do
+				$dest = $self->{_log_any_proxies}{$dest} //= do {
+					require Log::Any;
+					Log::Any->get_logger(category => $dest);
+				};
+			}
+			my $method = $LEVEL_TO_LOG_ANY{$level};
+			$dest->$method($message, ($fields ? ($fields) : ()));
+		}
+		1;
+	};
+	$forwarding = 0;
+	Carp::carp(ref($self), ": $what failed: $@") if(!$ok);
 }
 
 # ---------------------------------------------------------------------------
@@ -2110,9 +2271,11 @@ sub _log :Private {
 	# For trace/debug/info/notice: _log ← public_method ← user → depth=1
 	# For warn/error: _log ← _high_priority ← public_method ← user → depth=2
 	# Frames inside Log::Any (its proxy and our adapter) are skipped too, so
-	# messages routed through Log::Any report the user's code
+	# messages routed through Log::Any report the user's code.  So are those
+	# of the Log::Abstraction that forwarded a message here (see _produce)
 	my $depth = ((caller(1))[3] // '') =~ /::_high_priority$/ ? 2 : 1;
-	while((caller($depth + 1))[0] && (((caller($depth))[0] // '') =~ /^Log::Any(?:::|$)/)) {
+	my $skip = $forwarding ? qr/^Log::(?:Any|Abstraction|Dispatch)(?:::|$)/ : qr/^Log::Any(?:::|$)/;
+	while((caller($depth + 1))[0] && (((caller($depth))[0] // '') =~ $skip)) {
 		$depth++;
 	}
 	my $caller_file = (caller($depth))[1];
@@ -2289,6 +2452,21 @@ sub _log :Private {
 				}
 			}
 
+			# -- log_any and log_dispatch sub-backends -----------------------
+			# Log::Any takes the fields as data; Log::Dispatch gets them as
+			# text.  With a format, both get the formatted line instead
+			for my $name (qw(log_any log_dispatch)) {
+				my ($dest, $dest_level, $dest_format) = _backend($name, $logger->{$name});
+				next if(!defined($dest) || !_wants($level, $dest_level));
+				if(defined($dest_format)) {
+					$self->_produce($dest, $level, $render->($dest_format));
+				} elsif($name eq 'log_any') {
+					$self->_produce($dest, $level, $str, $fields);
+				} else {
+					$self->_produce($dest, $level, $text);
+				}
+			}
+
 			# -- fd sub-backend ---------------------------------------------
 			if($logger->{'fd'}) {
 				my ($fout, $fd_level, $fd_format) = _backend('fd', $logger->{'fd'});
@@ -2296,7 +2474,8 @@ sub _log :Private {
 
 			} elsif(!$logger->{'file'} && !$logger->{'array'}
 					&& !$logger->{'syslog'} && !exists($logger->{'sendmail'})
-					&& !$logger->{'fd'} && !$logger->{'journald'}) {
+					&& !$logger->{'fd'} && !$logger->{'journald'}
+					&& !$logger->{'log_any'} && !$logger->{'log_dispatch'}) {
 				# Hash logger with no recognised sub-key -- configuration error
 				Carp::croak(ref($self), ": Don't know how to deal with the $level message");
 			}
@@ -2305,6 +2484,18 @@ sub _log :Private {
 			# Scalar-path backend: validate path then append to the file
 			my $safe_path = $self->_validate_file_path($logger);
 			$self->_write_line($safe_path, $render->());
+
+		} elsif(Scalar::Util::blessed($logger)
+				&& ($logger->isa('Log::Any::Proxy') || $logger->isa('Log::Dispatch'))) {
+			# Log::Any and Log::Dispatch objects: as the log_any and
+			# log_dispatch backends, rather than one method per level
+			# (neither has a level method for every level, and both join
+			# the arguments with spaces)
+			if($logger->isa('Log::Any::Proxy')) {
+				$self->_produce($logger, $level, $str, $fields);
+			} else {
+				$self->_produce($logger, $level, $text);
+			}
 
 		} elsif(Scalar::Util::blessed($logger)) {
 			# Object backend: delegate to the method matching the level name
@@ -3401,10 +3592,10 @@ the first.  It is closed when the last such instance is destroyed.
 
 =item B<Structured fields are text in most backends>
 
-Only the history, array, CODE-ref, JSON and journald backends keep
-L</Structured fields> as data.  Text formats, syslog, email and object
-loggers get them as C<key=value> text appended to the message, and a custom
-C<format> has no token for them on their own.
+Only the history, array, CODE-ref, JSON, journald and Log::Any backends
+keep L</Structured fields> as data.  Text formats, syslog, email,
+Log::Dispatch and object loggers get them as C<key=value> text appended to
+the message, and a custom C<format> has no token for them on their own.
 
 =item B<Single-threaded email throttle>
 
@@ -3438,7 +3629,13 @@ Nigel Horne C<njh@nigelhorne.com>
 =item * L<Log::Any> and L<Log::Any::Adapter::Abstraction>
 
 Route messages from any C<Log::Any>-using CPAN module through
-C<Log::Abstraction> with a single C<Log::Any::Adapter-E<gt>set()> call.
+C<Log::Abstraction> with a single C<Log::Any::Adapter-E<gt>set()> call,
+or send messages on to Log::Any with the C<log_any> backend.
+
+=item * L<Log::Dispatch>
+
+Send messages on to a C<Log::Dispatch> object with the C<log_dispatch>
+backend (see L</Forwarding to Log::Any and Log::Dispatch>).
 
 =item * L<Test Dashboard|https://nigelhorne.github.io/Log-Abstraction/coverage/>
 

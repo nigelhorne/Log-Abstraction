@@ -24,7 +24,8 @@ requires 'autodie';
 recommends 'Email::Sender::Simple';
 recommends 'Email::Sender::Transport::SMTP';
 recommends 'Email::Simple';   # sendmail backend
-recommends 'Log::Any';   # Log::Any::Adapter::Abstraction
+recommends 'Log::Any';   # Log::Any::Adapter::Abstraction, log_any backend
+recommends 'Log::Dispatch';   # log_dispatch backend
 
 on 'test' => sub {
 	requires 'Config';

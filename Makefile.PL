@@ -83,7 +83,8 @@ WriteMakefile(
 			},
 			runtime => {
 				recommends => {
-					'Log::Any' => 0,	# Log::Any::Adapter::Abstraction
+					'Log::Any' => 0,	# Log::Any::Adapter::Abstraction, log_any backend
+					'Log::Dispatch' => 0,	# log_dispatch backend
 					'Email::Simple' => 0,	# sendmail backend
 					'Email::Sender::Simple' => 0,
 					'Email::Sender::Transport::SMTP' => 0,

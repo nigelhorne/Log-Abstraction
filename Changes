@@ -1,5 +1,19 @@
 Revision history for Log-Abstraction
 
+0.40	Not Released
+	[ Enhancements ]
+	- New log_any and log_dispatch backends in the logger hash send
+	  messages on to Log::Any (a category name or a Log::Any logger) and
+	  Log::Dispatch, with their own level and format like the other
+	  backends.  Log::Any gets structured fields as data.  A message that
+	  comes back through Log::Any::Adapter::Abstraction isn't forwarded
+	  again, so a set-up pointing at itself doesn't loop.
+	- A Log::Any logger or Log::Dispatch object given as the logger is used
+	  the same way.  Before, Log::Dispatch croaked on trace() (it has no
+	  trace method), and both joined the message's parts with spaces.
+	[ Tests ]
+	- New t/producers.t.
+
 0.39	Tue Oct  6 08:17:42 PM EDT 2026
 	[ Bug Fixes ]
 	- Remove recursion issue when running mutant tests

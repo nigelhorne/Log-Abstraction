@@ -146,8 +146,8 @@ when ["flush"](#flush) is called, or when the logger is destroyed (which calls
 Every backend can have its own `level` and `format`, as well as the
 logger's.  `syslog`, `journald` and `sendmail` are hashes already, so
 they take them as keys.  `file`, `fd` and `array`, inside a `logger` hash
-or at the top level, may be given as a hash holding the destination under
-the backend's own name:
+or at the top level, and `log_any` and `log_dispatch`, may be given as a
+hash holding the destination under the backend's own name:
 
 ```perl
 my $log = Log::Abstraction->new(
@@ -169,11 +169,54 @@ applied first, so a backend's level can only narrow it: set the logger's
 ["format"](#format), which it overrides.  For `file` and `fd` it is the line
 written.  For the others, which by default get the message as it is, it
 replaces the message: the `array` entry's `message`, the text sent to
-syslog, the journal's `MESSAGE` field and the email body.
+syslog, Log::Any or Log::Dispatch, the journal's `MESSAGE` field and the
+email body.
 
 The plain forms (`file => $path`, `fd => $handle`,
-`array => \@array`) still work and have no level or format of their
+`array => \@array`, `log_any => $category`,
+`log_dispatch => $dispatcher`) still work and have no level or format of their
 own.  A blessed handle object is a destination, not the hash form.
+
+### Forwarding to Log::Any and Log::Dispatch
+
+[Log::Any::Adapter::Abstraction](https://metacpan.org/pod/Log%3A%3AAny%3A%3AAdapter%3A%3AAbstraction) brings messages from [Log::Any](https://metacpan.org/pod/Log%3A%3AAny) into
+`Log::Abstraction`.  The `log_any` and `log_dispatch` backends go the
+other way, sending messages on to an application's existing [Log::Any](https://metacpan.org/pod/Log%3A%3AAny) or
+[Log::Dispatch](https://metacpan.org/pod/Log%3A%3ADispatch) set-up, alongside any other backends:
+
+```perl
+my $log = Log::Abstraction->new(
+    level  => 'debug',
+    logger => {
+        log_any      => 'MyApp',          # a category, or a Log::Any logger
+        log_dispatch => $dispatcher,      # a Log::Dispatch object
+        file         => '/var/log/myapp.log',
+    },
+);
+```
+
+Levels keep their names, except that `warn` becomes `warning`, and
+Log::Dispatch, which has nothing below `debug`, gets `trace` messages as
+`debug`.  Log::Any gets ["Structured fields"](#structured-fields) as its trailing hashref, so a
+structured adapter receives them as data; Log::Dispatch has no fields, so
+they are appended to the message as text.  With its own `format` (see
+["Per-backend level and format"](#per-backend-level-and-format)) a backend gets the formatted line instead.
+
+A `Log::Any` category name is looked up with
+`Log::Any->get_logger(category => $name)` (which needs [Log::Any](https://metacpan.org/pod/Log%3A%3AAny)
+installed) when the first message is sent, and follows later
+`Log::Any::Adapter->set()` calls.  If Log::Any or Log::Dispatch dies,
+`Carp::carp` is called and the other backends still get the message.
+
+A `Log::Any::Proxy` or `Log::Dispatch` object given as the `logger`
+itself is used in the same way, rather than as an object whose method is
+called for each level: neither has a method for every level, and both
+would join the arguments with spaces.
+
+A message that reaches a `Log::Abstraction` while it is being forwarded
+(e.g. through [Log::Any::Adapter::Abstraction](https://metacpan.org/pod/Log%3A%3AAny%3A%3AAdapter%3A%3AAbstraction)) is logged by that logger's
+other backends but not forwarded again, so a set-up that points back at
+itself doesn't loop.
 
 ### File Rotation
 
@@ -311,8 +354,11 @@ called on an object.  It may also be called as a plain function,
 
     - A code reference -- called with a hashref `{ class, file, line, level, message, ctx, fields }`
     (`ctx` and `fields` only when there are any)
-    - An object -- method matching the level name is called on it
-    - A hash reference -- may contain `file`, `array`, `fd`, `syslog`, `journald`, and/or `sendmail` keys,
+    - An object -- method matching the level name is called on it; a
+    [Log::Any](https://metacpan.org/pod/Log%3A%3AAny) logger or a [Log::Dispatch](https://metacpan.org/pod/Log%3A%3ADispatch) object is used as the `log_any` or
+    `log_dispatch` backend (see ["Forwarding to Log::Any and Log::Dispatch"](#forwarding-to-log-any-and-log-dispatch))
+    - A hash reference -- may contain `file`, `array`, `fd`, `syslog`, `journald`, `sendmail`,
+    `log_any` and/or `log_dispatch` keys,
     each of which may have its own `level` and `format` (see ["Per-backend level and format"](#per-backend-level-and-format))
     - An array reference -- `{ level, message }` hashrefs are pushed onto it, with a
     `fields` key when the call has ["Structured fields"](#structured-fields)
@@ -530,15 +576,22 @@ Error                                     Meaning / Action
                                           gives "invalid syslog level", as above.)
 "<class>: the <backend> format must be   A backend's 'format' is undef, empty or
   a non-empty string"                     a reference.
-"<class>: the <backend> hash needs a      The hash form of file, fd or array has
-  '<backend>' key"                        no destination (e.g. file => { level =>
-                                          'info' } without a 'file' key).
+"<class>: the <backend> hash needs a      The hash form of file, fd, array, log_any
+  '<backend>' key"                        or log_dispatch has no destination (e.g.
+                                          file => { level => 'info' } without a
+                                          'file' key).
 "<class>: the sendmail backend needs      The sendmail sub-hash has no 'to' key.
   a 'to' address"
 "<class>: sendmail digest_max must be a   digest_max is zero, negative or not a
   positive integer, not '<v>'"            number.
 "<class>: invalid journald field name     An extra journald key, upper-cased, is not
   '<k>'"                                  [A-Z0-9_] or starts with '_'.
+"<class>: log_any must be a Log::Any      log_any is neither a Log::Any logger
+  logger or a category name"              (Log::Any::Proxy) nor a non-empty string.
+"<class>: log_any needs Log::Any to be    log_any is a category name but Log::Any
+  installed"                              can't be loaded.
+"<class>: log_dispatch must be a          log_dispatch is not an object with a
+  Log::Dispatch object"                   log() method.
 ```
 
 The following are not raised by `new()` but later, by the logging methods
@@ -560,7 +613,8 @@ Croak                                     Meaning / Action
 "<class>: Invalid SMTP port: <port>"      The sendmail 'port' is not an integer in
                                           1-65535.
 "<class>: Don't know how to deal with     A logger hash has none of the keys file,
-  the <level> message"                    array, fd, syslog, journald or sendmail.
+  the <level> message"                    array, fd, syslog, journald, sendmail,
+                                          log_any or log_dispatch.
 "<class>: <object class> doesn't know     An object logger has no method for this
   how to deal with the <level> message"   level.  (notice falls back to info.)
 "<class>: configuration error, no         logger is a reference of an unsupported
@@ -575,6 +629,8 @@ Carp                                      Meaning / Action
 "<class>: journald send failed: <error>"  The journald socket could not be reached.
                                           Given once, then not again until a send
                                           succeeds.
+"<class>: Log::Any failed: <error>"       Log::Any (or its adapter) died.  The other
+"<class>: Log::Dispatch failed: <error>"  backends still receive the message.
 ```
 
 #### Pseudocode
@@ -632,8 +688,13 @@ FUNCTION new(class_or_obj, args...)
     compile, or matches the empty string; compile redact to one regex
 
   FOR each backend (top-level file/fd/array, and the logger hash's
-  file/fd/array/syslog/sendmail/journald) given as a hash:
-    CROAK if a file/fd/array hash lacks its destination key (its own name)
+  file/fd/array/syslog/sendmail/journald/log_any/log_dispatch):
+    IF log_any: CROAK unless a Log::Any::Proxy, or a category name with
+      Log::Any installed
+    IF log_dispatch: CROAK unless an object with a log() method
+    SKIP the rest unless given as a hash
+    CROAK if a file/fd/array/log_any/log_dispatch hash lacks its
+      destination key (its own name)
     CROAK if its 'level' is not a level name or 0-7
     CROAK if its 'format' is undef, empty or not a string
 
@@ -1470,10 +1531,10 @@ callback as described above.
 
 - **Structured fields are text in most backends**
 
-    Only the history, array, CODE-ref, JSON and journald backends keep
-    ["Structured fields"](#structured-fields) as data.  Text formats, syslog, email and object
-    loggers get them as `key=value` text appended to the message, and a custom
-    `format` has no token for them on their own.
+    Only the history, array, CODE-ref, JSON, journald and Log::Any backends
+    keep ["Structured fields"](#structured-fields) as data.  Text formats, syslog, email,
+    Log::Dispatch and object loggers get them as `key=value` text appended to
+    the message, and a custom `format` has no token for them on their own.
 
 - **Single-threaded email throttle**
 
@@ -1503,7 +1564,13 @@ Nigel Horne `njh@nigelhorne.com`
 - [Log::Any](https://metacpan.org/pod/Log%3A%3AAny) and [Log::Any::Adapter::Abstraction](https://metacpan.org/pod/Log%3A%3AAny%3A%3AAdapter%3A%3AAbstraction)
 
     Route messages from any `Log::Any`-using CPAN module through
-    `Log::Abstraction` with a single `Log::Any::Adapter->set()` call.
+    `Log::Abstraction` with a single `Log::Any::Adapter->set()` call,
+    or send messages on to Log::Any with the `log_any` backend.
+
+- [Log::Dispatch](https://metacpan.org/pod/Log%3A%3ADispatch)
+
+    Send messages on to a `Log::Dispatch` object with the `log_dispatch`
+    backend (see ["Forwarding to Log::Any and Log::Dispatch"](#forwarding-to-log-any-and-log-dispatch)).
 
 - [Test Dashboard](https://nigelhorne.github.io/Log-Abstraction/coverage/)
 
