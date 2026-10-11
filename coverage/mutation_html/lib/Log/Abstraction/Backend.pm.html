@@ -1,0 +1,525 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>File: lib/Log/Abstraction/Backend.pm</title>
+<style>
+
+/* --------------------------------------------------
+   CSS Variables (Light Mode Default)
+-------------------------------------------------- */
+
+:root {
+    --bg: #ffffff;
+    --text: #000000;
+    --table-header: #333;
+    --table-header-text: #ffffff;
+
+    --survived-1: #f8d7da;
+    --survived-2: #f5b7b1;
+    --survived-3: #ec7063;
+
+    --killed: #d4edda;
+    --border: #cccccc;
+}
+
+/* --------------------------------------------------
+   Dark Mode Overrides
+-------------------------------------------------- */
+
+html[data-theme='dark'] {
+    --bg: #1e1e1e;
+    --text: #dddddd;
+    --table-header: #222;
+    --table-header-text: #ffffff;
+
+    --survived-1: #5c2b2e;
+    --survived-2: #7b2c2f;
+    --survived-3: #a93226;
+
+    --killed: #1e4620;
+    --border: #555;
+}
+
+/* --------------------------------------------------
+   Global Styles
+-------------------------------------------------- */
+
+body {
+	font-family: sans-serif;
+	background: var(--bg);
+	color: var(--text);
+}
+
+table {
+    border-collapse: collapse;
+    width: 100%;
+}
+
+th {
+    background: var(--table-header);
+    color: var(--table-header-text);
+}
+
+.survived-1 { background-color: var(--survived-1); }
+.survived-2 { background-color: var(--survived-2); }
+.survived-3 { background-color: var(--survived-3); }
+
+.killed { background-color: var(--killed); }
+
+.legend {
+    border: 1px solid #ccc;
+    background: #fafafa;
+    padding: 10px;
+    margin: 15px 0;
+    font-size: 0.9em;
+}
+
+.legend pre {
+    background: #f4f4f4;
+    padding: 5px;
+}
+
+.legend-box {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    margin: 0 6px 0 20px;
+    vertical-align: middle;
+    border: 1px solid var(--border);
+}
+
+/* White box for non-mutated lines */
+.legend-box.none {
+	background-color: var(--bg);
+}
+
+/* --------------------------------------------------
+   Suggested Test Box Styling
+   Theme-aware and readable in light & dark modes
+-------------------------------------------------- */
+
+.suggested-test {
+    margin-top: 6px;
+    margin-bottom: 12px;
+
+    /* Use theme variables instead of hardcoded colors */
+    background: var(--bg);
+    color: var(--text);
+
+    padding: 8px;
+    border-radius: 4px;
+
+    /* Subtle border for visual separation */
+    border: 1px solid var(--border);
+}
+
+/* Label styling */
+.suggest-label {
+    font-weight: bold;
+    margin-bottom: 4px;
+}
+
+/* Ensure the test code block inherits readable colors */
+.suggested-test pre {
+    background: transparent;   /* Prevent nested dark blocks */
+    color: inherit;            /* Match theme text color */
+    margin: 0;
+    font-family: monospace;
+}
+
+pre { line-height: 1.4; }
+
+pre > details {
+    margin: 0.2em 0;
+}
+
+pre > details:first-child {
+    margin-top: 0;
+}
+
+pre > details:last-child {
+    margin-bottom: 0;
+}
+
+pre details,
+pre summary,
+pre ul,
+pre li {
+    white-space: normal;
+    margin: 0;
+    padding: 0;
+    line-height: 1.2;
+}
+
+.nav { margin-bottom: 1em; }
+
+.toggle {
+    float: right;
+    cursor: pointer;
+    padding: 6px 10px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+}
+
+/* Tooltip container */
+.tooltip {
+	position: relative;
+	cursor: help;
+}
+
+/* Tooltip bubble */
+.tooltip:hover::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    left: 0;
+    top: 100%;
+    background: var(--table-header);
+    color: var(--table-header-text);
+    padding: 6px 10px;
+    white-space: normal;
+    max-width: 300px;
+    min-width: 30ch;
+    font-size: 12px;
+    border-radius: 6px;
+    z-index: 1000;
+    margin-left: 10ch;   /* move tooltip ~10 characters to the right */
+}
+
+.mutant-details {
+	margin-left: 2em;
+	font-size: 0.9em;
+}
+
+/* Indent the list of mutations that displays when expanding by 8 characters */
+pre details.mutant-details ul {
+	padding-left: 8ch;
+	margin: 0.2em 0;
+}
+
+.mutant-details summary {
+	cursor: pointer;
+	font-weight: bold;
+}
+
+.lcsaj-dot {
+    color: #5555ff;
+    font-size: 10px;
+    margin-right: 3px;
+}
+
+.lcsaj-dot-uncovered {
+    color: #cc4444;
+    font-size: 10px;
+    margin-right: 3px;
+}
+
+.lcsaj-tip {
+	position: relative;
+	display: inline-block;
+}
+
+.lcsaj-tip .lcsaj-tip-text {
+	visibility: hidden;
+	background-color: #333;
+	color: #fff;
+	padding: 4px 8px;
+	border-radius: 4px;
+	font-size: 11px;
+	white-space: nowrap;
+	position: fixed;
+	z-index: 9999;
+	pointer-events: none;
+}
+
+.lcsaj-tip:hover .lcsaj-tip-text {
+	visibility: visible;
+}
+
+.cpd-dot {
+    color: #cc8800;
+    font-size: 10px;
+    margin-right: 3px;
+    cursor: help;
+    text-decoration: none;
+}
+a.cpd-dot { cursor: pointer; }
+a.cpd-dot:hover { color: #ff8800; }
+
+.cpd-tip {
+    position: relative;
+    display: inline-block;
+}
+
+.cpd-tip .cpd-tip-text {
+    visibility: hidden;
+    background-color: #333;
+    color: #fff;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    white-space: nowrap;
+    position: fixed;
+    z-index: 9999;
+    pointer-events: none;
+}
+
+.cpd-tip:hover .cpd-tip-text {
+    visibility: visible;
+}
+
+/* CPD drill-down page styles */
+.dup-line { background-color: #fff3cd; display: block; }
+.dup-line:hover { background-color: #ffe082; }
+.intra-dot { color: #9944cc; margin-right: 4px; cursor: help; text-decoration: none; }
+a.intra-dot { cursor: pointer; }
+a.intra-dot:hover { color: #7700bb; }
+.cpd-legend {
+    background: #fff3cd;
+    border: 1px solid #ffc107;
+    border-radius: 4px;
+    display: inline-block;
+    padding: 6px 10px;
+    margin-bottom: 1em;
+    font-size: 0.9em;
+}
+
+</style>
+</head>
+<body>
+<button class="toggle" onclick="toggleTheme()">🌙 Toggle Theme</button>
+<h1>lib/Log/Abstraction/Backend.pm</h1>
+<div class="nav"><a href="../../../../index.html">Index</a>
+</div><div class='summary'>
+<strong>Structural Coverage (Approximate)</strong><p>
+TER1 (Statement): 100.00%<br>
+TER2 (Branch): 100.00%<br>
+TER3 (LCSAJ): -<br>
+Approximate LCSAJ segments: 5<br>
+</div>
+
+    <div class="legend">
+        <h3>LCSAJ Legend</h3>
+
+        <p>
+        <span class="lcsaj-dot">●</span>
+        <b>Covered</b> — this LCSAJ path was executed during testing.
+        </p>
+
+        <p>
+        <span class="lcsaj-dot-uncovered">●</span>
+        <b>Not covered</b> — this LCSAJ path was never executed. These are the paths to focus on.
+        </p>
+
+        <p>
+        Multiple dots on a line indicate that multiple control-flow paths begin at that line.
+        Hovering over any dot shows:
+        </p>
+
+        <pre>
+        start → end → jump
+        </pre>
+
+        <ul>
+        <li><b>start</b> – first line of the linear sequence</li>
+        <li><b>end</b> – last line before control flow changes</li>
+        <li><b>jump</b> – line execution jumps to next</li>
+        </ul>
+
+        <p>
+        Uncovered paths show <b>[NOT COVERED]</b> in the tooltip.
+	</p>
+    </div>
+
+		<div class="legend">
+			<h3>Mutant Testing Legend</h3>
+			<span class="legend-box survived-1"></span> Survived (tests missed this)
+			<span class="legend-box killed"></span> Killed (tests detected this)
+			<span class="legend-box none"></span> No mutation
+		</div>
+	<pre>
+<span class="">    1: package Log::Abstraction::Backend;
+</span><span class="">    2: 
+</span><span class="">    3: # Base class of the backends that Log::Abstraction sends messages to
+</span><span class="">    4: use strict;
+</span><span class="">    5: use warnings;
+</span><span class="">    6: 
+</span><span class="">    7: use Carp ();
+</span><span class="">    8: 
+</span><span class="">    9: our $VERSION = &#39;0.39&#39;;
+</span><span class="">   10: 
+</span><span class="">   11: # Carp and croak from a backend report the code that called Log::Abstraction,
+</span><span class="">   12: # not Log::Abstraction itself.  The subclasses trust this package through
+</span><span class="">   13: # @ISA, and so Log::Abstraction too
+</span><span class="">   14: our @CARP_NOT = (&#39;Log::Abstraction&#39;);
+</span><span class="">   15: 
+</span><span class="">   16: # True while a message is being handed to Log::Any or Log::Dispatch.  If that
+</span><span class="">   17: # brings it back to a Log::Abstraction (e.g. through
+</span><span class="">   18: # Log::Any::Adapter::Abstraction), it isn&#39;t forwarded again, which would
+</span><span class="">   19: # loop.  Set with local by the log_any and log_dispatch backends, and read by
+</span><span class="">   20: # Log::Abstraction::_log to find the original caller
+</span><span class="">   21: our $FORWARDING = 0;
+</span><span class="">   22: 
+</span><span class="">   23: =head1 NAME
+</span><span class="">   24: 
+</span><span class="">   25: Log::Abstraction::Backend - base class of the Log::Abstraction backends
+</span><span class="">   26: 
+</span><span class="">   27: =head1 VERSION
+</span><span class="">   28: 
+</span><span class="">   29: 0.39
+</span><span class="">   30: 
+</span><span class="">   31: =head1 DESCRIPTION
+</span><span class="">   32: 
+</span><span class="">   33: For use by L&lt;Log::Abstraction&gt; only.  C&lt;Log::Abstraction-E&lt;gt&gt;new()&gt; builds
+</span><span class="">   34: one object of a C&lt;Log::Abstraction::Backend::*&gt; class for each place a
+</span><span class="">   35: message goes to (a file, an array, syslog ...), and each message is passed to
+</span><span class="">   36: every one of them.  The configuration given to C&lt;new()&gt; is not changed.
+</span><span class="">   37: 
+</span><span class="">   38: The backends are:
+</span><span class="">   39: 
+</span><span class="">   40:   Log::Abstraction::Backend::Array        array, or logger =&gt; \@array
+</span><span class="">   41:   Log::Abstraction::Backend::Code         logger =&gt; \&amp;code
+</span><span class="">   42:   Log::Abstraction::Backend::Fd           fd
+</span><span class="">   43:   Log::Abstraction::Backend::File         file, or logger =&gt; $path
+</span><span class="">   44:   Log::Abstraction::Backend::Journald     journald
+</span><span class="">   45:   Log::Abstraction::Backend::LogAny       log_any, or a Log::Any logger
+</span><span class="">   46:   Log::Abstraction::Backend::LogDispatch  log_dispatch, or a Log::Dispatch object
+</span><span class="">   47:   Log::Abstraction::Backend::Object       any other object as the logger
+</span><span class="">   48:   Log::Abstraction::Backend::Sendmail     sendmail
+</span><span class="">   49:   Log::Abstraction::Backend::Syslog       syslog
+</span><span class="">   50: 
+</span><span class="">   51: =head1 METHODS
+</span><span class="">   52: 
+</span><span class="">   53: =head2 new
+</span><span class="">   54: 
+</span><span class="">   55:   my $backend = Log::Abstraction::Backend::File-&gt;new(
+</span><span class="">   56:       file   =&gt; $path,
+</span><span class="">   57:       level  =&gt; 4,        # numeric threshold, or undef for none
+</span><span class="">   58:       format =&gt; $format,  # or undef
+</span><span class="">   59:   );
+</span><span class="">   60: 
+</span><span class="">   61: Stores its arguments.  They have already been checked by
+</span><span class="">   62: C&lt;Log::Abstraction-E&lt;gt&gt;new()&gt;; C&lt;level&gt; is a syslog number (0-7).
+</span><span class="">   63: 
+</span><span class="">   64: =cut
+</span><span class="">   65: 
+</span><span class="">   66: sub new {
+</span><span class="">   67: 	my ($class, %args) = @_;
+</span><span class="">   68: 
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">   69: 	return bless { %args }, $class;
+</span><p> <b> Mutants (Total: 2, Killed: 2, Survived: 0)</b><p><span class="">   70: }
+</span><span class="">   71: 
+</span><span class="">   72: =head2 wants
+</span><span class="">   73: 
+</span><span class="">   74:   next unless $backend-&gt;wants($event);
+</span><span class="">   75: 
+</span><span class="">   76: True if the backend has no level of its own, or the message is at that level
+</span><span class="">   77: or more severe.
+</span><span class="">   78: 
+</span><span class="">   79: =cut
+</span><span class="">   80: 
+</span><span class="">   81: sub wants {
+</span><span class="">   82: 	my ($self, $event) = @_;
+</span><span class="">   83: 
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">   84: 	return 1 unless(defined($self-&gt;{&#39;level&#39;}));
+</span><p> <b> Mutants (Total: 2, Killed: 2, Survived: 0)</b><p><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">   85: 	return $event-&gt;{&#39;priority&#39;} &lt;= $self-&gt;{&#39;level&#39;};
+</span><p> <b> Mutants (Total: 5, Killed: 5, Survived: 0)</b><p><span class="">   86: }
+</span><span class="">   87: 
+</span><span class="">   88: =head2 text
+</span><span class="">   89: 
+</span><span class="">   90:   my $message = $backend-&gt;text($event, $event-&gt;{text});
+</span><span class="">   91: 
+</span><span class="">   92: The message formatted with the backend&#39;s own C&lt;format&gt;, if it has one,
+</span><span class="">   93: otherwise the default given.
+</span><span class="">   94: 
+</span><span class="">   95: =cut
+</span><span class="">   96: 
+</span><span class="">   97: sub text {
+</span><span class="">   98: 	my ($self, $event, $default) = @_;
+</span><span class="">   99: 
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  100: 	return defined($self-&gt;{&#39;format&#39;}) ? $event-&gt;{&#39;render&#39;}-&gt;($self-&gt;{&#39;format&#39;}) : $default;
+</span><p> <b> Mutants (Total: 2, Killed: 2, Survived: 0)</b><p><span class="">  101: }
+</span><span class="">  102: 
+</span><span class="">  103: =head2 emit
+</span><span class="">  104: 
+</span><span class="">  105:   $backend-&gt;emit($logger, $event);
+</span><span class="">  106: 
+</span><span class="">  107: Sends a message, which has passed the logger&#39;s level, to the backend.
+</span><span class="">  108: C&lt;$logger&gt; is the C&lt;Log::Abstraction&gt; object.  C&lt;$event&gt; is a hash
+</span><span class="">  109: reference built by C&lt;Log::Abstraction&gt; for each message:
+</span><span class="">  110: 
+</span><span class="">  111:   level        the level name, e.g. &#39;warn&#39;
+</span><span class="">  112:   priority     its syslog number (0-7)
+</span><span class="">  113:   message      the message, its parts joined and redacted
+</span><span class="">  114:   parts        the message&#39;s parts (an array reference)
+</span><span class="">  115:   fields       the structured fields (a hash reference), or undef
+</span><span class="">  116:   fields_text  the fields as key=value text, or undef
+</span><span class="">  117:   text         the message with fields_text appended
+</span><span class="">  118:   entry        the history entry (a list, as an array reference)
+</span><span class="">  119:   class, file, line, ctx   for CODE references
+</span><span class="">  120:   render       format a line: $event-&gt;{render}-&gt;($format), undef for
+</span><span class="">  121:                the logger&#39;s format
+</span><span class="">  122:   write        write a line to a path (which it checks) or a handle:
+</span><span class="">  123:                $event-&gt;{write}-&gt;($target, $line)
+</span><span class="">  124:   send_email, hold_email   send or keep for later an email:
+</span><span class="">  125:                $event-&gt;{send_email}-&gt;(\%sendmail, $body)
+</span><span class="">  126: 
+</span><span class="">  127: The closures are how a backend uses Log::Abstraction&#39;s private methods.
+</span><span class="">  128: Subclasses must override this.
+</span><span class="">  129: 
+</span><span class="">  130: =cut
+</span><span class="">  131: 
+</span><span class="">  132: sub emit {
+</span><span class="">  133: 	my $self = shift;
+</span><span class="">  134: 
+</span><span class="">  135: 	Carp::croak(ref($self), &#39;: emit() is not implemented&#39;);
+</span><span class="">  136: }
+</span><span class="">  137: 
+</span><span class="">  138: =head1 AUTHOR
+</span><span class="">  139: 
+</span><span class="">  140: Nigel Horne C&lt;njh@nigelhorne.com&gt;
+</span><span class="">  141: 
+</span><span class="">  142: =head1 SEE ALSO
+</span><span class="">  143: 
+</span><span class="">  144: L&lt;Log::Abstraction&gt;
+</span><span class="">  145: 
+</span><span class="">  146: =head1 COPYRIGHT AND LICENSE
+</span><span class="">  147: 
+</span><span class="">  148: Copyright (C) 2025-2026 Nigel Horne
+</span><span class="">  149: 
+</span><span class="">  150: Usage is subject to the GPL2 licence terms.
+</span><span class="">  151: If you use it,
+</span><span class="">  152: please let me know.
+</span><span class="">  153: 
+</span><span class="">  154: =cut
+</span><span class="">  155: 
+</span><span class="">  156: 1;
+</span></pre>
+
+<script>
+function toggleTheme() {
+    const html = document.documentElement;
+    const current = html.getAttribute('data-theme');
+    const next = current === 'dark' ? 'light' : 'dark';
+    html.setAttribute('data-theme', next);
+    localStorage.setItem('theme', next);
+}
+
+(function() {
+    const saved = localStorage.getItem('theme');
+    if(saved) {
+        document.documentElement.setAttribute('data-theme', saved);
+    }
+})();
+
+document.addEventListener("mousemove", function(e) {
+	document.querySelectorAll(".lcsaj-tip-text, .cpd-tip-text").forEach(function(tip) {
+		tip.style.left = (e.clientX + 12) + "px";
+		tip.style.top  = (e.clientY + 12) + "px";
+	});
+});
+</script>
+</body>
+</html>
+	
