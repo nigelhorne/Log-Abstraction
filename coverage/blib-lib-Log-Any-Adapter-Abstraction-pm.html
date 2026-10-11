@@ -27,9 +27,9 @@ https://pjcj.net
 <tr><th>line</th><th>stmt</th><th>bran</th><th>cond</th><th>sub</th><th>time</th><th>code</th></tr>
 <tr><td class="h">1</td><td></td><td></td><td></td><td></td><td></td><td class="s">package Log::Any::Adapter::Abstraction;</td></tr>
 <tr><td class="h">2</td><td colspan="6"></td></tr><tr><td class="h">3</td><td></td><td></td><td></td><td></td><td></td><td class="s"># Route Log::Any log calls through a Log::Abstraction backend</td></tr>
-<tr><td class="h">4</td><td><div class="c3">3</div><div class="c3">3</div><div class="c3">3</div></td><td></td><td></td><td><div class="c3"><a href="blib-lib-Log-Any-Adapter-Abstraction-pm--subroutine.html#L4">3</a></div></td><td><div>71474</div><div>3</div><div>47</div></td><td class="s">use strict;</td></tr>
-<tr><td class="h">5</td><td><div class="c3">3</div><div class="c3">3</div><div class="c3">3</div></td><td></td><td></td><td><div class="c3"><a href="blib-lib-Log-Any-Adapter-Abstraction-pm--subroutine.html#L5">3</a></div></td><td><div>5</div><div>2</div><div>78</div></td><td class="s">use warnings;</td></tr>
-<tr><td class="h">6</td><td colspan="6"></td></tr><tr><td class="h">7</td><td><div class="c3">3</div><div class="c3">3</div><div class="c3">3</div></td><td></td><td></td><td><div class="c3"><a href="blib-lib-Log-Any-Adapter-Abstraction-pm--subroutine.html#L7">3</a></div></td><td><div>6</div><div>3</div><div>8</div></td><td class="s">use parent &#39;Log::Any::Adapter::Base&#39;;</td></tr>
+<tr><td class="h">4</td><td><div class="c3">3</div><div class="c3">3</div><div class="c3">3</div></td><td></td><td></td><td><div class="c3"><a href="blib-lib-Log-Any-Adapter-Abstraction-pm--subroutine.html#L4">3</a></div></td><td><div>66679</div><div>3</div><div>39</div></td><td class="s">use strict;</td></tr>
+<tr><td class="h">5</td><td><div class="c3">3</div><div class="c3">3</div><div class="c3">3</div></td><td></td><td></td><td><div class="c3"><a href="blib-lib-Log-Any-Adapter-Abstraction-pm--subroutine.html#L5">3</a></div></td><td><div>4</div><div>2</div><div>54</div></td><td class="s">use warnings;</td></tr>
+<tr><td class="h">6</td><td colspan="6"></td></tr><tr><td class="h">7</td><td><div class="c3">3</div><div class="c3">3</div><div class="c3">3</div></td><td></td><td></td><td><div class="c3"><a href="blib-lib-Log-Any-Adapter-Abstraction-pm--subroutine.html#L7">3</a></div></td><td><div>5</div><div>2</div><div>6</div></td><td class="s">use parent &#39;Log::Any::Adapter::Base&#39;;</td></tr>
 <tr><td class="h">8</td><td colspan="6"></td></tr><tr><td class="h">9</td><td></td><td></td><td></td><td></td><td></td><td class="s">use Carp ();</td></tr>
 <tr><td class="h">10</td><td></td><td></td><td></td><td></td><td></td><td class="s">use Log::Abstraction;</td></tr>
 <tr><td class="h">11</td><td></td><td></td><td></td><td></td><td></td><td class="s">use Scalar::Util ();</td></tr>
@@ -150,7 +150,7 @@ instance when C&lt;instance&gt; is not supplied.
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;rotate_size&nbsp;&nbsp;&nbsp;&nbsp;=&gt; { type =&gt; SCALAR, optional =&gt; 1 },
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;rotate_interval =&gt; { type =&gt; SCALAR, optional =&gt; 1 },
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;rotate_keep&nbsp;&nbsp;&nbsp;&nbsp;=&gt; { type =&gt; INTEGER, min =&gt; 0, optional =&gt; 1 },
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;reopen_interval =&gt; { type =&gt; INTEGER, min =&gt; 0, optional =&gt; 1 },
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;reopen_interval =&gt; { type =&gt; INTEGER, min =&gt; -1, optional =&gt; 1 },
 &nbsp;&nbsp;}
 
 =head4 Output
