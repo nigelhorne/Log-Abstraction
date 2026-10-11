@@ -347,7 +347,7 @@ Approximate LCSAJ segments: 5<br>
 </span><span class="">    6: 
 </span><span class="">    7: use Carp ();
 </span><span class="">    8: 
-</span><span class="">    9: our $VERSION = &#39;0.39&#39;;
+</span><span class="">    9: our $VERSION = &#39;0.40&#39;;
 </span><span class="">   10: 
 </span><span class="">   11: # Carp and croak from a backend report the code that called Log::Abstraction,
 </span><span class="">   12: # not Log::Abstraction itself.  The subclasses trust this package through
@@ -367,7 +367,7 @@ Approximate LCSAJ segments: 5<br>
 </span><span class="">   26: 
 </span><span class="">   27: =head1 VERSION
 </span><span class="">   28: 
-</span><span class="">   29: 0.39
+</span><span class="">   29: 0.40
 </span><span class="">   30: 
 </span><span class="">   31: =head1 DESCRIPTION
 </span><span class="">   32: 
@@ -402,99 +402,153 @@ Approximate LCSAJ segments: 5<br>
 </span><span class="">   61: Stores its arguments.  They have already been checked by
 </span><span class="">   62: C&lt;Log::Abstraction-E&lt;gt&gt;new()&gt;; C&lt;level&gt; is a syslog number (0-7).
 </span><span class="">   63: 
-</span><span class="">   64: =cut
+</span><span class="">   64: =head3 API SPECIFICATION
 </span><span class="">   65: 
-</span><span class="">   66: sub new {
-</span><span class="">   67: 	my ($class, %args) = @_;
-</span><span class="">   68: 
-</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">   69: 	return bless { %args }, $class;
-</span><p> <b> Mutants (Total: 2, Killed: 2, Survived: 0)</b><p><span class="">   70: }
-</span><span class="">   71: 
-</span><span class="">   72: =head2 wants
-</span><span class="">   73: 
-</span><span class="">   74:   next unless $backend-&gt;wants($event);
-</span><span class="">   75: 
-</span><span class="">   76: True if the backend has no level of its own, or the message is at that level
-</span><span class="">   77: or more severe.
+</span><span class="">   66: =head4 Input
+</span><span class="">   67: 
+</span><span class="">   68:   {
+</span><span class="">   69:       level  =&gt; { type =&gt; &#39;integer&#39;, min =&gt; 0, max =&gt; 7, optional =&gt; 1 },
+</span><span class="">   70:       format =&gt; { type =&gt; &#39;string&#39;, min =&gt; 1, optional =&gt; 1 },
+</span><span class="">   71:       # and the destination, under the backend&#39;s own key (file, fd,
+</span><span class="">   72:       # array, sendmail ...)
+</span><span class="">   73:   }
+</span><span class="">   74: 
+</span><span class="">   75: =head4 Output
+</span><span class="">   76: 
+</span><span class="">   77:   { type =&gt; &#39;object&#39;, isa =&gt; &#39;Log::Abstraction::Backend&#39; }
 </span><span class="">   78: 
 </span><span class="">   79: =cut
 </span><span class="">   80: 
-</span><span class="">   81: sub wants {
-</span><span class="">   82: 	my ($self, $event) = @_;
+</span><span class="">   81: sub new {
+</span><span class="">   82: 	my ($class, %args) = @_;
 </span><span class="">   83: 
-</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">   84: 	return 1 unless(defined($self-&gt;{&#39;level&#39;}));
-</span><p> <b> Mutants (Total: 2, Killed: 2, Survived: 0)</b><p><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">   85: 	return $event-&gt;{&#39;priority&#39;} &lt;= $self-&gt;{&#39;level&#39;};
-</span><p> <b> Mutants (Total: 5, Killed: 5, Survived: 0)</b><p><span class="">   86: }
-</span><span class="">   87: 
-</span><span class="">   88: =head2 text
-</span><span class="">   89: 
-</span><span class="">   90:   my $message = $backend-&gt;text($event, $event-&gt;{text});
-</span><span class="">   91: 
-</span><span class="">   92: The message formatted with the backend&#39;s own C&lt;format&gt;, if it has one,
-</span><span class="">   93: otherwise the default given.
-</span><span class="">   94: 
-</span><span class="">   95: =cut
-</span><span class="">   96: 
-</span><span class="">   97: sub text {
-</span><span class="">   98: 	my ($self, $event, $default) = @_;
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">   84: 	return bless { %args }, $class;
+</span><p> <b> Mutants (Total: 2, Killed: 2, Survived: 0)</b><p><span class="">   85: }
+</span><span class="">   86: 
+</span><span class="">   87: =head2 wants
+</span><span class="">   88: 
+</span><span class="">   89:   next unless $backend-&gt;wants($event);
+</span><span class="">   90: 
+</span><span class="">   91: True if the backend has no level of its own, or the message is at that level
+</span><span class="">   92: or more severe.
+</span><span class="">   93: 
+</span><span class="">   94: =head3 API SPECIFICATION
+</span><span class="">   95: 
+</span><span class="">   96: =head4 Input
+</span><span class="">   97: 
+</span><span class="">   98:   { event =&gt; { type =&gt; &#39;hashref&#39;, schema =&gt; { priority =&gt; { type =&gt; &#39;integer&#39;, min =&gt; 0, max =&gt; 7 } } } }
 </span><span class="">   99: 
-</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  100: 	return defined($self-&gt;{&#39;format&#39;}) ? $event-&gt;{&#39;render&#39;}-&gt;($self-&gt;{&#39;format&#39;}) : $default;
-</span><p> <b> Mutants (Total: 2, Killed: 2, Survived: 0)</b><p><span class="">  101: }
-</span><span class="">  102: 
-</span><span class="">  103: =head2 emit
-</span><span class="">  104: 
-</span><span class="">  105:   $backend-&gt;emit($logger, $event);
-</span><span class="">  106: 
-</span><span class="">  107: Sends a message, which has passed the logger&#39;s level, to the backend.
-</span><span class="">  108: C&lt;$logger&gt; is the C&lt;Log::Abstraction&gt; object.  C&lt;$event&gt; is a hash
-</span><span class="">  109: reference built by C&lt;Log::Abstraction&gt; for each message:
-</span><span class="">  110: 
-</span><span class="">  111:   level        the level name, e.g. &#39;warn&#39;
-</span><span class="">  112:   priority     its syslog number (0-7)
-</span><span class="">  113:   message      the message, its parts joined and redacted
-</span><span class="">  114:   parts        the message&#39;s parts (an array reference)
-</span><span class="">  115:   fields       the structured fields (a hash reference), or undef
-</span><span class="">  116:   fields_text  the fields as key=value text, or undef
-</span><span class="">  117:   text         the message with fields_text appended
-</span><span class="">  118:   entry        the history entry (a list, as an array reference)
-</span><span class="">  119:   class, file, line, ctx   for CODE references
-</span><span class="">  120:   render       format a line: $event-&gt;{render}-&gt;($format), undef for
-</span><span class="">  121:                the logger&#39;s format
-</span><span class="">  122:   write        write a line to a path (which it checks) or a handle:
-</span><span class="">  123:                $event-&gt;{write}-&gt;($target, $line)
-</span><span class="">  124:   send_email, hold_email   send or keep for later an email:
-</span><span class="">  125:                $event-&gt;{send_email}-&gt;(\%sendmail, $body)
-</span><span class="">  126: 
-</span><span class="">  127: The closures are how a backend uses Log::Abstraction&#39;s private methods.
-</span><span class="">  128: Subclasses must override this.
-</span><span class="">  129: 
-</span><span class="">  130: =cut
-</span><span class="">  131: 
-</span><span class="">  132: sub emit {
-</span><span class="">  133: 	my $self = shift;
+</span><span class="">  100: =head4 Output
+</span><span class="">  101: 
+</span><span class="">  102:   { type =&gt; &#39;boolean&#39; }
+</span><span class="">  103: 
+</span><span class="">  104: =cut
+</span><span class="">  105: 
+</span><span class="">  106: sub wants {
+</span><span class="">  107: 	my ($self, $event) = @_;
+</span><span class="">  108: 
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  109: 	return 1 unless(defined($self-&gt;{&#39;level&#39;}));
+</span><p> <b> Mutants (Total: 2, Killed: 2, Survived: 0)</b><p><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  110: 	return $event-&gt;{&#39;priority&#39;} &lt;= $self-&gt;{&#39;level&#39;};
+</span><p> <b> Mutants (Total: 5, Killed: 5, Survived: 0)</b><p><span class="">  111: }
+</span><span class="">  112: 
+</span><span class="">  113: =head2 text
+</span><span class="">  114: 
+</span><span class="">  115:   my $message = $backend-&gt;text($event, $event-&gt;{text});
+</span><span class="">  116: 
+</span><span class="">  117: The message formatted with the backend&#39;s own C&lt;format&gt;, if it has one,
+</span><span class="">  118: otherwise the default given.
+</span><span class="">  119: 
+</span><span class="">  120: =head3 API SPECIFICATION
+</span><span class="">  121: 
+</span><span class="">  122: =head4 Input
+</span><span class="">  123: 
+</span><span class="">  124:   {
+</span><span class="">  125:       event   =&gt; { type =&gt; &#39;hashref&#39;, schema =&gt; { render =&gt; { type =&gt; &#39;coderef&#39; } } },
+</span><span class="">  126:       default =&gt; { type =&gt; &#39;string&#39; },
+</span><span class="">  127:   }
+</span><span class="">  128: 
+</span><span class="">  129: =head4 Output
+</span><span class="">  130: 
+</span><span class="">  131:   { type =&gt; &#39;string&#39; }
+</span><span class="">  132: 
+</span><span class="">  133: =cut
 </span><span class="">  134: 
-</span><span class="">  135: 	Carp::croak(ref($self), &#39;: emit() is not implemented&#39;);
-</span><span class="">  136: }
+</span><span class="">  135: sub text {
+</span><span class="">  136: 	my ($self, $event, $default) = @_;
 </span><span class="">  137: 
-</span><span class="">  138: =head1 AUTHOR
-</span><span class="">  139: 
-</span><span class="">  140: Nigel Horne C&lt;njh@nigelhorne.com&gt;
-</span><span class="">  141: 
-</span><span class="">  142: =head1 SEE ALSO
-</span><span class="">  143: 
-</span><span class="">  144: L&lt;Log::Abstraction&gt;
-</span><span class="">  145: 
-</span><span class="">  146: =head1 COPYRIGHT AND LICENSE
-</span><span class="">  147: 
-</span><span class="">  148: Copyright (C) 2025-2026 Nigel Horne
-</span><span class="">  149: 
-</span><span class="">  150: Usage is subject to the GPL2 licence terms.
-</span><span class="">  151: If you use it,
-</span><span class="">  152: please let me know.
-</span><span class="">  153: 
-</span><span class="">  154: =cut
-</span><span class="">  155: 
-</span><span class="">  156: 1;
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  138: 	return defined($self-&gt;{&#39;format&#39;}) ? $event-&gt;{&#39;render&#39;}-&gt;($self-&gt;{&#39;format&#39;}) : $default;
+</span><p> <b> Mutants (Total: 2, Killed: 2, Survived: 0)</b><p><span class="">  139: }
+</span><span class="">  140: 
+</span><span class="">  141: =head2 emit
+</span><span class="">  142: 
+</span><span class="">  143:   $backend-&gt;emit($logger, $event);
+</span><span class="">  144: 
+</span><span class="">  145: Sends a message, which has passed the logger&#39;s level, to the backend.
+</span><span class="">  146: C&lt;$logger&gt; is the C&lt;Log::Abstraction&gt; object.  C&lt;$event&gt; is a hash
+</span><span class="">  147: reference built by C&lt;Log::Abstraction&gt; for each message:
+</span><span class="">  148: 
+</span><span class="">  149:   level        the level name, e.g. &#39;warn&#39;
+</span><span class="">  150:   priority     its syslog number (0-7)
+</span><span class="">  151:   message      the message, its parts joined and redacted
+</span><span class="">  152:   parts        the message&#39;s parts (an array reference)
+</span><span class="">  153:   fields       the structured fields (a hash reference), or undef
+</span><span class="">  154:   fields_text  the fields as key=value text, or undef
+</span><span class="">  155:   text         the message with fields_text appended
+</span><span class="">  156:   entry        the history entry (a list, as an array reference)
+</span><span class="">  157:   class, file, line, ctx   for CODE references
+</span><span class="">  158:   render       format a line: $event-&gt;{render}-&gt;($format), undef for
+</span><span class="">  159:                the logger&#39;s format
+</span><span class="">  160:   write        write a line to a path (which it checks) or a handle:
+</span><span class="">  161:                $event-&gt;{write}-&gt;($target, $line)
+</span><span class="">  162:   send_email, hold_email   send or keep for later an email:
+</span><span class="">  163:                $event-&gt;{send_email}-&gt;(\%sendmail, $body)
+</span><span class="">  164: 
+</span><span class="">  165: The closures are how a backend uses Log::Abstraction&#39;s private methods.
+</span><span class="">  166: Subclasses must override this.
+</span><span class="">  167: 
+</span><span class="">  168: =head3 API SPECIFICATION
+</span><span class="">  169: 
+</span><span class="">  170: =head4 Input
+</span><span class="">  171: 
+</span><span class="">  172:   {
+</span><span class="">  173:       logger =&gt; { type =&gt; &#39;object&#39;, isa =&gt; &#39;Log::Abstraction&#39; },
+</span><span class="">  174:       event  =&gt; { type =&gt; &#39;hashref&#39; },    # the keys above
+</span><span class="">  175:   }
+</span><span class="">  176: 
+</span><span class="">  177: =head4 Output
+</span><span class="">  178: 
+</span><span class="">  179:   None.  The base class&#39;s emit() croaks &quot;&lt;class&gt;: emit() is not
+</span><span class="">  180:   implemented&quot;; a subclass&#39;s sends the message.  A failed delivery is
+</span><span class="">  181:   carped, not fatal; a configuration error (e.g. an invalid sendmail
+</span><span class="">  182:   host) still croaks.
+</span><span class="">  183: 
+</span><span class="">  184: =cut
+</span><span class="">  185: 
+</span><span class="">  186: sub emit {
+</span><span class="">  187: 	my $self = shift;
+</span><span class="">  188: 
+</span><span class="">  189: 	Carp::croak(ref($self), &#39;: emit() is not implemented&#39;);
+</span><span class="">  190: }
+</span><span class="">  191: 
+</span><span class="">  192: =head1 AUTHOR
+</span><span class="">  193: 
+</span><span class="">  194: Nigel Horne C&lt;njh@nigelhorne.com&gt;
+</span><span class="">  195: 
+</span><span class="">  196: =head1 SEE ALSO
+</span><span class="">  197: 
+</span><span class="">  198: L&lt;Log::Abstraction&gt;
+</span><span class="">  199: 
+</span><span class="">  200: =head1 COPYRIGHT AND LICENSE
+</span><span class="">  201: 
+</span><span class="">  202: Copyright (C) 2025-2026 Nigel Horne
+</span><span class="">  203: 
+</span><span class="">  204: Usage is subject to the GPL2 licence terms.
+</span><span class="">  205: If you use it,
+</span><span class="">  206: please let me know.
+</span><span class="">  207: 
+</span><span class="">  208: =cut
+</span><span class="">  209: 
+</span><span class="">  210: 1;
 </span></pre>
 
 <script>

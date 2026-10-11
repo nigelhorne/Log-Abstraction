@@ -27,10 +27,10 @@ https://pjcj.net
 <tr><th>line</th><th>stmt</th><th>bran</th><th>cond</th><th>sub</th><th>time</th><th>code</th></tr>
 <tr><td class="h">1</td><td></td><td></td><td></td><td></td><td></td><td class="s">package Log::Abstraction::Backend;</td></tr>
 <tr><td class="h">2</td><td colspan="6"></td></tr><tr><td class="h">3</td><td></td><td></td><td></td><td></td><td></td><td class="s"># Base class of the backends that Log::Abstraction sends messages to</td></tr>
-<tr><td class="h">4</td><td><div class="c3">37</div><div class="c3">37</div><div class="c3">37</div></td><td></td><td></td><td><div class="c3"><a href="blib-lib-Log-Abstraction-Backend-pm--subroutine.html#L4">37</a></div></td><td><div>234</div><div>34</div><div>504</div></td><td class="s">use strict;</td></tr>
-<tr><td class="h">5</td><td><div class="c3">37</div><div class="c3">37</div><div class="c3">37</div></td><td></td><td></td><td><div class="c3"><a href="blib-lib-Log-Abstraction-Backend-pm--subroutine.html#L5">37</a></div></td><td><div>63</div><div>23</div><div>688</div></td><td class="s">use warnings;</td></tr>
-<tr><td class="h">6</td><td colspan="6"></td></tr><tr><td class="h">7</td><td><div class="c3">37</div><div class="c3">37</div><div class="c3">37</div></td><td></td><td></td><td><div class="c3"><a href="blib-lib-Log-Abstraction-Backend-pm--subroutine.html#L7">37</a></div></td><td><div>59</div><div>34</div><div>4064</div></td><td class="s">use Carp ();</td></tr>
-<tr><td class="h">8</td><td colspan="6"></td></tr><tr><td class="h">9</td><td></td><td></td><td></td><td></td><td></td><td class="s">our $VERSION = &#39;0.39&#39;;</td></tr>
+<tr><td class="h">4</td><td><div class="c3">37</div><div class="c3">37</div><div class="c3">37</div></td><td></td><td></td><td><div class="c3"><a href="blib-lib-Log-Abstraction-Backend-pm--subroutine.html#L4">37</a></div></td><td><div>230</div><div>31</div><div>470</div></td><td class="s">use strict;</td></tr>
+<tr><td class="h">5</td><td><div class="c3">37</div><div class="c3">37</div><div class="c3">37</div></td><td></td><td></td><td><div class="c3"><a href="blib-lib-Log-Abstraction-Backend-pm--subroutine.html#L5">37</a></div></td><td><div>53</div><div>26</div><div>623</div></td><td class="s">use warnings;</td></tr>
+<tr><td class="h">6</td><td colspan="6"></td></tr><tr><td class="h">7</td><td><div class="c3">37</div><div class="c3">37</div><div class="c3">37</div></td><td></td><td></td><td><div class="c3"><a href="blib-lib-Log-Abstraction-Backend-pm--subroutine.html#L7">37</a></div></td><td><div>56</div><div>28</div><div>4101</div></td><td class="s">use Carp ();</td></tr>
+<tr><td class="h">8</td><td colspan="6"></td></tr><tr><td class="h">9</td><td></td><td></td><td></td><td></td><td></td><td class="s">our $VERSION = &#39;0.40&#39;;</td></tr>
 <tr><td class="h">10</td><td colspan="6"></td></tr><tr><td class="h">11</td><td></td><td></td><td></td><td></td><td></td><td class="s"># Carp and croak from a backend report the code that called Log::Abstraction,</td></tr>
 <tr><td class="h">12</td><td></td><td></td><td></td><td></td><td></td><td class="s"># not Log::Abstraction itself.&nbsp;&nbsp;The subclasses trust this package through</td></tr>
 <tr><td class="h">13</td><td></td><td></td><td></td><td></td><td></td><td class="s"># @ISA, and so Log::Abstraction too</td></tr>
@@ -41,13 +41,13 @@ https://pjcj.net
 <tr><td class="h">19</td><td></td><td></td><td></td><td></td><td></td><td class="s"># loop.&nbsp;&nbsp;Set with local by the log_any and log_dispatch backends, and read by</td></tr>
 <tr><td class="h">20</td><td></td><td></td><td></td><td></td><td></td><td class="s"># Log::Abstraction::_log to find the original caller</td></tr>
 <tr><td class="h">21</td><td></td><td></td><td></td><td></td><td></td><td class="s">our $FORWARDING = 0;</td></tr>
-<tr><td class="h">22</td><td colspan="6"></td></tr><tr><td class="h">23 - 64</td><td colspan="5"></td><td class="s"><pre>=head1 NAME
+<tr><td class="h">22</td><td colspan="6"></td></tr><tr><td class="h">23 - 79</td><td colspan="5"></td><td class="s"><pre>=head1 NAME
 
 Log::Abstraction::Backend - base class of the Log::Abstraction backends
 
 =head1 VERSION
 
-0.39
+0.40
 
 =head1 DESCRIPTION
 
@@ -82,37 +82,75 @@ The backends are:
 Stores its arguments.&nbsp;&nbsp;They have already been checked by
 C&lt;Log::Abstraction-E&lt;gt&gt;new()&gt;; C&lt;level&gt; is a syslog number (0-7).
 
+=head3 API SPECIFICATION
+
+=head4 Input
+
+&nbsp;&nbsp;{
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;level&nbsp;&nbsp;=&gt; { type =&gt; &#39;integer&#39;, min =&gt; 0, max =&gt; 7, optional =&gt; 1 },
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;format =&gt; { type =&gt; &#39;string&#39;, min =&gt; 1, optional =&gt; 1 },
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;# and the destination, under the backend&#39;s own key (file, fd,
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;# array, sendmail ...)
+&nbsp;&nbsp;}
+
+=head4 Output
+
+&nbsp;&nbsp;{ type =&gt; &#39;object&#39;, isa =&gt; &#39;Log::Abstraction::Backend&#39; }
+
 =cut</pre></td></tr>
-<tr><td class="h">65</td><td colspan="6"></td></tr><tr><td class="h">66</td><td></td><td></td><td></td><td></td><td></td><td class="s">sub new {</td></tr>
-<tr><td class="h">67</td><td><div class="c3">1743</div></td><td></td><td></td><td><div class="c3"><a href="blib-lib-Log-Abstraction-Backend-pm--subroutine.html#L67">1743</a></div></td><td><div>8852</div></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;my ($class, %args) = @_;</td></tr>
-<tr><td class="h">68</td><td colspan="6"></td></tr><tr><td class="h">69</td><td><div class="c3">1743</div></td><td></td><td></td><td></td><td><div>3311</div></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return bless { %args }, $class;</td></tr>
-<tr><td class="h">70</td><td></td><td></td><td></td><td></td><td></td><td class="s">}</td></tr>
-<tr><td class="h">71</td><td colspan="6"></td></tr><tr><td class="h">72 - 79</td><td colspan="5"></td><td class="s"><pre>=head2 wants
+<tr><td class="h">80</td><td colspan="6"></td></tr><tr><td class="h">81</td><td></td><td></td><td></td><td></td><td></td><td class="s">sub new {</td></tr>
+<tr><td class="h">82</td><td><div class="c3">1743</div></td><td></td><td></td><td><div class="c3"><a href="blib-lib-Log-Abstraction-Backend-pm--subroutine.html#L82">1743</a></div></td><td><div>8551</div></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;my ($class, %args) = @_;</td></tr>
+<tr><td class="h">83</td><td colspan="6"></td></tr><tr><td class="h">84</td><td><div class="c3">1743</div></td><td></td><td></td><td></td><td><div>3185</div></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return bless { %args }, $class;</td></tr>
+<tr><td class="h">85</td><td></td><td></td><td></td><td></td><td></td><td class="s">}</td></tr>
+<tr><td class="h">86</td><td colspan="6"></td></tr><tr><td class="h">87 - 104</td><td colspan="5"></td><td class="s"><pre>=head2 wants
 
 &nbsp;&nbsp;next unless $backend-&gt;wants($event);
 
 True if the backend has no level of its own, or the message is at that level
 or more severe.
 
+=head3 API SPECIFICATION
+
+=head4 Input
+
+&nbsp;&nbsp;{ event =&gt; { type =&gt; &#39;hashref&#39;, schema =&gt; { priority =&gt; { type =&gt; &#39;integer&#39;, min =&gt; 0, max =&gt; 7 } } } }
+
+=head4 Output
+
+&nbsp;&nbsp;{ type =&gt; &#39;boolean&#39; }
+
 =cut</pre></td></tr>
-<tr><td class="h">80</td><td colspan="6"></td></tr><tr><td class="h">81</td><td></td><td></td><td></td><td></td><td></td><td class="s">sub wants {</td></tr>
-<tr><td class="h">82</td><td><div class="c3">11025</div></td><td></td><td></td><td><div class="c3"><a href="blib-lib-Log-Abstraction-Backend-pm--subroutine.html#L82">11025</a></div></td><td><div>7840</div></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;my ($self, $event) = @_;</td></tr>
-<tr><td class="h">83</td><td colspan="6"></td></tr><tr><td class="h">84</td><td><div class="c3">11025</div></td><td><div class="c3" title="T/F"><a href="blib-lib-Log-Abstraction-Backend-pm--branch.html#L84">100</a></div></td><td></td><td></td><td><div>17513</div></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return 1 unless(defined($self-&gt;{&#39;level&#39;}));</td></tr>
-<tr><td class="h">85</td><td><div class="c3">56</div></td><td></td><td></td><td></td><td><div>319</div></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return $event-&gt;{&#39;priority&#39;} &lt;= $self-&gt;{&#39;level&#39;};</td></tr>
-<tr><td class="h">86</td><td></td><td></td><td></td><td></td><td></td><td class="s">}</td></tr>
-<tr><td class="h">87</td><td colspan="6"></td></tr><tr><td class="h">88 - 95</td><td colspan="5"></td><td class="s"><pre>=head2 text
+<tr><td class="h">105</td><td colspan="6"></td></tr><tr><td class="h">106</td><td></td><td></td><td></td><td></td><td></td><td class="s">sub wants {</td></tr>
+<tr><td class="h">107</td><td><div class="c3">11025</div></td><td></td><td></td><td><div class="c3"><a href="blib-lib-Log-Abstraction-Backend-pm--subroutine.html#L107">11025</a></div></td><td><div>7605</div></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;my ($self, $event) = @_;</td></tr>
+<tr><td class="h">108</td><td colspan="6"></td></tr><tr><td class="h">109</td><td><div class="c3">11025</div></td><td><div class="c3" title="T/F"><a href="blib-lib-Log-Abstraction-Backend-pm--branch.html#L109">100</a></div></td><td></td><td></td><td><div>17210</div></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return 1 unless(defined($self-&gt;{&#39;level&#39;}));</td></tr>
+<tr><td class="h">110</td><td><div class="c3">56</div></td><td></td><td></td><td></td><td><div>203</div></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return $event-&gt;{&#39;priority&#39;} &lt;= $self-&gt;{&#39;level&#39;};</td></tr>
+<tr><td class="h">111</td><td></td><td></td><td></td><td></td><td></td><td class="s">}</td></tr>
+<tr><td class="h">112</td><td colspan="6"></td></tr><tr><td class="h">113 - 133</td><td colspan="5"></td><td class="s"><pre>=head2 text
 
 &nbsp;&nbsp;my $message = $backend-&gt;text($event, $event-&gt;{text});
 
 The message formatted with the backend&#39;s own C&lt;format&gt;, if it has one,
 otherwise the default given.
 
+=head3 API SPECIFICATION
+
+=head4 Input
+
+&nbsp;&nbsp;{
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;event&nbsp;&nbsp;&nbsp;=&gt; { type =&gt; &#39;hashref&#39;, schema =&gt; { render =&gt; { type =&gt; &#39;coderef&#39; } } },
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;default =&gt; { type =&gt; &#39;string&#39; },
+&nbsp;&nbsp;}
+
+=head4 Output
+
+&nbsp;&nbsp;{ type =&gt; &#39;string&#39; }
+
 =cut</pre></td></tr>
-<tr><td class="h">96</td><td colspan="6"></td></tr><tr><td class="h">97</td><td></td><td></td><td></td><td></td><td></td><td class="s">sub text {</td></tr>
-<tr><td class="h">98</td><td><div class="c3">86</div></td><td></td><td></td><td><div class="c3"><a href="blib-lib-Log-Abstraction-Backend-pm--subroutine.html#L98">86</a></div></td><td><div>106</div></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;my ($self, $event, $default) = @_;</td></tr>
-<tr><td class="h">99</td><td colspan="6"></td></tr><tr><td class="h">100</td><td><div class="c3">86</div></td><td><div class="c3" title="T/F"><a href="blib-lib-Log-Abstraction-Backend-pm--branch.html#L100">100</a></div></td><td></td><td></td><td><div>159</div></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return defined($self-&gt;{&#39;format&#39;}) ? $event-&gt;{&#39;render&#39;}-&gt;($self-&gt;{&#39;format&#39;}) : $default;</td></tr>
-<tr><td class="h">101</td><td></td><td></td><td></td><td></td><td></td><td class="s">}</td></tr>
-<tr><td class="h">102</td><td colspan="6"></td></tr><tr><td class="h">103 - 130</td><td colspan="5"></td><td class="s"><pre>=head2 emit
+<tr><td class="h">134</td><td colspan="6"></td></tr><tr><td class="h">135</td><td></td><td></td><td></td><td></td><td></td><td class="s">sub text {</td></tr>
+<tr><td class="h">136</td><td><div class="c3">86</div></td><td></td><td></td><td><div class="c3"><a href="blib-lib-Log-Abstraction-Backend-pm--subroutine.html#L136">86</a></div></td><td><div>95</div></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;my ($self, $event, $default) = @_;</td></tr>
+<tr><td class="h">137</td><td colspan="6"></td></tr><tr><td class="h">138</td><td><div class="c3">86</div></td><td><div class="c3" title="T/F"><a href="blib-lib-Log-Abstraction-Backend-pm--branch.html#L138">100</a></div></td><td></td><td></td><td><div>138</div></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return defined($self-&gt;{&#39;format&#39;}) ? $event-&gt;{&#39;render&#39;}-&gt;($self-&gt;{&#39;format&#39;}) : $default;</td></tr>
+<tr><td class="h">139</td><td></td><td></td><td></td><td></td><td></td><td class="s">}</td></tr>
+<tr><td class="h">140</td><td colspan="6"></td></tr><tr><td class="h">141 - 184</td><td colspan="5"></td><td class="s"><pre>=head2 emit
 
 &nbsp;&nbsp;$backend-&gt;emit($logger, $event);
 
@@ -139,12 +177,28 @@ reference built by C&lt;Log::Abstraction&gt; for each message:
 The closures are how a backend uses Log::Abstraction&#39;s private methods.
 Subclasses must override this.
 
+=head3 API SPECIFICATION
+
+=head4 Input
+
+&nbsp;&nbsp;{
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;logger =&gt; { type =&gt; &#39;object&#39;, isa =&gt; &#39;Log::Abstraction&#39; },
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;event&nbsp;&nbsp;=&gt; { type =&gt; &#39;hashref&#39; },&nbsp;&nbsp;&nbsp;&nbsp;# the keys above
+&nbsp;&nbsp;}
+
+=head4 Output
+
+&nbsp;&nbsp;None.&nbsp;&nbsp;The base class&#39;s emit() croaks &quot;&lt;class&gt;: emit() is not
+&nbsp;&nbsp;implemented&quot;; a subclass&#39;s sends the message.&nbsp;&nbsp;A failed delivery is
+&nbsp;&nbsp;carped, not fatal; a configuration error (e.g. an invalid sendmail
+&nbsp;&nbsp;host) still croaks.
+
 =cut</pre></td></tr>
-<tr><td class="h">131</td><td colspan="6"></td></tr><tr><td class="h">132</td><td></td><td></td><td></td><td></td><td></td><td class="s">sub emit {</td></tr>
-<tr><td class="h">133</td><td><div class="c3">1</div></td><td></td><td></td><td><div class="c3"><a href="blib-lib-Log-Abstraction-Backend-pm--subroutine.html#L133">1</a></div></td><td><div>1</div></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;my $self = shift;</td></tr>
-<tr><td class="h">134</td><td colspan="6"></td></tr><tr><td class="h">135</td><td><div class="c3">1</div></td><td></td><td></td><td></td><td><div>5</div></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Carp::croak(ref($self), &#39;: emit() is not implemented&#39;);</td></tr>
-<tr><td class="h">136</td><td></td><td></td><td></td><td></td><td></td><td class="s">}</td></tr>
-<tr><td class="h">137</td><td colspan="6"></td></tr><tr><td class="h">138 - 154</td><td colspan="5"></td><td class="s"><pre>=head1 AUTHOR
+<tr><td class="h">185</td><td colspan="6"></td></tr><tr><td class="h">186</td><td></td><td></td><td></td><td></td><td></td><td class="s">sub emit {</td></tr>
+<tr><td class="h">187</td><td><div class="c3">1</div></td><td></td><td></td><td><div class="c3"><a href="blib-lib-Log-Abstraction-Backend-pm--subroutine.html#L187">1</a></div></td><td><div>1</div></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;my $self = shift;</td></tr>
+<tr><td class="h">188</td><td colspan="6"></td></tr><tr><td class="h">189</td><td><div class="c3">1</div></td><td></td><td></td><td></td><td><div>5</div></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Carp::croak(ref($self), &#39;: emit() is not implemented&#39;);</td></tr>
+<tr><td class="h">190</td><td></td><td></td><td></td><td></td><td></td><td class="s">}</td></tr>
+<tr><td class="h">191</td><td colspan="6"></td></tr><tr><td class="h">192 - 208</td><td colspan="5"></td><td class="s"><pre>=head1 AUTHOR
 
 Nigel Horne C&lt;njh@nigelhorne.com&gt;
 
@@ -161,7 +215,7 @@ If you use it,
 please let me know.
 
 =cut</pre></td></tr>
-<tr><td class="h">155</td><td colspan="6"></td></tr><tr><td class="h">156</td><td></td><td></td><td></td><td></td><td></td><td class="s">1;</td></tr>
+<tr><td class="h">209</td><td colspan="6"></td></tr><tr><td class="h">210</td><td></td><td></td><td></td><td></td><td></td><td class="s">1;</td></tr>
 </table>
 </body>
 </html>
