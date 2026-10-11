@@ -1,6 +1,6 @@
 Revision history for Log-Abstraction
 
-0.40	Not Released
+0.40	Sun Oct 11 02:48:00 PM EDT 2026
 	[ Enhancements ]
 	- New log_any and log_dispatch backends in the logger hash send
 	  messages on to Log::Any (a category name or a Log::Any logger) and
