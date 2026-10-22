@@ -1,6 +1,6 @@
 Revision history for Log-Abstraction
 
-0.41
+0.41	Thu Oct 22 10:41:55 AM EDT 2026
 	[ Bug Fixes ]
 	- Loading Log::Abstraction no longer sets Sub::Private's mode to
 	  enforce for the whole process.  Every module loaded afterwards that
