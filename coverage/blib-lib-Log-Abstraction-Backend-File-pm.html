@@ -27,9 +27,9 @@ https://pjcj.net
 <tr><th>line</th><th>stmt</th><th>bran</th><th>cond</th><th>sub</th><th>time</th><th>code</th></tr>
 <tr><td class="h">1</td><td></td><td></td><td></td><td></td><td></td><td class="s">package Log::Abstraction::Backend::File;</td></tr>
 <tr><td class="h">2</td><td colspan="6"></td></tr><tr><td class="h">3</td><td></td><td></td><td></td><td></td><td></td><td class="s"># The file backend: append a formatted line to a file</td></tr>
-<tr><td class="h">4</td><td><div class="c3">37</div><div class="c3">37</div><div class="c3">37</div></td><td></td><td></td><td><div class="c3"><a href="blib-lib-Log-Abstraction-Backend-File-pm--subroutine.html#L4">37</a></div></td><td><div>99</div><div>17</div><div>132</div></td><td class="s">use strict;</td></tr>
-<tr><td class="h">5</td><td><div class="c3">37</div><div class="c3">37</div><div class="c3">37</div></td><td></td><td></td><td><div class="c3"><a href="blib-lib-Log-Abstraction-Backend-File-pm--subroutine.html#L5">37</a></div></td><td><div>29</div><div>14</div><div>265</div></td><td class="s">use warnings;</td></tr>
-<tr><td class="h">6</td><td colspan="6"></td></tr><tr><td class="h">7</td><td><div class="c3">37</div><div class="c3">37</div><div class="c3">37</div></td><td></td><td></td><td><div class="c3"><a href="blib-lib-Log-Abstraction-Backend-File-pm--subroutine.html#L7">37</a></div></td><td><div>26</div><div>17</div><div>29</div></td><td class="s">use parent &#39;Log::Abstraction::Backend&#39;;</td></tr>
+<tr><td class="h">4</td><td><div class="c3">37</div><div class="c3">37</div><div class="c3">37</div></td><td></td><td></td><td><div class="c3"><a href="blib-lib-Log-Abstraction-Backend-File-pm--subroutine.html#L4">37</a></div></td><td><div>92</div><div>16</div><div>136</div></td><td class="s">use strict;</td></tr>
+<tr><td class="h">5</td><td><div class="c3">37</div><div class="c3">37</div><div class="c3">37</div></td><td></td><td></td><td><div class="c3"><a href="blib-lib-Log-Abstraction-Backend-File-pm--subroutine.html#L5">37</a></div></td><td><div>30</div><div>36</div><div>263</div></td><td class="s">use warnings;</td></tr>
+<tr><td class="h">6</td><td colspan="6"></td></tr><tr><td class="h">7</td><td><div class="c3">37</div><div class="c3">37</div><div class="c3">37</div></td><td></td><td></td><td><div class="c3"><a href="blib-lib-Log-Abstraction-Backend-File-pm--subroutine.html#L7">37</a></div></td><td><div>46</div><div>21</div><div>35</div></td><td class="s">use parent &#39;Log::Abstraction::Backend&#39;;</td></tr>
 <tr><td class="h">8</td><td colspan="6"></td></tr><tr><td class="h">9</td><td></td><td></td><td></td><td></td><td></td><td class="s">our $VERSION = &#39;0.40&#39;;</td></tr>
 <tr><td class="h">10</td><td colspan="6"></td></tr><tr><td class="h">11 - 35</td><td colspan="5"></td><td class="s"><pre>=head1 NAME
 
@@ -57,8 +57,8 @@ For use by L&lt;Log::Abstraction&gt; only; see L&lt;Log::Abstraction::Backend&gt
 
 =cut</pre></td></tr>
 <tr><td class="h">36</td><td colspan="6"></td></tr><tr><td class="h">37</td><td></td><td></td><td></td><td></td><td></td><td class="s">sub emit {</td></tr>
-<tr><td class="h">38</td><td><div class="c3">165</div></td><td></td><td></td><td><div class="c3"><a href="blib-lib-Log-Abstraction-Backend-File-pm--subroutine.html#L38">165</a></div></td><td><div>87</div></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;my ($self, $logger, $event) = @_;</td></tr>
-<tr><td class="h">39</td><td colspan="6"></td></tr><tr><td class="h">40</td><td><div class="c3">165</div></td><td></td><td></td><td></td><td><div>146</div></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;$event-&gt;{&#39;write&#39;}-&gt;($self-&gt;{&#39;file&#39;}, $event-&gt;{&#39;render&#39;}-&gt;($self-&gt;{&#39;format&#39;}));</td></tr>
+<tr><td class="h">38</td><td><div class="c3">165</div></td><td></td><td></td><td><div class="c3"><a href="blib-lib-Log-Abstraction-Backend-File-pm--subroutine.html#L38">165</a></div></td><td><div>113</div></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;my ($self, $logger, $event) = @_;</td></tr>
+<tr><td class="h">39</td><td colspan="6"></td></tr><tr><td class="h">40</td><td><div class="c3">165</div></td><td></td><td></td><td></td><td><div>157</div></td><td class="s">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;$event-&gt;{&#39;write&#39;}-&gt;($self-&gt;{&#39;file&#39;}, $event-&gt;{&#39;render&#39;}-&gt;($self-&gt;{&#39;format&#39;}));</td></tr>
 <tr><td class="h">41</td><td></td><td></td><td></td><td></td><td></td><td class="s">}</td></tr>
 <tr><td class="h">42</td><td colspan="6"></td></tr><tr><td class="h">43 - 59</td><td colspan="5"></td><td class="s"><pre>=head1 AUTHOR
 
