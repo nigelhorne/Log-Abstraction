@@ -13,9 +13,8 @@ use Carp ();
 use POSIX ();
 use Readonly ();
 
-# _send is private to this package (see Log::Abstraction)
-BEGIN { $Sub::Private::config{mode} = 'enforce' }
-use Sub::Private 0.06;
+# _send is private to this package (listed at the end of this file)
+use Sub::Private 0.06 ();
 
 our $VERSION = '0.40';
 
@@ -157,7 +156,7 @@ sub emit {
 #               addressed to the path, so it still arrives after journald
 #               restarts and creates the socket file again.
 # ---------------------------------------------------------------------------
-sub _send :Private {
+sub _send {
 	my ($self, $socket_path, %fields) = @_;
 
 	# The protocol carries bytes, and binary framing declares a byte length,
@@ -258,5 +257,18 @@ If you use it,
 please let me know.
 
 =cut
+
+# Make the private routines croak when called from outside this package.
+# The list is given here, after they are compiled, rather than as :Private
+# attributes because those are wrapped at CHECK time and need enforce mode
+# set for the whole process until then, which changed it for every other
+# user of Sub::Private.  Here enforce mode is set only while the list is
+# taken; the wrapping itself doesn't look at the mode.
+BEGIN {
+	local $Sub::Private::config{mode} = 'enforce';
+	Sub::Private->import(qw(
+		_send
+	));
+}
 
 1;
