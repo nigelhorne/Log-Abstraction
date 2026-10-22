@@ -6,9 +6,10 @@ Revision history for Log-Abstraction
 	  enforce for the whole process.  Every module loaded afterwards that
 	  marked subs :Private had them wrapped instead of removed, and code
 	  checking or setting the mode saw the wrong value.  The private subs
-	  are now listed at the end of Log::Abstraction and the journald
-	  backend, with enforce mode set only while they are, and are
-	  enforced as before.
+	  are still marked :Private and enforced as before, but enforce mode
+	  is now set for Log::Abstraction and the journald backend only, with
+	  use Sub::Private { mode => 'enforce' }.  Sub::Private 0.07 is
+	  required for that.
 
 0.40	Sun Oct 11 02:48:00 PM EDT 2026
 	[ Enhancements ]

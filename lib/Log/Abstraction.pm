@@ -77,12 +77,13 @@ use Scalar::Util ();
 use Time::HiRes ();
 use Time::Local ();
 
-# Sub::Private in enforce mode: the _-prefixed subs listed at the end of this
-# file croak when called from outside this package.  HARNESS_ACTIVE bypasses
-# checks during make test so white-box tests can still reach private methods.
-# 0.06 also enforces when this module is loaded at run time (require,
-# Log::Any).
-use Sub::Private 0.06 ();
+# Sub::Private in enforce mode: _-prefixed subs decorated :Private croak when
+# called from outside this package.  HARNESS_ACTIVE bypasses checks during
+# make test so white-box tests can still reach private methods.  0.06 also
+# enforces when this module is loaded at run time (require, Log::Any).  The
+# mode is set for this package only (0.07), not in $Sub::Private::config,
+# which would change it for every other module using Sub::Private.
+use Sub::Private 0.07 { mode => 'enforce' };
 
 # The backends, one object per destination, built by new() (see
 # _build_backends).  Loaded now rather than on demand, so that they are
@@ -1224,7 +1225,7 @@ sub new {
 #     RETURN backends
 #   END FUNCTION
 # ---------------------------------------------------------------------------
-sub _build_backends {
+sub _build_backends :Private {
 	my $self = shift;
 
 	my $class = Scalar::Util::blessed($self);
@@ -1292,7 +1293,7 @@ sub _build_backends {
 # Exit:         Returns the sanitised scalar, or undef if input was undef.
 # Notes:        Called from _log before every header_set() call.
 # ---------------------------------------------------------------------------
-sub _sanitize_email_header {
+sub _sanitize_email_header :Private {
 	my ($value) = @_;
 
 	return unless defined $value;
@@ -1317,7 +1318,7 @@ sub _sanitize_email_header {
 #               a recognised level name nor an integer in 0-7.
 # Notes:        A pure function (no $self), called as _level_number($value).
 # ---------------------------------------------------------------------------
-sub _level_number {
+sub _level_number :Private {
 	my ($value) = @_;
 
 	return unless defined $value;
@@ -1342,7 +1343,7 @@ sub _level_number {
 #               Only an unblessed hash is the hash form, so a handle object
 #               is still a destination.
 # ---------------------------------------------------------------------------
-sub _backend {
+sub _backend :Private {
 	my ($name, $value) = @_;
 
 	return ($value, undef, undef) unless(ref($value) eq 'HASH');
@@ -1363,7 +1364,7 @@ sub _backend {
 #               log_dispatch takes a Log::Dispatch (or anything with a
 #               Log::Dispatch-style log() method).
 # ---------------------------------------------------------------------------
-sub _check_producer {
+sub _check_producer :Private {
 	my ($class, $name, $value) = @_;
 
 	my ($dest) = _backend($name, $value);
@@ -1396,7 +1397,7 @@ sub _check_producer {
 #               Blessed objects and other values JSON can't represent are
 #               encoded as null.
 # ---------------------------------------------------------------------------
-sub _to_json {
+sub _to_json :Private {
 	my ($data) = @_;
 
 	require JSON::PP;
@@ -1415,7 +1416,7 @@ sub _to_json {
 #               any other reference, and the value itself otherwise.
 # Notes:        A pure function (no $self), called as _field_string($value).
 # ---------------------------------------------------------------------------
-sub _field_string {
+sub _field_string :Private {
 	my ($value) = @_;
 
 	return '' unless defined($value);
@@ -1437,7 +1438,7 @@ sub _field_string {
 #               \n, \r, \t or \xNN, so a field can never contain a line break
 #               and forge a log entry.
 # ---------------------------------------------------------------------------
-sub _fields_text {
+sub _fields_text :Private {
 	my ($fields) = @_;
 
 	my %escapes = ("\n" => '\n', "\r" => '\r', "\t" => '\t');
@@ -1466,7 +1467,7 @@ sub _fields_text {
 # Notes:        A pure function (no $self), called as
 #               _check_timestamp_args($class, \%args).
 # ---------------------------------------------------------------------------
-sub _check_timestamp_args {
+sub _check_timestamp_args :Private {
 	my ($class, $args) = @_;
 
 	if(exists($args->{'timestamp_format'})) {
@@ -1495,7 +1496,7 @@ sub _check_timestamp_args {
 #               UTC, less the real time.  The year is passed in full so that
 #               Time::Local doesn't guess a century.
 # ---------------------------------------------------------------------------
-sub _utc_offset {
+sub _utc_offset :Private {
 	my ($secs, $utc) = @_;
 
 	return 0 if($utc);
@@ -1515,7 +1516,7 @@ sub _utc_offset {
 # Notes:        A pure function (no $self), called as
 #               _check_rotate_args($class, \%args).
 # ---------------------------------------------------------------------------
-sub _check_rotate_args {
+sub _check_rotate_args :Private {
 	my ($class, $args) = @_;
 
 	if(defined(my $size = $args->{'rotate_size'})) {
@@ -1572,7 +1573,7 @@ sub _check_rotate_args {
 #     set redact to qr/(?:p1)|(?:p2)|.../
 #   END FUNCTION
 # ---------------------------------------------------------------------------
-sub _check_redact_args {
+sub _check_redact_args :Private {
 	my ($class, $args) = @_;
 
 	return if(!exists($args->{'redact'}));
@@ -1634,7 +1635,7 @@ sub _check_redact_args {
 #     RETURN it
 #   END FUNCTION
 # ---------------------------------------------------------------------------
-sub _redact {
+sub _redact :Private {
 	my ($re, $value, $seen) = @_;
 
 	return $value if(!defined($value));
@@ -1691,7 +1692,7 @@ sub _redact {
 #     rename path to path.1
 #   END FUNCTION
 # ---------------------------------------------------------------------------
-sub _rotate {
+sub _rotate :Private {
 	my ($self, $path) = @_;
 
 	my @st = stat($path) or return;
@@ -1753,7 +1754,7 @@ sub _rotate {
 #     RETURN strftime(format, tm)
 #   END FUNCTION
 # ---------------------------------------------------------------------------
-sub _timestamp {
+sub _timestamp :Private {
 	my ($self, $now) = @_;
 
 	$now //= Time::HiRes::time();
@@ -1804,7 +1805,7 @@ sub _timestamp {
 #               :utf8 or :encoding layer.  File I/O failures are silent by
 #               design: an I/O error must never crash the application.
 # ---------------------------------------------------------------------------
-sub _write_line {
+sub _write_line :Private {
 	my ($self, $target, $line) = @_;
 
 	if(ref($target)) {
@@ -1872,7 +1873,7 @@ sub _write_line {
 #     RETURN the handle
 #   END FUNCTION
 # ---------------------------------------------------------------------------
-sub _file_handle {
+sub _file_handle :Private {
 	my ($self, $path) = @_;
 
 	if(my $open = $self->{_handles}{$path}) {
@@ -1915,7 +1916,7 @@ sub _file_handle {
 #               sets afterwards replaces this one; reopen_interval still
 #               reopens the files.
 # ---------------------------------------------------------------------------
-sub _catch_sighup {
+sub _catch_sighup :Private {
 	my $self = $_[0];
 
 	return if($self->{_sighup} || ($^O eq 'MSWin32'));
@@ -1952,7 +1953,7 @@ sub _catch_sighup {
 #               program has set a handler of its own since; the next logger
 #               to open a file installs the handler again.
 # ---------------------------------------------------------------------------
-sub _release_sighup {
+sub _release_sighup :Private {
 	my $self = $_[0];
 
 	return unless(delete $self->{_sighup});
@@ -1976,7 +1977,7 @@ sub _release_sighup {
 # Side effects: Closes the handles and forgets them, so the next write opens
 #               the file again.  A failing close is ignored.
 # ---------------------------------------------------------------------------
-sub _close_files {
+sub _close_files :Private {
 	my ($self, @paths) = @_;
 
 	my $handles = $self->{_handles} or return;
@@ -2029,7 +2030,7 @@ sub _close_files {
 #     clear the digest; record the time for the throttle; RETURN 1
 #   END FUNCTION
 # ---------------------------------------------------------------------------
-sub _send_email {
+sub _send_email :Private {
 	my ($self, $sm, @lines) = @_;
 
 	# Validate host and port before any eval so bad config croaks immediately
@@ -2130,7 +2131,7 @@ sub _send_email {
 #               still running then are reaped by a later call, or when the
 #               program exits.
 # ---------------------------------------------------------------------------
-sub _reap_email_children {
+sub _reap_email_children :Private {
 	@email_children = grep { waitpid($_, POSIX::WNOHANG()) == 0 } @email_children;
 	return;
 }
@@ -2146,7 +2147,7 @@ sub _reap_email_children {
 # Exit:         Returns nothing.  Holds $line, or once digest_max are held,
 #               only counts it, so a burst can't use unbounded memory.
 # ---------------------------------------------------------------------------
-sub _hold_email {
+sub _hold_email :Private {
 	my ($self, $sm, $line) = @_;
 
 	my $held = $self->{_email_digest} ||= [];
@@ -2171,7 +2172,7 @@ sub _hold_email {
 # Notes:        Blocks the character set <, >, |, *, ?, ;, !, `, $, "
 #               and all C0 control characters, as well as ".." sequences.
 # ---------------------------------------------------------------------------
-sub _validate_file_path {
+sub _validate_file_path :Private {
 	my ($self, $path) = @_;
 
 	# Block ".." path-traversal and all dangerous shell metacharacters
@@ -2243,7 +2244,7 @@ sub _validate_file_path {
 #     RETURN formatted line string
 #   END FUNCTION
 # ---------------------------------------------------------------------------
-sub _format_message {
+sub _format_message :Private {
 	my ($self, $level, $str, $use_class, $caller_file, $caller_line, $fields, $timestamp, $format) = @_;
 
 	$timestamp //= $self->_timestamp();
@@ -2355,10 +2356,10 @@ sub _format_message {
 #     (each Log::Abstraction::Backend::* class documents what it does)
 #   END FUNCTION
 # ---------------------------------------------------------------------------
-sub _log {
+sub _log :Private {
 	my ($self, $level, @messages) = @_;
 
-	# Reject direct calls from outside this package (also enforced by Sub::Private)
+	# Reject direct calls from outside this package (also enforced by :Private)
 	if(!(caller)[0]->isa(__PACKAGE__)) {
 		Carp::croak('Illegal Operation: _log is a private method');
 	}
@@ -2538,7 +2539,7 @@ sub _log {
 #       CARP with warning text
 #   END FUNCTION
 # ---------------------------------------------------------------------------
-sub _high_priority {
+sub _high_priority :Private {
 	my $self  = shift;
 	my $level = shift;    # 'warn', 'error', 'critical', 'alert' or 'emergency'
 
@@ -3940,44 +3941,5 @@ If you use it,
 please let me know.
 
 =cut
-
-# Make the private routines croak when called from outside this package.
-# The list is given here, after they are compiled, rather than as :Private
-# attributes because those are wrapped at CHECK time and need enforce mode
-# set for the whole process until then, which changed it for every other
-# user of Sub::Private.  Here enforce mode is set only while the list is
-# taken; the wrapping itself doesn't look at the mode.
-BEGIN {
-	local $Sub::Private::config{mode} = 'enforce';
-	Sub::Private->import(qw(
-		_build_backends
-		_sanitize_email_header
-		_level_number
-		_backend
-		_check_producer
-		_to_json
-		_field_string
-		_fields_text
-		_check_timestamp_args
-		_utc_offset
-		_check_rotate_args
-		_check_redact_args
-		_redact
-		_rotate
-		_timestamp
-		_write_line
-		_file_handle
-		_catch_sighup
-		_release_sighup
-		_close_files
-		_send_email
-		_reap_email_children
-		_hold_email
-		_validate_file_path
-		_format_message
-		_log
-		_high_priority
-	));
-}
 
 1;
